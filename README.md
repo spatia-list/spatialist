@@ -1,2 +1,2 @@
-# mr-post-it
-POC of persistent object placement on Hololens 2
+# SpatiaList
+POC of persistent object placement on Hololens 2 using Azure Spatial Anchors
