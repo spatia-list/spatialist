@@ -680,7 +680,7 @@ PlayerSettings:
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
   metroPackageName: Spatialist
-  metroPackageVersion: 
+  metroPackageVersion: 1.0.0.0
   metroCertificatePath: Assets/WSATestCertificate.pfx
   metroCertificatePassword: 
   metroCertificateSubject: DefaultCompany
@@ -688,7 +688,7 @@ PlayerSettings:
   metroCertificateNotAfter: 00e435ae712adb01
   metroApplicationDescription: Spatialist
   wsaImages: {}
-  metroTileShortName: 
+  metroTileShortName: Spatialist
   metroTileShowName: 0
   metroMediumTileShowName: 0
   metroLargeTileShowName: 0
