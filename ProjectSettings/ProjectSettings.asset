@@ -702,6 +702,8 @@ PlayerSettings:
   metroSplashScreenUseBackgroundColor: 0
   platformCapabilities:
     WindowsStoreApps:
+      PrivateNetworkClientServer: True
+      InternetClientServer: True
       SpatialPerception: True
       InternetClient: True
       WebCam: True
