@@ -50,7 +50,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     void Start()
     {
         Debug.Log("connecting to the Display");
-        debugController.Invoke("Connected to manager", Color.green);
+        Debug.Log("Connected to manager");
         Debug.Log("starting the session");
 
         _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
@@ -60,12 +60,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         Debug.Log("Setting up further debug watchers");
         _spatialAnchorManager.LogDebug += (sender, args) =>
         {
-            debugController.Invoke($"ASA - Debug: {args.Message}", Color.red);
+            Debug.Log($"ASA - Debug: {args.Message}");
             Debug.Log($"ASA - Debug: {args.Message}");
         };
         _spatialAnchorManager.Error += (sender, args) =>
         {
-            debugController.Invoke($"ASA - Error: {args.ErrorMessage}", Color.red);
+            Debug.Log($"ASA - Error: {args.ErrorMessage}");
             Debug.Log($"ASA - Error: {args.ErrorMessage}");
         };
 
@@ -99,6 +99,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     }
                     _tappingTimer[i] = 0;
                 }
+                else
+                {
+                    _tappingTimer[i] += Time.deltaTime;
+
+                }
             }
 
         }
@@ -113,6 +118,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <param name="handPosition">Location where tap was registered</param>
     private async void ShortTap(Vector3 handPosition)
     {
+
+        Debug.Log("Detected a tap!");
         
         if (!IsAnchorNearby(handPosition, out GameObject anchorGameObject))
         {
@@ -133,11 +140,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         if (_spatialAnchorManager != null && _spatialAnchorManager.IsSessionStarted)
         {
             Debug.Log("Session is already started!");
-            debugController.Invoke("Session is already started!", Color.grey);
+            Debug.Log("Session is already started!");
         }
-        debugController.Invoke("Starting session...", Color.blue);
+        Debug.Log("Starting session...");
         _spatialAnchorManager.StartSessionAsync().ContinueWith((x) => { 
-            debugController.Invoke("Started session!", Color.blue);
+            Debug.Log("Started session!");
         });
 
         Debug.Log("session started, setting up watcher");
@@ -150,7 +157,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
 
 
-        debugController.Invoke($"ASA - Watcher created!", Color.green);
+        Debug.Log($"ASA - Watcher created!");
 
     }
     
@@ -166,7 +173,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             _spatialAnchorManager.DestroySession();
             RemoveAllAnchorGameObjects();
 
-            debugController.Invoke("ASA - Stopped Session and removed all Anchor Objects", Color.grey);
+            Debug.Log("ASA - Stopped Session and removed all Anchor Objects");
             Debug.Log("ASA - Stopped session and removed objects");
         }
     }
@@ -183,6 +190,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Destroy(anchorGameObject);
         }
         _foundOrCreatedAnchorGameObjects.Clear();
+        _foundOrCreatedAnchorIds = null;
     }
     // </RemoveAllAnchorGameObjects>
 
@@ -254,10 +262,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         while (!_spatialAnchorManager.IsReadyForCreate)
         {
             float createProgress = _spatialAnchorManager.SessionStatus.RecommendedForCreateProgress;
-            debugController.Invoke($"ASA - Move your device to capture more environment data: {createProgress:0%}", Color.red);
+            Debug.Log($"ASA - Move your device to capture more environment data: {createProgress:0%}");
         }
 
-        debugController.Invoke($"ASA - Saving cloud anchor... ", Color.red);
+        Debug.Log($"ASA - Saving cloud anchor... ");
 
         try
         {
@@ -272,10 +280,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 return;
             }
 
-            debugController.Invoke($"ASA - Saved cloud anchor with ID: {cloudSpatialAnchor.Identifier}", Color.red);
+            Debug.Log($"ASA - Saved cloud anchor with ID: {cloudSpatialAnchor.Identifier}");
             _foundOrCreatedAnchorGameObjects.Add(anchorGameObject);
             _foundOrCreatedAnchorIds.Add(cloudSpatialAnchor.Identifier);
-            anchorGameObject.GetComponent<MeshRenderer>().material.color = Color.green;
         }
         catch (Exception exception)
         {
@@ -296,7 +303,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <param name="args">Callback AnchorLocatedEventArgs</param>
     private void SpatialAnchorManager_AnchorLocated(object sender, AnchorLocatedEventArgs args)
     {
-        debugController.Invoke($"ASA - Anchor recognized as a possible anchor {args.Identifier} {args.Status}", Color.red);
+        Debug.Log($"ASA - Anchor recognized as a possible anchor {args.Identifier} {args.Status}");
 
 
         switch (args.Status)
@@ -346,17 +353,17 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         CloudNativeAnchor cloudNativeAnchor = anchorGameObject.GetComponent<CloudNativeAnchor>();
         CloudSpatialAnchor cloudSpatialAnchor = cloudNativeAnchor.CloudAnchor;
 
-        debugController.Invoke($"ASA - Deleting cloud anchor: {cloudSpatialAnchor.Identifier}", Color.red);
+        Debug.Log($"ASA - Deleting cloud anchor: {cloudSpatialAnchor.Identifier}");
 
-        //Request Deletion of Cloud Anchor
-        await _spatialAnchorManager.DeleteAnchorAsync(cloudSpatialAnchor);
+        //Request Deletion of Cloud Anchor (Not for now)
+        //await _spatialAnchorManager.DeleteAnchorAsync(cloudSpatialAnchor);
 
         //Remove local references
         _foundOrCreatedAnchorGameObjects.Remove(anchorGameObject);
         _foundOrCreatedAnchorIds.Remove(cloudSpatialAnchor.Identifier);
         Destroy(anchorGameObject);
 
-        debugController.Invoke($"ASA - Cloud anchor deleted!", Color.red    );
+        Debug.Log($"ASA - Cloud anchor deleted!");
     }
     // </DeleteAnchor>
 
