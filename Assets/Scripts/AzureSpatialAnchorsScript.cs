@@ -2,7 +2,10 @@ using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -36,6 +39,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// The prefab we will use as a new Post-it instance
     /// </summary>
     public GameObject postItPrefab;
+
+
+    /// <summary>
+    /// API endpoint base url
+    /// </summary>
+    public string APIUrl;
 
     /// <summary>
     /// UnityEvent for showing messages
@@ -134,6 +143,51 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
     // </ShortTap>
 
+
+    /// <summary>
+    /// Perform an async request to the API endpoint querying all of the anchors
+    /// </summary>
+    public async Task<List<string>> GetApiAnchors()
+    {
+
+        if (APIUrl == null) 
+        {
+            Debug.Log("No API set!!");
+            return new List<string>();
+        }
+
+        string url = APIUrl + "/allAnchorIds";
+
+        try
+        {
+            WebRequest wr = WebRequest.Create(url);
+            wr.Method = "GET";
+            wr.Headers["Content-Type"] = "application/json";
+
+            WebResponse response = await wr.GetResponseAsync();
+
+            Stream result = response.GetResponseStream();
+            StreamReader reader = new(result);
+
+            string json = reader.ReadToEnd();
+
+
+
+        }
+        catch (Exception ex)
+        {
+            Debug.Log($"Exception while querying API: {ex.Message}");
+            return new List<string>();
+        }
+
+        return new List<string>();
+    }
+
+
+    /// <StartSession>
+    /// <summary>
+    /// Start the ASA session
+    /// </summary>
     public void StartSession()
     {
 
@@ -160,11 +214,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         Debug.Log($"ASA - Watcher created!");
 
     }
-    
+    ///</StartSession>
+
     ///<DestroySession>
-    ///<sumarry>
+    ///<summary>
     /// Destroy the session and game objects
-    /// </sumarry>
+    /// </summary>
     public void DestroySession()
     {
         if (_spatialAnchorManager.IsSessionStarted)
@@ -276,7 +331,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             if (!saveSucceeded)
             {
                 Debug.LogError("ASA - Failed to save, but no exception was thrown.");
-                Destroy(anchorGameObject);
+                anchorGameObject.SetActive(false);
                 return;
             }
 
@@ -288,7 +343,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         {
             Debug.Log("ASA - Failed to save anchor: " + exception.ToString());
             Debug.LogException(exception);
-            Destroy(anchorGameObject);
+            anchorGameObject.SetActive(false);
         }
     }
     // </CreateAnchor>
@@ -359,9 +414,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         //await _spatialAnchorManager.DeleteAnchorAsync(cloudSpatialAnchor);
 
         //Remove local references
-        _foundOrCreatedAnchorGameObjects.Remove(anchorGameObject);
-        _foundOrCreatedAnchorIds.Remove(cloudSpatialAnchor.Identifier);
-        Destroy(anchorGameObject);
+        //_foundOrCreatedAnchorGameObjects.Remove(anchorGameObject);
+        //_foundOrCreatedAnchorIds.Remove(cloudSpatialAnchor.Identifier);
+       anchorGameObject.SetActive(false);
 
         Debug.Log($"ASA - Cloud anchor deleted!");
     }
