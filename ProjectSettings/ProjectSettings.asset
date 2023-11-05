@@ -136,10 +136,7 @@ PlayerSettings:
   vulkanEnableCommandBufferRecycling: 1
   loadStoreDebugModeEnabled: 0
   bundleVersion: 0.1
-  preloadedAssets:
-  - {fileID: 2213548059040073467, guid: 8777b978ace46514a825c4c4356e61d1, type: 2}
-  - {fileID: 11400000, guid: 9b59203dd37496e4ca5d19e2153e9574, type: 2}
-  - {fileID: 1161308730658866241, guid: 8885e04ccecc0ab488e138f2b7cb1110, type: 2}
+  preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -702,11 +699,19 @@ PlayerSettings:
   metroSplashScreenUseBackgroundColor: 0
   platformCapabilities:
     WindowsStoreApps:
+      Location: True
+      Bluetooth: True
       PrivateNetworkClientServer: True
       InternetClientServer: True
+      WebCam: True
+      GazeInput: True
+      UserNotificationListener: True
+      UserDataTasks: True
+      PointOfService: False
+      SystemManagement: True
       SpatialPerception: True
       InternetClient: True
-      WebCam: True
+      Proximity: True
       Microphone: True
   metroTargetDeviceFamilies: {}
   metroFTAName: 
