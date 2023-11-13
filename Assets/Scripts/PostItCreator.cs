@@ -20,6 +20,7 @@ public class PostItCreator : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("Post-it creator started");
         for (int i = 0; i < 5; i++)
         {
             this.postIts[i] = Instantiate(obj, postItPositions[i], Quaternion.identity);
