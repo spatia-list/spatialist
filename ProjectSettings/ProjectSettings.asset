@@ -713,7 +713,8 @@ PlayerSettings:
       InternetClient: True
       Proximity: True
       Microphone: True
-  metroTargetDeviceFamilies: {}
+  metroTargetDeviceFamilies:
+    Holographic: True
   metroFTAName: 
   metroFTAFileTypes: []
   metroProtocolName: 
