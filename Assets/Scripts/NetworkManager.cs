@@ -3,30 +3,31 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Text.Json;
+//using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using Debug = UnityEngine.Debug;
 
-// public class PostIt
-// {
-//     public string id { get; set; }
-//     public string anchor_id { get; set; }
-//     public string owner { get; set; }
-//     public string title { get; set; }
-//     public string type { get; set; }
-//     public string text_content { get; set; }
-//     public string media_content { get; set; }
-//     public List<int> rgb { get; set; }
-//     public string _rid { get; set; }
-//     public string _self { get; set; }
-//     public string _etag { get; set; }
-//     public string _attachments { get; set; }
-//     public int _ts { get; set; }
-// }
+public class PostIt
+{
+    public string id { get; set; }
+    public string anchor_id { get; set; }
+    public string owner { get; set; }
+    public string title { get; set; }
+    public string type { get; set; }
+    public string text_content { get; set; }
+    public string media_content { get; set; }
+    public List<int> rgb { get; set; }
+    public string _rid { get; set; }
+    public string _self { get; set; }
+    public string _etag { get; set; }
+    public string _attachments { get; set; }
+    public int _ts { get; set; }
+}
 
-// public class PostItContainer
-// {
-//     public List<PostIt> postits { get; set; }
-// }
+public class PostItContainer
+{
+    public List<PostIt> postits { get; set; }
+}
 
 public class NetworkManager : MonoBehaviour
 {
@@ -66,6 +67,19 @@ public class NetworkManager : MonoBehaviour
         Debug.Log(postItJson);
 
         // deserialize the json response
-        // PostItContainer postItContainer = JsonSerializer.Deserialize<PostItContainer>(postItJson);
+        PostItContainer postItContainer = Newtonsoft.Json.JsonConvert.DeserializeObject<PostItContainer>(postItJson);
+
+        // print the number of postits
+        Debug.Log("Total post-it count: " + postItContainer.postits.Count);
+
+        // print the first postit
+        Debug.Log("first post it title: " + postItContainer.postits[0].title);
+
+        // print all post-its titles, text content and rgb in one line
+        Debug.Log("all post-its titles:");
+        foreach (PostIt postIt in postItContainer.postits)
+        {
+            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.text_content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2]);
+        }
     }
 }
