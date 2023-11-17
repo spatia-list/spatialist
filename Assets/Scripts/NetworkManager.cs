@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Debug = UnityEngine.Debug;
 
+public class Pose
+{
+    public Vector3 position { get; set; }
+    public Quaternion orientation { get; set; }
+}
+
 public class PostIt
 {
     public string id { get; set; }
@@ -17,6 +23,7 @@ public class PostIt
     public string text_content { get; set; }
     public string media_content { get; set; }
     public List<int> rgb { get; set; }
+    public Pose pose { get; set; }
     public string _rid { get; set; }
     public string _self { get; set; }
     public string _etag { get; set; }
@@ -64,7 +71,7 @@ public class NetworkManager : MonoBehaviour
         string postItJson = getPostItsTask.Result;
 
         // print the json response
-        Debug.Log(postItJson);
+        // Debug.Log(postItJson);
 
         // deserialize the json response
         PostItContainer postItContainer = Newtonsoft.Json.JsonConvert.DeserializeObject<PostItContainer>(postItJson);
