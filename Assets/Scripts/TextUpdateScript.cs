@@ -25,8 +25,8 @@ public class TextUpdateScript : MonoBehaviour
 
     public void SetText(string text, Color color)
     { 
-        Debug.Log($"TUS :: {text}");
-        textMeshPro.SetText(textMeshPro.text + "\n" + text);
+        Debug.Log($"TextOut :: {text}");
+        textMeshPro.SetText(text);
         textMeshPro.color = color;
     }
 }

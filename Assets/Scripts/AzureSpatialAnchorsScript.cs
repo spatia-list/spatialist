@@ -11,6 +11,14 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR;
 
+public enum SpatialScriptMode
+{
+    Init,
+    Idle,
+    Mapping,
+    Creation,
+}
+
 
 [RequireComponent(typeof(SpatialAnchorManager))]
 public class AzureSpatialAnchorsScript : MonoBehaviour
@@ -52,12 +60,15 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     [System.Serializable]
     public class UnityMessageEvent : UnityEvent<string, Color> { }
 
-    public UnityMessageEvent debugController;
+    public UnityMessageEvent coloredMessageChannel;
+
+    private SpatialScriptMode _currentMode = SpatialScriptMode.Idle;
 
     // <Start>
     // Start is called before the first frame update
     void Start()
     {
+        _currentMode = SpatialScriptMode.Init;
         Debug.Log("connecting to the Display");
         Debug.Log("Connected to manager");
         Debug.Log("starting the session");
