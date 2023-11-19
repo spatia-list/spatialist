@@ -4,7 +4,10 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/AnchorsScene.unity
+    guid: fff810944bcd7e54c9f71e10dc1410b5
   m_configObjects:
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 9b59203dd37496e4ca5d19e2153e9574, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 8777b978ace46514a825c4c4356e61d1, type: 2}
