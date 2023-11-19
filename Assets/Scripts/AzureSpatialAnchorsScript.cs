@@ -11,14 +11,13 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR;
 
-public enum SpatialScriptMode
-{
-    Init,
-    Idle,
-    Mapping,
-    Creation,
-}
 
+public enum ManagerState
+{
+    IDLE, 
+    MAPPING,
+    CREATE
+}
 
 [RequireComponent(typeof(SpatialAnchorManager))]
 public class AzureSpatialAnchorsScript : MonoBehaviour
@@ -60,15 +59,17 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     [System.Serializable]
     public class UnityMessageEvent : UnityEvent<string, Color> { }
 
-    public UnityMessageEvent coloredMessageChannel;
+    public UnityMessageEvent debugController;
 
-    private SpatialScriptMode _currentMode = SpatialScriptMode.Idle;
+    /// <summary>
+    /// Initial state of the manager
+    /// </summary>
+    public ManagerState state;
 
     // <Start>
     // Start is called before the first frame update
     void Start()
     {
-        _currentMode = SpatialScriptMode.Init;
         Debug.Log("connecting to the Display");
         Debug.Log("Connected to manager");
         Debug.Log("starting the session");
@@ -140,16 +141,42 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
 
         Debug.Log("Detected a tap!");
-        
-        if (!IsAnchorNearby(handPosition, out GameObject anchorGameObject))
+
+        switch (state)
         {
-            //No Anchor Nearby, start session and create an anchor
-            await CreateAnchor(handPosition);
-        }
-        else
-        {
-            //Delete nearby Anchor
-            DeleteAnchor(anchorGameObject);
+            case ManagerState.MAPPING:
+                {
+                    Debug.Log("MAPPING MODE");
+                    break;
+                }
+
+            case ManagerState.CREATE:
+                {
+                    Debug.Log("CREATE MODE");
+                    if (!IsAnchorNearby(handPosition, out GameObject anchorGameObject))
+                    {
+                        //No Anchor Nearby, start session and create an anchor
+                        await CreateAnchor(handPosition);
+                    }
+                    else
+                    {
+                        //Delete nearby Anchor
+                        DeleteAnchor(anchorGameObject);
+                    }
+                    break;
+                }
+
+            case ManagerState.IDLE:
+                {
+                    Debug.Log("IDLE MODE");
+                    break;
+                }
+
+            default:
+                {
+                    Debug.Log("Manage is in unknow state!");
+                    break;
+                }
         }
     }
     // </ShortTap>
