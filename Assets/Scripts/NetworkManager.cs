@@ -93,7 +93,7 @@ public class NetworkManager : MonoBehaviour
     {
         using (HttpClient client = new HttpClient())
         {
-            HttpResponseMessage response = await client.GetAsync(this.EndpointURL + "/anchors");
+            HttpResponseMessage response = await client.GetAsync(this.EndpointURL + "/anchors/" + Username);
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
             return responseBody;
