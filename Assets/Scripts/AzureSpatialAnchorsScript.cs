@@ -19,9 +19,65 @@ public enum ManagerState
     CREATE
 }
 
+public class LocalAnchorRef
+{
+    public string Id;
+    public string Username;
+    public GameObject Ref;
+
+    public LocalAnchorRef(string id, string username, GameObject go)
+    {
+        Id = id;
+        Username = username;
+        Ref = go;
+    }
+
+}
+
+public enum PostItType
+{
+    TEXT,
+    MEDIA
+}
+
+public class PostIt
+{
+    public string Id;
+    public string AnchorId;
+    private LocalAnchorRef _anchorRef;
+    public string Owner;
+    public string Title;
+    public PostItType Type;
+    public string Content;
+    // color
+    public Pose RelativePose;
+
+    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content)
+    {
+        Id = id;
+        AnchorId = anchorId;
+        Owner = owner;
+        Title = title;
+        Type = type;
+        Content = content;
+        RelativePose = new Pose();
+    }
+
+    public void AttachToRef(LocalAnchorRef anchorRef)
+    {
+        _anchorRef = anchorRef;
+    }
+}
+
 [RequireComponent(typeof(SpatialAnchorManager))]
 public class AzureSpatialAnchorsScript : MonoBehaviour
-{
+{ 
+
+    /// <summary>
+    /// Testing value to set a tracked username
+    /// </summary>
+    public string testUsername = "TestUser";
+
     /// <summary>
     /// Used to distinguish short taps and long taps
     /// </summary>
@@ -33,14 +89,14 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private SpatialAnchorManager _spatialAnchorManager;
 
     /// <summary>
-    /// Used to keep track of all GameObjects that represent a found or created anchor
+    /// Used to keep track of all local anchors found and created
     /// </summary>
-    private List<GameObject> _foundOrCreatedAnchorGameObjects = new();
+    private List<LocalAnchorRef> _foundOrCreatedLocalAnchors = new();
 
     /// <summary>
-    /// Used to keep track of all targeted anchor IDs
+    /// Used to keep track of all found or created postits
     /// </summary>
-    private List<string> _foundOrCreatedAnchorIds = new();
+    private List<PostIt> _foundOrCreatePostits = new();
 
     /// <summary>
     /// The prefab we will use as a new Post-it instance
@@ -194,7 +250,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             return new List<string>();
         }
 
-        string url = APIUrl + "/allAnchorIds";
+        string url = APIUrl + "/localAnchors/" + testUsername;
 
         try
         {
