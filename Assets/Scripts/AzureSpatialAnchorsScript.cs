@@ -19,6 +19,117 @@ public enum ManagerState
     CREATE
 }
 
+public class LocalAnchor
+{
+    public string anchorId;
+    public string owner;
+    public GameObject Instance;
+
+    public LocalAnchor(string anchorId, string owner)
+    {
+        this.anchorId = anchorId;
+        this.owner = owner;
+    }
+
+    public void AttachInstance(GameObject instance)
+    { this.Instance = instance; }
+}
+
+public enum PostItType
+{
+    TEXT,MEDIA
+}
+
+public class PostIt
+{
+    public string Id; 
+    public string AnchorId;
+    public string Owner;
+    public string Title;
+    public PostItType Type;
+    public string Content;
+    public Color Color;
+    public Pose Pose;
+
+    public GameObject Instance;
+
+    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content, Color color, Pose pose)
+    {
+        Id = id;
+        AnchorId = anchorId;
+        Owner = owner;
+        Title = title;
+        Type = type;
+        Content = content;
+        Color = color;
+        Pose = pose;
+    }
+
+    public static PostIt ParseJSON(PostItJSON data)
+    {
+        PostItType type;
+        Color color;
+        Pose pose;
+        string content = "";
+
+        switch (data.type)
+        {
+            case "text":
+                {
+                    type = PostItType.TEXT;
+                    if(data.text_content != null)
+                    { content = data.text_content; }
+                    break;
+                }
+            case "media":
+                {
+                    type = PostItType.MEDIA;
+                    if (data.media_content != null)
+                    { content = data.media_content; }
+                    break;
+                }
+            default:
+                {
+                    type = PostItType.TEXT;
+                    if (data.text_content != null)
+                    { content = data.text_content; }
+                    break;
+                }
+        }
+
+        if (data.rgb != null && data.rgb.Count >= 3)
+        {
+            color = new Color(data.rgb[0], data.rgb[1], data.rgb[2]);
+        }
+        else
+        {
+            Debug.Log("Received invalid RGB data");
+            color = Color.white;
+        }
+
+        if (data.pose.position != null && data.pose.orientation != null)
+        {
+            pose = new Pose(data.pose.position, data.pose.orientation);
+        }
+        else
+        {  
+            pose = new Pose(new Vector3(0,0,0), new Quaternion(0,0,0,1));
+        }
+
+
+        return new PostIt(
+                data.id,
+                data.anchor_id,
+                data.owner,
+                data.title,
+                type,
+                content,
+                color,
+                pose
+            );
+    }
+}
+
 [RequireComponent(typeof(SpatialAnchorManager))]
 public class AzureSpatialAnchorsScript : MonoBehaviour
 {
@@ -31,6 +142,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// Main interface to anything Spatial Anchors related
     /// </summary>
     private SpatialAnchorManager _spatialAnchorManager;
+
+    /// <summary>
+    /// Main interface to make API calls and connect to DB
+    /// </summary>
+    private NetworkManager _networkManager;
 
     /// <summary>
     /// Used to keep track of all GameObjects that represent a found or created anchor
@@ -46,12 +162,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// The prefab we will use as a new Post-it instance
     /// </summary>
     public GameObject postItPrefab;
-
-
-    /// <summary>
-    /// API endpoint base url
-    /// </summary>
-    public string APIUrl;
 
     /// <summary>
     /// UnityEvent for showing messages
@@ -75,6 +185,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         Debug.Log("starting the session");
 
         _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
+        _networkManager = GetComponent<NetworkManager>();
 
         StartSession();
 
@@ -182,52 +293,18 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     // </ShortTap>
 
 
-    /// <summary>
-    /// Perform an async request to the API endpoint querying all of the anchors
-    /// </summary>
-    public async Task<List<string>> GetApiAnchors()
-    {
-
-        if (APIUrl == null) 
-        {
-            Debug.Log("No API set!!");
-            return new List<string>();
-        }
-
-        string url = APIUrl + "/allAnchorIds";
-
-        try
-        {
-            WebRequest wr = WebRequest.Create(url);
-            wr.Method = "GET";
-            wr.Headers["Content-Type"] = "application/json";
-
-            WebResponse response = await wr.GetResponseAsync();
-
-            Stream result = response.GetResponseStream();
-            StreamReader reader = new(result);
-
-            string json = reader.ReadToEnd();
-
-
-
-        }
-        catch (Exception ex)
-        {
-            Debug.Log($"Exception while querying API: {ex.Message}");
-            return new List<string>();
-        }
-
-        return new List<string>();
-    }
-
-
     /// <StartSession>
     /// <summary>
     /// Start the ASA session
     /// </summary>
-    public void StartSession()
+    public async void StartSession()
     {
+
+        Debug.Log("Performin postit refresh...");
+
+        List<PostIt> list = await _networkManager.GetPostIts();
+
+        Debug.Log("Finished postits refresh.");
 
         if (_spatialAnchorManager != null && _spatialAnchorManager.IsSessionStarted)
         {
@@ -235,9 +312,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Debug.Log("Session is already started!");
         }
         Debug.Log("Starting session...");
-        _spatialAnchorManager.StartSessionAsync().ContinueWith((x) => { 
-            Debug.Log("Started session!");
-        });
+        await _spatialAnchorManager.StartSessionAsync();
+        Debug.Log("Started session!");
+       
 
         Debug.Log("session started, setting up watcher");
 
