@@ -9,8 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1dbe7d70b89f48f40be3192488695342, type: 3}
-  m_Name: FigmaToolkitSettings
+  m_Script: {fileID: 11500000, guid: 0a08cf0443c295c4aad0ec7fcc9ddb89, type: 3}
+  m_Name: New Custom Map
   m_EditorClassIdentifier: 
-  FigmaToken: figd_8AsROuV7sAuB2FqHr9CglhWA-P22fqvX-r-OYmPY
-  DefaultCustomMap: {fileID: 11400000, guid: a19511a29b2c2b048bbbbe6cd2cab910, type: 2}
+  jsonResponse: {fileID: 0}
+  defaultFont: {fileID: 0}
+  componentMap:
+    list: []
