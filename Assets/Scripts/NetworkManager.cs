@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Debug = UnityEngine.Debug;
 using Unity.VisualScripting;
+using Newtonsoft.Json;
+using System.IO;
+using System.Net;
+using System.Text;
+using Microsoft.MixedReality.Toolkit.Utilities;
 
 public class PoseJSON
 {
@@ -139,7 +144,7 @@ public class NetworkManager : MonoBehaviour
         // Debug.Log(postItJson);
 
         // deserialize the json response
-        GetAnchorsResponseJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<GetAnchorsResponseJSON>(textResponse);
+        GetAnchorsResponseJSON response = JsonConvert.DeserializeObject<GetAnchorsResponseJSON>(textResponse);
 
         // print the number of postits
         Debug.Log("Total anchor count: " + response.anchors.Count);
@@ -157,5 +162,60 @@ public class NetworkManager : MonoBehaviour
         }
 
         return anchorList;
+    }
+
+    public class NewLocalAnchorJSON
+    {
+        public string anchor_id;
+        public string owner;
+
+        public NewLocalAnchorJSON(LocalAnchor anchor)
+        {
+            anchor_id = anchor.anchorId;
+            owner = anchor.owner;
+        }
+    }
+
+    public class MessageResponseJSON
+    {
+        public string message { get; set; }
+    }
+
+    public async void PostAnchors(List<LocalAnchor> newAnchors)
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            foreach (LocalAnchor anchor in newAnchors)
+            {
+
+                NewLocalAnchorJSON entry = new NewLocalAnchorJSON(anchor);
+
+                // encode to json
+                string msg = JsonConvert.SerializeObject(entry);
+
+                // perform the request
+                Debug.Log(msg);
+
+                HttpContent content = new StringContent(msg, Encoding.UTF8, "application/json");
+
+                _ = client.PostAsync(EndpointURL + "/anchor", content)
+                    .ContinueWith(
+                    async (res) =>
+                    {
+
+                        HttpResponseMessage response = await res;
+                        response.EnsureSuccessStatusCode();
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        MessageResponseJSON parsed = JsonConvert.DeserializeObject<MessageResponseJSON>(responseBody);
+
+                        Debug.Log(parsed.message);
+                    });
+              
+                
+                }
+
+            }
+        
+
     }
 }

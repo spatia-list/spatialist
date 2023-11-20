@@ -458,7 +458,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         Quaternion orientation = new(0,0,0,1);
 
         GameObject anchorGameObject = Instantiate(anchorPrefab, position, orientation);
-        anchorGameObject.transform.localScale = Vector3.one * 0.3f;
+        anchorGameObject.transform.localScale = Vector3.one * 0.1f;
 
         //Add and configure ASA components
         CloudNativeAnchor cloudNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
