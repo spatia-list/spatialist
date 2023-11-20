@@ -12,6 +12,13 @@ using UnityEngine.Events;
 using UnityEngine.XR;
 
 
+public enum ManagerState
+{
+    IDLE, 
+    MAPPING,
+    CREATE
+}
+
 [RequireComponent(typeof(SpatialAnchorManager))]
 public class AzureSpatialAnchorsScript : MonoBehaviour
 {
@@ -53,6 +60,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     public class UnityMessageEvent : UnityEvent<string, Color> { }
 
     public UnityMessageEvent debugController;
+
+    /// <summary>
+    /// Initial state of the manager
+    /// </summary>
+    public ManagerState state;
 
     // <Start>
     // Start is called before the first frame update
@@ -129,16 +141,42 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
 
         Debug.Log("Detected a tap!");
-        
-        if (!IsAnchorNearby(handPosition, out GameObject anchorGameObject))
+
+        switch (state)
         {
-            //No Anchor Nearby, start session and create an anchor
-            await CreateAnchor(handPosition);
-        }
-        else
-        {
-            //Delete nearby Anchor
-            DeleteAnchor(anchorGameObject);
+            case ManagerState.MAPPING:
+                {
+                    Debug.Log("MAPPING MODE");
+                    break;
+                }
+
+            case ManagerState.CREATE:
+                {
+                    Debug.Log("CREATE MODE");
+                    if (!IsAnchorNearby(handPosition, out GameObject anchorGameObject))
+                    {
+                        //No Anchor Nearby, start session and create an anchor
+                        await CreateAnchor(handPosition);
+                    }
+                    else
+                    {
+                        //Delete nearby Anchor
+                        DeleteAnchor(anchorGameObject);
+                    }
+                    break;
+                }
+
+            case ManagerState.IDLE:
+                {
+                    Debug.Log("IDLE MODE");
+                    break;
+                }
+
+            default:
+                {
+                    Debug.Log("Manage is in unknow state!");
+                    break;
+                }
         }
     }
     // </ShortTap>

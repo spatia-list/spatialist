@@ -40,6 +40,8 @@ public class NetworkManager : MonoBehaviour
 {
     // endpoint url
     private string url = "http://10.5.36.174:8000";
+    // Declare a PostItViz variable
+    public PostItViz postItViz;
 
     // Start is called before the first frame update
     void Start()
@@ -88,5 +90,6 @@ public class NetworkManager : MonoBehaviour
         {
             Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.text_content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2]);
         }
+        this.postItViz.VisualizePostIts(postItContainer);
     }
 }
