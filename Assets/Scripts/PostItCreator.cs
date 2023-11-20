@@ -36,7 +36,6 @@ public class PostItCreator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // provide dynamical text update (dependant on the update Interval (0.5s))
         if (Time.time - lastUpdateTime > updateInterval)
         {
             DateTime currenttime = DateTime.Now;
@@ -49,70 +48,4 @@ public class PostItCreator : MonoBehaviour
             lastUpdateTime = Time.time;
         }
     }
-} 
-
-
-
-//     // Update is called once per frame
-//     void Update()
-//     {
-
-//         //Checks for any air taps from either hand
-//         for (int i = 0; i < 2; i++) //iterarting twice, once for each hand
-//         {
-//             InputDevice device = InputDevices.GetDeviceAtXRNode((i == 0) ? XRNode.RightHand : XRNode.LeftHand);
-//             if (device.TryGetFeatureValue(CommonUsages.primaryButton, out bool isTapping))
-//             {
-//                 if (!isTapping)
-//                 {
-//                     //Stopped Tapping or wasn't tapping
-//                     if (0f < _tappingTimer[i] && _tappingTimer[i] < 1f)
-//                     {
-//                         //User has been tapping for less than 1 sec. Get hand position and call ShortTap
-//                         if (device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 handPosition))
-//                         {
-//                             ShortTap(handPosition);
-//                         }
-//                     }
-//                     _tappingTimer[i] = 0;
-//                 }
-//                 else
-//                 {
-//                     _tappingTimer[i] += Time.deltaTime;
-
-//                 }
-//             }
-
-//         }
-//     }
-    
-//     // </Update>
-
-
-//     // <ShortTap>
-//     /// <summary>
-//     /// 
-//     /// Called when a user is air tapping for a short time 
-//     /// </summary>
-//     /// <param name="handPosition">Location where tap was registered</param>
-//     private async void ShortTap(Vector3 handPosition)
-//     {
-
-//         Debug.Log("Detected a tap!");
-        
-//         if (!IsAnchorNearby(handPosition, out GameObject anchorGameObject))
-//         {
-//             //No Anchor Nearby, start session and create an anchor
-//             await CreateAnchor(handPosition);
-//         }
-//         else
-//         {
-//             //Delete nearby Anchor
-//             DeleteAnchor(anchorGameObject);
-//         }
-//     }
-//     // </ShortTap>
-
-
-    
-// }
+}
