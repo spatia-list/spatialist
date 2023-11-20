@@ -30,7 +30,10 @@ public class UIManager : MonoBehaviour
     public GameObject U9PostIt;
 
     private List<GameObject> _list = new();
-    public UIState CurrentState;
+    private UIState _currentState;
+    public UIState StartState;
+
+    private GameObject _currentView;
 
 
     void Start()
@@ -44,6 +47,13 @@ public class UIManager : MonoBehaviour
         _list.Add(U7MappingConfirmCancel);
         _list.Add(U8Lozalization);
         _list.Add(U9PostIt);
+
+        for (int i = 0; i < _list.Count; i++)
+        {
+            _list[i].SetActive(false);
+        }
+
+        SetState(StartState);
     }
 
     // Update is called once per frame
@@ -52,8 +62,28 @@ public class UIManager : MonoBehaviour
         
     }
 
+    private GameObject getNextView(UIState nextState)
+    {
+        return _list[(int) nextState];
+    }
+
     public void SetState(UIState state)
     {
-        CurrentState = state;
+        if (_currentView)
+        {
+            _currentView.SetActive(false);
+        }     
+        _currentState = state;
+
+        _currentView = getNextView(state); if (_currentView != null)
+        {
+            _currentView.SetActive(true);
+        }
+
     }
+
+    public void SetU1() { SetState(UIState.WELCOME); }
+
+    public void SetU2() { SetState(UIState.LAUNCH); }
+
 }
