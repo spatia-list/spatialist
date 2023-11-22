@@ -2,7 +2,6 @@ using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -10,8 +9,11 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR;
+using Debug = UnityEngine.Debug;
 
-
+/// <summary>
+/// ManagerState represents the mode of the headset (IDLE, MAPPING or CREATE)
+/// </summary>
 public enum ManagerState
 {
     IDLE, 
@@ -19,13 +21,14 @@ public enum ManagerState
     CREATE
 }
 
+/// <summary>
+/// Main class (MonoBehaviour) attached to the MixedRealitySceneContent in Unity
+/// Creates (and manages) anchors and post-its in the physical space
+/// </summary>
 [RequireComponent(typeof(SpatialAnchorManager))]
 public class AzureSpatialAnchorsScript : MonoBehaviour
 {
-    /// <summary>
-    /// Used to distinguish short taps and long taps
-    /// </summary>
-    private float[] _tappingTimer = { 0, 0 };
+    // Azure Spation Anchors Variables //
 
     /// <summary>
     /// Main interface to anything Spatial Anchors related
@@ -39,37 +42,82 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     /// <summary>
     /// Used to keep track of all targeted anchor IDs
-    /// </summary>
+    /// </summary>	
     private List<string> _foundOrCreatedAnchorIds = new();
 
+
+    // Post-It creation Variables //
+
     /// <summary>
-    /// The prefab we will use as a new Post-it instance
+    /// The prefab we will use for new Post-It instances
     /// </summary>
     public GameObject postItPrefab;
 
+    /// <summary>
+    /// max amount of post-its in one scene
+    /// </summary>
+    public int maxPostIts = 100; 
 
     /// <summary>
-    /// API endpoint base url
+    /// Storing post-it IDs and respective game objects in a dictionary
     /// </summary>
+    public Dictionary<int, GameObject> postIts = new Dictionary<int, GameObject>(); 
+
+    /// <summary>
+    /// Storing post-it colors in a list
+    /// </summary>
+    private string[] postItColors = new string[] { "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF" };
+    
+
+    // Time and update variables //
+    
+    /// <summary>
+    /// Distinguish short taps from long taps
+    /// </summary>
+    private float[] _tappingTimer = { 0, 0 };
+
+    /// <summary>
+    /// Static update interval (refresh rate) for post-its
+    /// </summary>
+    private float postitUpdateInterval = 0.5f; // Update every 0.5 seconds
+
+    /// <summary>
+    /// Last time a post-it was updated
+    /// </summary>
+    public float lastUpdateTime;
+
+
+    // Backend Communication Variables //
+    
+    /// API endpoint base url
     public string APIUrl;
 
+
+    // other //
+
     /// <summary>
-    /// UnityEvent for showing messages
+    /// Declare manager state object
+    /// </summary>    
+    public ManagerState state;
+
+    /// <summary>
+    /// Unity event for showing debug messages
     /// </summary>
     [System.Serializable]
     public class UnityMessageEvent : UnityEvent<string, Color> { }
-
     public UnityMessageEvent debugController;
 
-    /// <summary>
-    /// Initial state of the manager
-    /// </summary>
-    public ManagerState state;
+    
+
 
     // <Start>
-    // Start is called before the first frame update
+    /// <summary>
+    /// Load ASA, load debug watchers, load previous post-its, open start UI scene
+    /// Start is called before the first frame update
+    /// </summary>
     void Start()
     {
+        // Setup
         Debug.Log("connecting to the Display");
         Debug.Log("Connected to manager");
         Debug.Log("starting the session");
@@ -92,12 +140,21 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         Debug.Log("Adding locator callback");
         _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
+
+        // Show introduction UI frame
+        // Wait for the user to tap on the "Start" button
+
+
+        // Load post-its from the database (to be session persistent)
+
        
     }
     // </Start>
 
     // <Update>
-    // Update is called once per frame
+    /// <summary>
+    /// Update is called once per frame
+    /// </summary>
     void Update()
     {
 
@@ -179,9 +236,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 }
         }
     }
-    // </ShortTap>
+    // <ShortTap>
 
-
+    //
     /// <summary>
     /// Perform an async request to the API endpoint querying all of the anchors
     /// </summary>
