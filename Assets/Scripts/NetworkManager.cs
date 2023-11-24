@@ -126,6 +126,8 @@ public class NetworkManager : MonoBehaviour
     // post-it visualization
     public PostItViz postItViz;
 
+    private List<PostIt> postIts;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -192,11 +194,30 @@ public class NetworkManager : MonoBehaviour
 
         Task<List<PostIt>> getPostItsTask2 = GetPostIts();
         yield return new WaitUntil(() => getPostItsTask2.IsCompleted);
-        List<PostIt> postIts = getPostItsTask2.Result;
+        this.postIts = getPostItsTask2.Result;
         // print the number of postits
-        Debug.Log("Total post-it count: " + postIts.Count);
+        Debug.Log("Total post-it count: " + this.postIts.Count);
 
-        this.postItViz.VisualizePostIts(postIts);
+        // print all post-its titles, text content and rgb in one line
+        Debug.Log("all post-its titles:");
+        foreach (PostIt postIt in this.postIts)
+        {
+            Debug.Log(
+                postIt.Id
+                    + " title: "
+                    + postIt.Title
+                    + " content: "
+                    + postIt.Content
+                    + " color: "
+                    + postIt.Color.r
+                    + ", "
+                    + postIt.Color.g
+                    + ", "
+                    + postIt.Color.b
+            );
+        }
+
+        this.postItViz.VisualizePostIts(this.postIts);
     }
 
     public async Task<List<PostIt>> GetPostIts()
@@ -213,26 +234,26 @@ public class NetworkManager : MonoBehaviour
             .DeserializeObject<GetPostItsResponseJSON>(textResponse);
 
         // print the number of postits
-        Debug.Log("Total post-it count: " + response.postits.Count);
+        // Debug.Log("Total post-it count: " + response.postits.Count);
 
         // print all post-its titles, text content and rgb in one line
-        Debug.Log("all post-its titles:");
-        foreach (PostItJSON postIt in response.postits)
-        {
-            Debug.Log(
-                postIt.id
-                    + " title: "
-                    + postIt.title
-                    + " content: "
-                    + postIt.text_content
-                    + " color: "
-                    + postIt.rgb[0]
-                    + ", "
-                    + postIt.rgb[1]
-                    + ", "
-                    + postIt.rgb[2]
-            );
-        }
+        // Debug.Log("all post-its titles:");
+        // foreach (PostItJSON postIt in response.postits)
+        // {
+        //     Debug.Log(
+        //         postIt.id
+        //             + " title: "
+        //             + postIt.title
+        //             + " content: "
+        //             + postIt.text_content
+        //             + " color: "
+        //             + postIt.rgb[0]
+        //             + ", "
+        //             + postIt.rgb[1]
+        //             + ", "
+        //             + postIt.rgb[2]
+        //     );
+        // }
         List<PostIt> objectList = new List<PostIt>();
         for (int i = 0; i < response.postits.Count; i++)
         {

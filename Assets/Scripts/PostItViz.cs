@@ -37,6 +37,7 @@ public class PostItViz : MonoBehaviour
             // set the text of the post-it game object
             // add title and description in to one text
             string postItText = postIt.Title + "\n" + postIt.Content;
+            Debug.Log($"post-it text: {postItText}");
             postItGameObject.GetComponentInChildren<PostItUpdater>().UpdateText(postItText);
             // set the color of the post-it game object
             // int r = postIt.Color[0];
