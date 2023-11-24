@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641252, b: 0.5748171, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -849,9 +849,6 @@ MonoBehaviour:
   PostItPrefab: {fileID: 8818515646668342897, guid: 0151b783c81c7924295962ea1d660ca9, type: 3}
   AnchorPrefab: {fileID: 7445720189133080051, guid: 01f34190a6c6a4d41b483d31dd0d0ee7, type: 3}
   FoundAnchorPrefab: {fileID: 7445720189133080051, guid: ab80ec32b82dee545adba55d05dff117, type: 3}
-  debugController:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!4 &967253951
 Transform:
   m_ObjectHideFlags: 0

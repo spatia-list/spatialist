@@ -1,43 +1,56 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using Debug = UnityEngine.Debug;
-using Unity.VisualScripting;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.MixedReality.Toolkit.Utilities;
-using System;
+using Newtonsoft.Json.Linq;
+using Unity.VisualScripting;
+using UnityEngine;
+using Debug = UnityEngine.Debug;
 
+// Class to represent a pose in 3D space
 public class PoseJSON
 {
+    // Position vector
     public Vector3 position { get; set; }
+    // Orientation quaternion
     public Quaternion orientation { get; set; }
 }
 
+// Class to represent a PostIt note in JSON format
 public class PostItJSON
 {
+    // Unique identifier
     public string id { get; set; }
+    // Anchor identifier
     public string anchor_id { get; set; }
+    // Owner of the PostIt note
     public string owner { get; set; }
+    // Title of the PostIt note
     public string title { get; set; }
+    // Type of the PostIt note
     public string type { get; set; }
+    // Text content of the PostIt note
     public string text_content { get; set; }
+    // Media content of the PostIt note
     public string media_content { get; set; }
+    // RGB color of the PostIt note
     public List<int> rgb { get; set; }
+    // Pose of the PostIt note
     public PoseJSON pose { get; set; }
+    // Additional properties
     public string _rid { get; set; }
     public string _self { get; set; }
     public string _etag { get; set; }
     public string _attachments { get; set; }
     public int _ts { get; set; }
-
-    
 }
 
+// Class to represent a PostIt note for upload in JSON format
 public class PostItUploadJSON
 {
     public string anchor_id { get; set; }
@@ -70,26 +83,25 @@ public class PostItUploadJSON
         {
             res.type = "media";
             res.media_content = postIt.Content;
-        } else
+        }
+        else
         {
             res.type = "text";
             res.text_content = postIt.Content;
         }
         return res;
-
     }
 }
 
-
-    public class GetPostItsResponseJSON
+public class GetPostItsResponseJSON
 {
     public List<PostItJSON> postits { get; set; }
 }
 
 public class AnchorJSON
-{ 
+{
     public string id { get; set; }
-    public string anchor_id { get; set;}
+    public string anchor_id { get; set; }
     public string owner { get; set; }
     public string _rid { get; set; }
     public string _self { get; set; }
@@ -100,9 +112,8 @@ public class AnchorJSON
 
 public class GetAnchorsResponseJSON
 {
-    public List<AnchorJSON> anchors { get; set;}
+    public List<AnchorJSON> anchors { get; set; }
 }
-
 
 public class NetworkManager : MonoBehaviour
 {
@@ -122,10 +133,7 @@ public class NetworkManager : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    void Update() { }
 
     private async Task<string> getPostItsAsync()
     {
@@ -144,18 +152,17 @@ public class NetworkManager : MonoBehaviour
             Debug.Log("NetManager - " + ex.Message);
             return "";
         }
-
-        
     }
 
     private async Task<string> getAnchorsAsync()
     {
-        
         try
         {
             using (HttpClient client = new HttpClient())
             {
-                HttpResponseMessage response = await client.GetAsync(this.EndpointURL + "/anchors/" + Username);
+                HttpResponseMessage response = await client.GetAsync(
+                    this.EndpointURL + "/anchors/" + Username
+                );
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
                 return responseBody;
@@ -176,7 +183,10 @@ public class NetworkManager : MonoBehaviour
         // Debug.Log(postItJson);
 
         // deserialize the json response
-        GetPostItsResponseJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<GetPostItsResponseJSON>(textResponse);
+        GetPostItsResponseJSON response = Newtonsoft
+            .Json
+            .JsonConvert
+            .DeserializeObject<GetPostItsResponseJSON>(textResponse);
 
         // print the number of postits
         Debug.Log("Total post-it count: " + response.postits.Count);
@@ -185,7 +195,19 @@ public class NetworkManager : MonoBehaviour
         Debug.Log("all post-its titles:");
         foreach (PostItJSON postIt in response.postits)
         {
-            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.text_content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2]);
+            Debug.Log(
+                postIt.id
+                    + " title: "
+                    + postIt.title
+                    + " content: "
+                    + postIt.text_content
+                    + " color: "
+                    + postIt.rgb[0]
+                    + ", "
+                    + postIt.rgb[1]
+                    + ", "
+                    + postIt.rgb[2]
+            );
         }
         List<PostIt> objectList = new List<PostIt>();
         for (int i = 0; i < response.postits.Count; i++)
@@ -204,19 +226,18 @@ public class NetworkManager : MonoBehaviour
         // Debug.Log(postItJson);
 
         // deserialize the json response
-        GetAnchorsResponseJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<GetAnchorsResponseJSON>(textResponse);
+        GetAnchorsResponseJSON response = Newtonsoft
+            .Json
+            .JsonConvert
+            .DeserializeObject<GetAnchorsResponseJSON>(textResponse);
 
         // print the number of postits
         Debug.Log("Total anchor count: " + response.anchors.Count);
 
-
         List<LocalAnchor> anchorList = new();
         foreach (AnchorJSON anchor in response.anchors)
         {
-            anchorList.Add(new LocalAnchor(
-                    anchor.anchor_id,
-                    anchor.owner
-                ));
+            anchorList.Add(new LocalAnchor(anchor.anchor_id, anchor.owner));
             Debug.Log("Found anchor with id:" + anchor.anchor_id);
         }
 
@@ -242,8 +263,6 @@ public class NetworkManager : MonoBehaviour
 
     public async Task<bool> PostAnchor(LocalAnchor newAnchor)
     {
-
-        
         try
         {
             NewLocalAnchorJSON entry = new NewLocalAnchorJSON(newAnchor);
@@ -269,15 +288,12 @@ public class NetworkManager : MonoBehaviour
                 Debug.Log(responseContent);
             }
             return true;
-
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             Debug.Log("NetManager - " + e.Message);
             return false;
         }
-                                   
-
-
     }
 
     public async void PostPostIt(PostIt postIt)
@@ -306,14 +322,10 @@ public class NetworkManager : MonoBehaviour
                 // MessageResponseJSON res = Newtonsoft.Json.JsonConvert.DeserializeObject<MessageResponseJSON>(responseContent);
                 Debug.Log(responseContent);
             }
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             Debug.Log("NetManager - " + e.Message);
         }
-        
-
     }
-
-
-
 }

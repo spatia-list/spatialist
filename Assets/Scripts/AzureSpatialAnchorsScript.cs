@@ -205,9 +205,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         {
             Debug.Log($"ASA - Error: {args.ErrorMessage}");
         };
-
-        
-       
     }
     // </Start>
 
