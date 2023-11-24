@@ -123,12 +123,18 @@ public class NetworkManager : MonoBehaviour
     // username
     public string Username;
 
+    // post-it visualization
+    public PostItViz postItViz;
+
     // Start is called before the first frame update
     void Start()
     {
         if (string.IsNullOrEmpty(EndpointURL))
         {
             Debug.Log("Unassigned Endpoint URL");
+        }
+        else {
+            StartCoroutine(GetPostItsRunner());
         }
     }
 
@@ -173,6 +179,24 @@ public class NetworkManager : MonoBehaviour
             Debug.Log("NetManager - " + ex.Message);
             return "";
         }
+    }
+
+    private IEnumerator GetPostItsRunner()
+    {
+        // Task<string> getPostItsTask = getPostItsAsync();
+        // yield return new WaitUntil(() => getPostItsTask.IsCompleted);
+        // string postItJson = getPostItsTask.Result;
+        // // print the json response
+        // Debug.Log(postItJson);
+
+
+        Task<List<PostIt>> getPostItsTask2 = GetPostIts();
+        yield return new WaitUntil(() => getPostItsTask2.IsCompleted);
+        List<PostIt> postIts = getPostItsTask2.Result;
+        // print the number of postits
+        Debug.Log("Total post-it count: " + postIts.Count);
+
+        this.postItViz.VisualizePostIts(postIts);
     }
 
     public async Task<List<PostIt>> GetPostIts()

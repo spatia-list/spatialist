@@ -27,24 +27,24 @@ public class PostItViz : MonoBehaviour
     }
 
     // method to visualize post-its
-    public void VisualizePostIts(GetPostItsResponseJSON postItContainer)
+    public void VisualizePostIts(List<PostIt> postItContainer)
     {
         // iterate through post-its
-        foreach (PostItJSON postIt in postItContainer.postits)
+        foreach (PostIt postIt in postItContainer)
         {
             // create a post-it game object
-            GameObject postItGameObject = Instantiate(postItPrefab, postIt.pose.position, postIt.pose.orientation);
+            GameObject postItGameObject = Instantiate(postItPrefab, postIt.Pose.position, postIt.Pose.rotation);
             // set the text of the post-it game object
             // add title and description in to one text
-            string postItText = postIt.title + "\n" + postIt.text_content;
+            string postItText = postIt.Title + "\n" + postIt.Content;
             postItGameObject.GetComponentInChildren<PostItUpdater>().UpdateText(postItText);
             // set the color of the post-it game object
-            int r = postIt.rgb[0];
-            int g = postIt.rgb[1];
-            int b = postIt.rgb[2];
-            Color32 color = new Color32((byte)r, (byte)g, (byte)b, 255);
-            string htmlColor = "#" + color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2");
-            postItGameObject.GetComponentInChildren<PostItUpdater>().UpdateColor(htmlColor);
+            // int r = postIt.Color[0];
+            // int g = postIt.Color[1];
+            // int b = postIt.Color[2];
+            // Color32 color = new Color32((byte)r, (byte)g, (byte)b, 255);
+            // string htmlColor = "#" + color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2");
+            // postItGameObject.GetComponentInChildren<PostItUpdater>().UpdateColor(htmlColor);
         }
     }
 }
