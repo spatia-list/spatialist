@@ -37,6 +37,14 @@ public class PostItUpdater : MonoBehaviour
         Debug.Log($"color update signal -> {color}");
     }
 
+    // update color using Unity's Color class
+    public void UpdateColor(Color color)
+    {
+        this.tmpText = gameObject.GetComponent<TextMeshProUGUI>();
+        this.tmpText.color = color;
+        Debug.Log($"color update signal -> {color}");
+    }
+
     // set id
     public void UpdateId(string id)
     {

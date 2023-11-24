@@ -39,13 +39,7 @@ public class PostItViz : MonoBehaviour
             string postItText = postIt.Title + "\n" + postIt.Content;
             Debug.Log($"post-it text: {postItText}");
             postItGameObject.GetComponentInChildren<PostItUpdater>().UpdateText(postItText);
-            // set the color of the post-it game object
-            // int r = postIt.Color[0];
-            // int g = postIt.Color[1];
-            // int b = postIt.Color[2];
-            // Color32 color = new Color32((byte)r, (byte)g, (byte)b, 255);
-            // string htmlColor = "#" + color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2");
-            // postItGameObject.GetComponentInChildren<PostItUpdater>().UpdateColor(htmlColor);
+            postItGameObject.GetComponentInChildren<PostItUpdater>().UpdateColor(postIt.Color);
         }
     }
 }
