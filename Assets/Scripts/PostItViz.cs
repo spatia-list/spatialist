@@ -27,10 +27,10 @@ public class PostItViz : MonoBehaviour
     }
 
     // method to visualize post-its
-    public void VisualizePostIts(PostItContainer postItContainer)
+    public void VisualizePostIts(GetPostItsResponseJSON postItContainer)
     {
         // iterate through post-its
-        foreach (PostIt postIt in postItContainer.postits)
+        foreach (PostItJSON postIt in postItContainer.postits)
         {
             // create a post-it game object
             GameObject postItGameObject = Instantiate(postItPrefab, postIt.pose.position, postIt.pose.orientation);
