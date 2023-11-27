@@ -315,11 +315,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         // Refresh the list of anchors
 
-        var currentAnchorsHash = _availableLocalAnchors.GetHashCode();
-
-        Debug.Log("Current anchors hash:" +  currentAnchorsHash);
+        Debug.Log("Performing anchor refresh...");
 
         _availableLocalAnchors = await _networkManager.GetAnchors();
+
 
     }
 
@@ -362,9 +361,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     public async void StartSession()
     {
 
-        Debug.Log("Performing anchor refresh...");
-
-         _availableLocalAnchors = await _networkManager.GetAnchors();
+        
         
 
         Debug.Log("Finished anchor refresh.");
