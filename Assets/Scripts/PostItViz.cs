@@ -36,7 +36,7 @@ public class PostItViz : MonoBehaviour
             GameObject postItGameObject = Instantiate(postItPrefab, postIt.pose.position, postIt.pose.orientation);
             // set the text of the post-it game object
             // add title and description in to one text
-            string postItText = postIt.title + "\n" + postIt.text_content;
+            string postItText = postIt.title + "\n" + postIt.content;
             postItGameObject.GetComponentInChildren<PostItUpdater>().UpdateText(postItText);
             // set the color of the post-it game object
             int r = postIt.rgb[0];

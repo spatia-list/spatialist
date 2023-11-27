@@ -70,32 +70,16 @@ public class PostIt
         PostItType type;
         Color color;
         Pose pose;
-        string content = "";
-
-        switch (data.type)
+        
+        if(data.type == "media")
         {
-            case "text":
-                {
-                    type = PostItType.TEXT;
-                    if(data.text_content != null)
-                    { content = data.text_content; }
-                    break;
-                }
-            case "media":
-                {
-                    type = PostItType.MEDIA;
-                    if (data.media_content != null)
-                    { content = data.media_content; }
-                    break;
-                }
-            default:
-                {
-                    type = PostItType.TEXT;
-                    if (data.text_content != null)
-                    { content = data.text_content; }
-                    break;
-                }
+            type = PostItType.MEDIA;
+        } else
+        {
+            type = PostItType.TEXT;
         }
+
+        
 
         if (data.rgb != null && data.rgb.Count >= 3)
         {
@@ -107,7 +91,7 @@ public class PostIt
             color = Color.white;
         }
 
-        if (data.pose.position != null && data.pose.orientation != null)
+        if (data.pose != null && data.pose.position != null && data.pose.orientation != null)
         {
             pose = new Pose(data.pose.position, data.pose.orientation);
         }
@@ -123,10 +107,15 @@ public class PostIt
                 data.owner,
                 data.title,
                 type,
-                content,
+                data.content,
                 color,
                 pose
             );
+    }
+
+    public static PostIt Test()
+    {
+        return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, Pose.identity);
     }
 }
 
@@ -137,6 +126,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// Used to distinguish short taps and long taps
     /// </summary>
     private float[] _tappingTimer = { 0, 0 };
+
+    private float _refreshTimer;
 
     /// <summary>
     /// Main interface to anything Spatial Anchors related
@@ -184,6 +175,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     private ManagerState _state;
 
+    private String _currentGroup = "TestRoom";
+
     // <Start>
     // Start is called before the first frame update
     void Start()
@@ -193,6 +186,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
         _networkManager = GetComponent<NetworkManager>();
+
+        RefreshData();
 
         StartSession();
 
@@ -206,8 +201,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Debug.Log($"ASA - Error: {args.ErrorMessage}");
         };
 
-        
-       
+        _refreshTimer = 0.0f;
+
     }
     // </Start>
 
@@ -243,6 +238,14 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             }
 
         }
+
+        _refreshTimer += Time.deltaTime;
+        if (_refreshTimer > 5.0f)
+        {
+            RefreshData();
+
+            _refreshTimer = 0.0f;
+        }
     }
     // </Update>
 
@@ -269,7 +272,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case ManagerState.CREATE:
                 {
                     Debug.Log("CREATE MODE");
-                    await CreatePostIt(handPosition);
+                    await CreatePostIt(handPosition, PostIt.Test());
                     break;
                 }
 
@@ -287,6 +290,38 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
     }
     // </ShortTap>
+
+
+    public void SetCurrentGroup(String name) { 
+        _currentGroup = name; 
+        RefreshData();
+    }
+
+    public void SetUsername(String name)
+    {
+        _networkManager.Username = name;
+        RefreshData();
+    }
+
+    public async void RefreshData()
+    {
+        Debug.Log("Performing Refresh...");
+        PostIt swiped = await _networkManager.GetSwipe();
+        if (swiped != null)
+        {
+            Debug.Log("Creating swipe!");
+            await CreatePostIt(new Vector3(0, 0, 1), swiped);
+        }
+
+        // Refresh the list of anchors
+
+        var currentAnchorsHash = _availableLocalAnchors.GetHashCode();
+
+        Debug.Log("Current anchors hash:" +  currentAnchorsHash);
+
+        _availableLocalAnchors = await _networkManager.GetAnchors();
+
+    }
 
     public async void BeginMapping() {
 
@@ -490,7 +525,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 }
 
                 Debug.Log($"ASA - Saved cloud anchor with ID: {cloudSpatialAnchor.Identifier}");
-                LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _networkManager.Username);
+                LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _currentGroup);
                 createdAnchor.AttachInstance(anchorGameObject);
 
                 if (await _networkManager.PostAnchor(createdAnchor))
@@ -521,7 +556,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     /// <param name="position">Position where Azure Spatial Anchor will be created</param>
     /// <returns>Async Task</returns>
-    private async Task CreatePostIt(Vector3 position)
+    private async Task CreatePostIt(Vector3 position, PostIt obj)
     {
         UnityDispatcher.InvokeOnAppThread(async () =>
         {
@@ -537,6 +572,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
             GameObject postItGameObject = Instantiate(PostItPrefab, position, orientationTowardsHead);
             postItGameObject.transform.localScale = Vector3.one * 0.3f;
+
+            PostItManager manager = postItGameObject.GetComponent<PostItManager>();
+            manager.AttachToInstance(this);
+            manager.SetObject(obj);
 
             
         });
