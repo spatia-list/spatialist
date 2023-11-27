@@ -500,6 +500,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: UIPrefab instance
       objectReference: {fileID: 0}
+    - target: {fileID: 427382759302636676, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 523379682041291548, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -551,6 +555,10 @@ PrefabInstance:
     - target: {fileID: 877570167909267039, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: ButtonPressed.m_PersistentCalls.m_Calls.Array.data[2].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 937906662203130604, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 963822469022056367, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -716,6 +724,10 @@ PrefabInstance:
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: UIManager, Assembly-CSharp
       objectReference: {fileID: 0}
+    - target: {fileID: 3190206098412198538, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3197994722901011525, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -727,6 +739,10 @@ PrefabInstance:
     - target: {fileID: 3197994722901011525, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: UIManager, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 4065958979071058268, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4386757592090051363, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: ButtonPressed.m_PersistentCalls.m_Calls.Array.size
@@ -916,6 +932,10 @@ PrefabInstance:
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
+    - target: {fileID: 5568599115249741518, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5985853442204573323, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: m_text
       value: Cancel
@@ -1028,6 +1048,10 @@ PrefabInstance:
       propertyPath: ButtonPressed.m_PersistentCalls.m_Calls.Array.data[2].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
+    - target: {fileID: 6747651020910695286, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6827812240632664920, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
       value: 6
@@ -1079,6 +1103,10 @@ PrefabInstance:
     - target: {fileID: 7086080839327748814, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: ButtonPressed.m_PersistentCalls.m_Calls.Array.data[2].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 7687202262173373949, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8063551120909827309, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: ButtonPressed.m_PersistentCalls.m_Calls.Array.size
@@ -1910,6 +1938,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EndpointURL: http://185.224.139.115:8000
   Username: TestUser
+  GroupName: 
 --- !u!1 &1160758322
 GameObject:
   m_ObjectHideFlags: 0
