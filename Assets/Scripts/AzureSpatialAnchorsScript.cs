@@ -403,23 +403,27 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
 
 
-    // <IsAnchorNearby>
+
+    // <NearestAnchorInThreshold>
     /// <summary>
-    /// Returns true if an Anchor GameObject is within 15cm of the received reference position
+    /// Returns true if an Anchor GameObject is within 1m of the received reference position
     /// </summary>
     /// <param name="position">Reference position</param>
-    /// <param name="anchorGameObject">Anchor GameObject within 15cm of received position. Not necessarily the nearest to this position. If no AnchorObject is within 15cm, this value will be null</param>
-    /// <returns>True if a Anchor GameObject is within 15cm</returns>
-    private bool IsAnchorNearby(Vector3 position, out GameObject anchorGameObject)
+    /// <param name="anchorGameObject"> (output) Anchor GameObject within the distance threshold of received position. 
+    /// If no AnchorObject is within the threshold distance, this value will be null </param>
+    /// <returns> True if a Anchor GameObject is within the distance threshold </returns>
+    private bool NearestAnchorInThreshold(Vector3 position, float distanceThreshold, out GameObject nearestAnchorGameObject)
     {
-        anchorGameObject = null;
+        // Initialize output
+        nearestAnchorGameObject = null;
 
         if (_foundLocalAnchors.Count <= 0)
         {
             return false;
         }
 
-        //Iterate over existing anchor gameobjects to find the nearest
+        //Iterate over existing anchor gameobjects (with an aggregation process) to find the nearest
+        //Idea: implement spatial partitioning datastructure such as an octree to speed up the search
         var (distance, closestObject) = _foundLocalAnchors.Aggregate(
             new Tuple<float, GameObject>(Mathf.Infinity, null),
             (minPair, anchor) =>
@@ -430,19 +434,20 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 float distance = (position - gameObjectPosition).magnitude;
                 return distance < minPair.Item1 ? new Tuple<float, GameObject>(distance, gameobject) : minPair;
             });
-
-        if (distance <= 0.15f)
+            
+        if (distance <= distanceThreshold)
         {
-            //Found an anchor within 15cm
-            anchorGameObject = closestObject;
+            //Output the nearest anchor
+            nearestAnchorGameObject = closestObject;
             return true;
         }
         else
         {
+            // Output the null GameObject
             return false;
         }
     }
-    // </IsAnchorNearby>
+    // </NearestAnchorInThreshold>
 
     // <CreateAnchor>
     /// <summary>
@@ -519,30 +524,56 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <summary>
     /// Creates a PostIt instance
     /// </summary>
-    /// <param name="position">Position where Azure Spatial Anchor will be created</param>
-    /// <returns>Async Task</returns>
-    private async Task CreatePostIt(Vector3 position)
+    /// <param name="position"> postit_position_W post-it creation (in world space) </param>
+    /// <returns> Async Task </returns>
+    private async Task CreatePostIt(Vector3 postitWorldPosition)
     {
+        float anchorDistanceThreshold = 1;
+
         UnityDispatcher.InvokeOnAppThread(async () =>
         {
-
-            //Create Anchor GameObject. We will use ASA to save the position and the rotation of this GameObject.
-            if (!InputDevices.GetDeviceAtXRNode(XRNode.Head).TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 headPosition))
+            Debug.Log("Beginning post-it creation");
+            // Find the nearest anchor (within the treshold) to the post-it position
+            if (NearestAnchorInThreshold(postitWorldPosition, anchorDistanceThreshold, out GameObject nearestAnchorGameObject)) 
             {
-                headPosition = Vector3.zero;
+                Debug.Log($"Found nearby anchor! (within {anchorDistanceThreshold}m)");
+            }
+            else
+            {
+                Debug.Log($"No nearby anchor found! (within {anchorDistanceThreshold}m). First, an anchor is created at this world position.");
+
+                // Create an anchor at the post-it position
+
             }
 
-            Quaternion orientationTowardsHead = Quaternion.LookRotation(position - headPosition, Vector3.up);
+            // Get head world position
+            if (!InputDevices.GetDeviceAtXRNode(XRNode.Head).TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 headWorldPosition))
+            {
+                headWorldPosition = Vector3.zero;
+            }
+            
+            // Calculate rotation in the world coordinate frame towards the headset
+            Quaternion worldRotationTowardsHead = Quaternion.LookRotation(postitWorldPosition - headWorldPosition, Vector3.up);
+            
 
-
-            GameObject postItGameObject = Instantiate(PostItPrefab, position, orientationTowardsHead);
+            // Initializing the post it GameObject
+            GameObject postItGameObject = Instantiate(PostItPrefab, postitWorldPosition, worldRotationTowardsHead);
+            // Scale the post-it to be 30cm in height
             postItGameObject.transform.localScale = Vector3.one * 0.3f;
+            // Setting the anchor as the parent GameObject (so we can calculate relative tranformations later)
+            postItGameObject.transform.SetParent(nearestAnchorGameObject.transform, true);
+            
 
+            // relative position and rotation calculation (might not be needed)
+            // Calculate relative position (post-it position relative to anchor position)
+            //Vector3 relativePosition = nearestAnchorGameObject.transform.InverseTransformPoint(postitWorldPosition);
+            // Calculate relative rotation (post-it rotation relative to anchor rotation)
+            //Quaternion relativeRotationTowardsHead = Quaternion.Inverse(nearestAnchorGameObject.transform.rotation) * worldRotationTowardsHead;
             
         });
 
     }
-    // </CreateAnchor>
+    // </CreatePostIt>
 
 
 
