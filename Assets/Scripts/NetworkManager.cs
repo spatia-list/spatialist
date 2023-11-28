@@ -111,7 +111,7 @@ public class GetAnchorsResponseJSON
 
 public class HashMessageJSON
 {
-    public string hash_response { get; set; }
+    public string hash { get; set; }
 }
 
 
@@ -124,6 +124,9 @@ public class NetworkManager : MonoBehaviour
     public string Username;
 
     public string GroupName;
+
+    private string _lastPostItsHash;
+    private string _lastAnchorsHash;
 
     
 
@@ -144,13 +147,14 @@ public class NetworkManager : MonoBehaviour
         
     }
 
-    private async Task<string> getPostItsAsync()
+    private async Task<string> getAsync(string endpoint)
     {
+
         try
         {
             using (HttpClient client = new HttpClient())
             {
-                HttpResponseMessage response = await client.GetAsync(this.EndpointURL + "/postits");
+                HttpResponseMessage response = await client.GetAsync(this.EndpointURL + endpoint);
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
                 return responseBody;
@@ -158,57 +162,54 @@ public class NetworkManager : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.Log("NetManager - " + ex.Message);
-            return "";
-        }
-
-        
-    }
-
-    private async Task<string> getAnchorsAsync()
-    {
-        
-        try
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.GetAsync(this.EndpointURL + "/anchors/" + GroupName);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-                return responseBody;
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.Log("NetManager - " + ex.Message);
+            Debug.Log($" NetManager::{endpoint} - {ex.Message}");
             return "";
         }
     }
 
-    private async Task<string> getSwipeAsync()
+    public async Task<String> GetAnchorsHash()
     {
+        string textResponse = await getAsync("/anchorsHash");
 
-        try
+        // deserialize the json response
+        HashMessageJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<HashMessageJSON>(textResponse);
+        return response.hash;
+    }
+
+    public async Task<String> GetPostItsHash()
+    {
+        string textResponse = await getAsync("/postitsHash");
+
+        // deserialize the json response
+        HashMessageJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<HashMessageJSON>(textResponse);
+        return response.hash;
+    }
+
+    public async Task<bool> ShouldRefreshAnchors()
+    {
+        string newHash = await GetAnchorsHash();
+        if (_lastAnchorsHash == null || newHash != _lastAnchorsHash)
         {
-            using (HttpClient client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.GetAsync(this.EndpointURL + "/hasSwipe/" + Username);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-                return responseBody;
-            }
+            _lastAnchorsHash = newHash;
+            return true;
         }
-        catch (Exception ex)
-        {
-            Debug.Log("NetManager - " + ex.Message);
-            return "";
+        return false;
+    }
+
+    public async Task<bool> ShouldRefreshPostIts()
+    {
+        string newHash = await GetPostItsHash();
+        if (_lastPostItsHash == null || newHash != _lastPostItsHash)
+        { _lastPostItsHash = newHash; 
+            return true; 
         }
+        return false;
     }
 
 
     public async Task<List<PostIt>> GetPostIts()
     {
-        string textResponse = await getPostItsAsync();
+        string textResponse = await getAsync("/postits");
 
         // print the json response
         // Debug.Log(postItJson);
@@ -236,7 +237,7 @@ public class NetworkManager : MonoBehaviour
 
     public async Task<List<LocalAnchor>> GetAnchors()
     {
-        string textResponse = await getAnchorsAsync();
+        string textResponse = await getAsync("/anchors/" + GroupName);
 
         // print the json response
         // Debug.Log(postItJson);
@@ -263,7 +264,7 @@ public class NetworkManager : MonoBehaviour
 
     public async Task<PostIt> GetSwipe()
     {
-        string textResponse = await getSwipeAsync();
+        string textResponse = await getAsync("/hasSwipe/" + Username);
 
         // print the json response
         Debug.Log(textResponse);
