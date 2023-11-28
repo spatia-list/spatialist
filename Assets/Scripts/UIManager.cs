@@ -81,61 +81,61 @@ public class UIManager : MonoBehaviour
         {
             case UIState.WELCOME:
                 {
-                    SetU1();
+                    
                     break;
                 }
 
             case UIState.LAUNCH:
                 {
-                    SetU2();
+                    
                     break;
                 }
 
             case UIState.SELECT_MAP:
                 {
-                    SetU3();
+                    
                     break;
                 }
 
             case UIState.MAPPING_MAIN:
                 {
-                    SetU4();
+                    
                     break;
                 }
 
             case UIState.MAPPING_MODE:
                 {
-                    SetU5();
+                    
                     break;
                 }
 
             case UIState.MAPPING_CHANGE_NAME:
                 {
-                    SetU6();
+                    
                     break;
                 }
 
             case UIState.MAPPING_CONFIRM_CANCEL:
                 {
-                    SetU7();
+                    
                     break;
                 }
 
             case UIState.LOCALIZATION:
                 {
-                    SetU8();
+                    
                     break;
                 }
 
             case UIState.POSTIT:
                 {
-                    SetU9();
+                    
                     break;
                 }
 
             default:
                 {
-                    Debug.Log("UI is in unknow state!");
+                    
                     break;
                 }
         }
@@ -179,7 +179,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void SetU1() { SetState(UIState.WELCOME); }
 
-    public void SetU2() { SetState(UIState.LAUNCH); Debug.Log("Welcome button pressed"); }
+    public void SetU2() { SetState(UIState.LAUNCH);}
 
     public void SetU3() { SetState(UIState.SELECT_MAP); }
 

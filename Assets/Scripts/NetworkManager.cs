@@ -25,8 +25,7 @@ public class PostItJSON
     public string owner { get; set; }
     public string title { get; set; }
     public string type { get; set; }
-    public string text_content { get; set; }
-    public string media_content { get; set; }
+    public string content { get; set; }
     public List<int> rgb { get; set; }
     public PoseJSON pose { get; set; }
     public string _rid { get; set; }
@@ -36,6 +35,13 @@ public class PostItJSON
     public int _ts { get; set; }
 
     
+}
+
+public class SwipeJSON
+{
+    public string hasSwipe { get; set; }
+
+    public PostItJSON postIt { get; set; }
 }
 
 public class PostItUploadJSON
@@ -103,6 +109,11 @@ public class GetAnchorsResponseJSON
     public List<AnchorJSON> anchors { get; set;}
 }
 
+public class HashMessageJSON
+{
+    public string hash_response { get; set; }
+}
+
 
 public class NetworkManager : MonoBehaviour
 {
@@ -112,6 +123,10 @@ public class NetworkManager : MonoBehaviour
     // username
     public string Username;
 
+    public string GroupName;
+
+    
+
     // Start is called before the first frame update
     void Start()
     {
@@ -119,6 +134,8 @@ public class NetworkManager : MonoBehaviour
         {
             Debug.Log("Unassigned Endpoint URL");
         }
+
+        
     }
 
     // Update is called once per frame
@@ -155,7 +172,7 @@ public class NetworkManager : MonoBehaviour
         {
             using (HttpClient client = new HttpClient())
             {
-                HttpResponseMessage response = await client.GetAsync(this.EndpointURL + "/anchors/" + Username);
+                HttpResponseMessage response = await client.GetAsync(this.EndpointURL + "/anchors/" + GroupName);
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
                 return responseBody;
@@ -167,6 +184,27 @@ public class NetworkManager : MonoBehaviour
             return "";
         }
     }
+
+    private async Task<string> getSwipeAsync()
+    {
+
+        try
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                HttpResponseMessage response = await client.GetAsync(this.EndpointURL + "/hasSwipe/" + Username);
+                response.EnsureSuccessStatusCode();
+                string responseBody = await response.Content.ReadAsStringAsync();
+                return responseBody;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.Log("NetManager - " + ex.Message);
+            return "";
+        }
+    }
+
 
     public async Task<List<PostIt>> GetPostIts()
     {
@@ -185,7 +223,7 @@ public class NetworkManager : MonoBehaviour
         Debug.Log("all post-its titles:");
         foreach (PostItJSON postIt in response.postits)
         {
-            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.text_content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2]);
+            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2]);
         }
         List<PostIt> objectList = new List<PostIt>();
         for (int i = 0; i < response.postits.Count; i++)
@@ -223,15 +261,37 @@ public class NetworkManager : MonoBehaviour
         return anchorList;
     }
 
+    public async Task<PostIt> GetSwipe()
+    {
+        string textResponse = await getSwipeAsync();
+
+        // print the json response
+        Debug.Log(textResponse);
+
+        // deserialize the json response
+        SwipeJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<SwipeJSON>(textResponse);
+
+        // print the number of postits
+        Debug.Log("New swipe available:" + response.hasSwipe);
+
+        if (response.hasSwipe == "true")
+        {
+            return PostIt.ParseJSON(response.postIt);
+        }
+
+        return null;
+    }
+
+
     public class NewLocalAnchorJSON
     {
         public string anchor_id;
         public string owner;
 
-        public NewLocalAnchorJSON(LocalAnchor anchor)
+        public NewLocalAnchorJSON(LocalAnchor anchor, string groupName)
         {
             anchor_id = anchor.anchorId;
-            owner = anchor.owner;
+            owner = groupName;
         }
     }
 
@@ -246,7 +306,7 @@ public class NetworkManager : MonoBehaviour
         
         try
         {
-            NewLocalAnchorJSON entry = new NewLocalAnchorJSON(newAnchor);
+            NewLocalAnchorJSON entry = new NewLocalAnchorJSON(newAnchor, GroupName);
 
             // encode to json
             string msg = Newtonsoft.Json.JsonConvert.SerializeObject(entry);
