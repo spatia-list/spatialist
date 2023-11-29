@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR;
@@ -70,32 +71,16 @@ public class PostIt
         PostItType type;
         Color color;
         Pose pose;
-        string content = "";
-
-        switch (data.type)
+        
+        if(data.type == "media")
         {
-            case "text":
-                {
-                    type = PostItType.TEXT;
-                    if(data.text_content != null)
-                    { content = data.text_content; }
-                    break;
-                }
-            case "media":
-                {
-                    type = PostItType.MEDIA;
-                    if (data.media_content != null)
-                    { content = data.media_content; }
-                    break;
-                }
-            default:
-                {
-                    type = PostItType.TEXT;
-                    if (data.text_content != null)
-                    { content = data.text_content; }
-                    break;
-                }
+            type = PostItType.MEDIA;
+        } else
+        {
+            type = PostItType.TEXT;
         }
+
+        
 
         if (data.rgb != null && data.rgb.Count >= 3)
         {
@@ -107,7 +92,7 @@ public class PostIt
             color = Color.white;
         }
 
-        if (data.pose.position != null && data.pose.orientation != null)
+        if (data.pose != null && data.pose.position != null && data.pose.orientation != null)
         {
             pose = new Pose(data.pose.position, data.pose.orientation);
         }
@@ -123,10 +108,15 @@ public class PostIt
                 data.owner,
                 data.title,
                 type,
-                content,
+                data.content,
                 color,
                 pose
             );
+    }
+
+    public static PostIt Test()
+    {
+        return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, Pose.identity);
     }
 }
 
@@ -137,6 +127,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// Used to distinguish short taps and long taps
     /// </summary>
     private float[] _tappingTimer = { 0, 0 };
+
+    private float _refreshTimer;
 
     /// <summary>
     /// Main interface to anything Spatial Anchors related
@@ -184,6 +176,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     private ManagerState _state;
 
+    private String _currentGroup = "TestRoom";
+
     // <Start>
     // Start is called before the first frame update
     void Start()
@@ -194,7 +188,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
         _networkManager = GetComponent<NetworkManager>();
 
-        StartSession();
+        RefreshData();
 
         Debug.Log("Setting up further debug watchers");
         _spatialAnchorManager.LogDebug += (sender, args) =>
@@ -206,8 +200,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Debug.Log($"ASA - Error: {args.ErrorMessage}");
         };
 
-        
-       
+        _refreshTimer = 0.0f;
+
     }
     // </Start>
 
@@ -243,6 +237,14 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             }
 
         }
+
+        _refreshTimer += Time.deltaTime;
+        if (_refreshTimer > 5.0f)
+        {
+            RefreshData();
+
+            _refreshTimer = 0.0f;
+        }
     }
     // </Update>
 
@@ -269,7 +271,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case ManagerState.CREATE:
                 {
                     Debug.Log("CREATE MODE");
-                    await CreatePostIt(handPosition);
+                    CreatePostIt(handPosition, PostIt.Test());
                     break;
                 }
 
@@ -288,6 +290,47 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
     // </ShortTap>
 
+
+    public void SetCurrentGroup(String name) {
+        _currentGroup = name;
+        RefreshData();
+    }
+
+    public void SetUsername(String name)
+    {
+        _networkManager.Username = name;
+        RefreshData();
+    }
+
+    public async void RefreshData()
+    {
+
+        Debug.Log("Performing Refresh...");
+
+        if (await _networkManager.ShouldRefreshAnchors())
+        {
+
+            Debug.Log("Detected a need to refresh anchors");
+            _availableLocalAnchors = await _networkManager.GetAnchors();
+            SetWatcher();
+
+        } else
+        {
+            Debug.Log("Skipping anchor refresh!");
+        }
+
+
+        PostIt swiped = await _networkManager.GetSwipe();
+        if (swiped != null)
+        {
+            Debug.Log("Creating swipe!");
+            CreatePostIt(new Vector3(0, 0, 0), swiped);
+        }
+
+
+
+    }
+
     public async void BeginMapping() {
 
         await Task.Run(() =>
@@ -295,77 +338,99 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
             _state = ManagerState.MAPPING;
             ShowAnchors();
-            
+
         });
     }
 
-    public void BeginCreate() { 
-    
-        switch(_state)
+    public void BeginCreate() {
+
+        switch (_state)
         {
-                case ManagerState.MAPPING:
-                    {
-                        _state = ManagerState.CREATE;
-                        HideAnchors();
-                        break;
-                    }
-                default : {
+            case ManagerState.MAPPING:
+                {
+                    _state = ManagerState.CREATE;
+                    HideAnchors();
+                    break;
+                }
+            default: {
                     Debug.Log("TODO");
                     break;
                 }
         }
-    
+
     }
 
     public void SetStateIdle() { _state = ManagerState.IDLE; }
 
 
-    /// <StartSession>
-    /// <summary>
-    /// Start the ASA session
-    /// </summary>
-    public async void StartSession()
-    {
-
-        Debug.Log("Performing anchor refresh...");
-        // Anchors that are available (saved) on cosmos DB server
-        _availableLocalAnchors = await _networkManager.GetAnchors();
-        
-        Debug.Log("Finished anchor refresh.");
-
-        if (_spatialAnchorManager != null && _spatialAnchorManager.IsSessionStarted)
+    public void SetWatcher()
+    { 
+        ResetSession();
+        if (_availableLocalAnchors.Count <= 0)
         {
-            Debug.Log("Session is already started!");
-        } else
-        {
-            Debug.Log("Starting session...");
-            await _spatialAnchorManager.StartSessionAsync();
+            Debug.Log("No watchers to add.");
+            return; // dont add watcher if no anchors defined
         }
-        
-        _spatialAnchorManager.Session.AnchorLocated += SpatialAnchorManager_AnchorLocated;
 
-        if (_availableLocalAnchors.Count <= 0) return; // dont add watcher if no anchors where found on cosmos DB
+        
 
         Debug.Log("Setting up watcher...");
+
 
         List<String> localAnchors = new List<String>();
         foreach (var localAnchor in _availableLocalAnchors)
         {
             localAnchors.Add(localAnchor.anchorId);
+            Debug.Log($"Adding to watcher: {localAnchor.anchorId}");
         }
-        
+
         // Set the session's locate criteria
         AnchorLocateCriteria anchorLocateCriteria = new AnchorLocateCriteria
         {
             Identifiers = localAnchors.ToArray(),
         };
-        _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
-
+        
+        CloudSpatialAnchorWatcher watcher = _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
 
         Debug.Log($"ASA - Watcher created!");
 
     }
-    ///</StartSession>
+
+
+    /// <ResetSession>
+    /// <summary>
+    /// Start the ASA session
+    /// </summary>
+    private async void ResetSession()
+    {
+        Debug.Log("Resetting Session");
+
+        if (_spatialAnchorManager == null)
+        {
+            Debug.Log("Cannot start session, no spatial manager.");
+            return;
+        }
+
+        
+        if (_spatialAnchorManager.IsSessionStarted)
+        {
+            CloudSpatialAnchorSession session = _spatialAnchorManager.Session;
+            if (session == null) {
+                Debug.Log("Could not fetch session");
+            } else
+            {
+                session.Dispose();
+                _spatialAnchorManager.StopSession();
+                _spatialAnchorManager.DestroySession();
+            }
+            
+        }
+
+        await _spatialAnchorManager.CreateSessionAsync();
+        _spatialAnchorManager.Session.AnchorLocated += SpatialAnchorManager_AnchorLocated;
+
+    }
+    ///</ResetSession>
 
     public void HideAnchors()
     {
@@ -464,13 +529,42 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             GameObject anchorGameObject = Instantiate(AnchorPrefab, position, orientation);
             anchorGameObject.transform.localScale = Vector3.one * 0.07f;
 
+            Debug.Log("Instantiated marker");
+            if (_spatialAnchorManager == null)
+            {
+                Debug.Log("Null manager error"); return;
+            }
+            Debug.Log("SM is OK!");
+
+            if (!_spatialAnchorManager.IsSessionStarted)
+            {
+                Debug.Log("ASA - Session is not started"); return;
+            }
+            Debug.Log("Session is started!");
+
+            Debug.Log("Instantiated marker");
+            if (_spatialAnchorManager == null)
+            {
+                Debug.Log("Null manager error"); return;
+            }
+            Debug.Log("SM is OK!");
+
+            if (!_spatialAnchorManager.IsSessionStarted)
+            {
+                Debug.Log("ASA - Session is not started"); return;
+            }
+            Debug.Log("Session is started!");
+
             //Use ASA to save the position and the rotation of this GameObject.
             //Add and configure ASA components
             CloudNativeAnchor cloudNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
             await cloudNativeAnchor.NativeToCloud();
+
+            Debug.Log("Got cloud anchor conversion.");
             CloudSpatialAnchor cloudSpatialAnchor = cloudNativeAnchor.CloudAnchor;
             //cloudSpatialAnchor.Expiration = DateTimeOffset.Now.AddDays(10);
 
+            Debug.Log("Finished creating cloud native anchor");
             //Collect Environment Data
             while (!_spatialAnchorManager.IsReadyForCreate)
             {
@@ -496,7 +590,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 Debug.Log($"ASA - Saved cloud anchor with ID: {cloudSpatialAnchor.Identifier}");
 
                 // Create a LocalAnchor class instance and attach the GameObject to it
-                LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _networkManager.Username);
+                LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _currentGroup);
                 createdAnchor.AttachInstance(anchorGameObject);
 
                 if (await _networkManager.PostAnchor(createdAnchor))
