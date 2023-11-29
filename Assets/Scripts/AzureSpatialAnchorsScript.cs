@@ -149,12 +149,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private NetworkManager _networkManager;
 
     /// <summary>
-    /// Used to keep track of all found local anchors
+    /// Used to keep track of all found local anchors, coming from Azure Spatial Anchors
     /// </summary>
     private List<LocalAnchor> _foundLocalAnchors = new();
 
     /// <summary>
-    /// Used to keep track of all available local anchors
+    /// Used to keep track of all available local anchors, saved on the cosmos DB server
     /// </summary>
     private List<LocalAnchor> _availableLocalAnchors = new();
 
@@ -328,10 +328,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
 
         Debug.Log("Performing anchor refresh...");
-
-         _availableLocalAnchors = await _networkManager.GetAnchors();
+        // Anchors that are available (saved) on cosmos DB server
+        _availableLocalAnchors = await _networkManager.GetAnchors();
         
-
         Debug.Log("Finished anchor refresh.");
 
         if (_spatialAnchorManager != null && _spatialAnchorManager.IsSessionStarted)
@@ -345,7 +344,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         
         _spatialAnchorManager.Session.AnchorLocated += SpatialAnchorManager_AnchorLocated;
 
-        if (_availableLocalAnchors.Count <= 0) return; // dont add watcher if no anchors defined
+        if (_availableLocalAnchors.Count <= 0) return; // dont add watcher if no anchors where found on cosmos DB
 
         Debug.Log("Setting up watcher...");
 
@@ -403,7 +402,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
 
 
-
     // <NearestAnchorInThreshold>
     /// <summary>
     /// Returns true if an Anchor GameObject is within 1m of the received reference position
@@ -455,17 +453,18 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     /// <param name="position">Position where Azure Spatial Anchor will be created</param>
     /// <returns>Async Task</returns>
-    private async Task CreateLocalAnchor(Vector3 position)
+    private async Task<GameObject> CreateLocalAnchor(Vector3 position)
     {
+
         UnityDispatcher.InvokeOnAppThread(async () =>
         {
-            //Create Anchor GameObject. We will use ASA to save the position and the rotation of this GameObject.
-            Debug.Log("Beginning local anchor creation");
+            //Create Anchor GameObject
+            Debug.Log("Beginning local anchor creation (generation of GameObject)");
             Quaternion orientation = new(0,0,0,1);
-
             GameObject anchorGameObject = Instantiate(AnchorPrefab, position, orientation);
             anchorGameObject.transform.localScale = Vector3.one * 0.07f;
 
+            //Use ASA to save the position and the rotation of this GameObject.
             //Add and configure ASA components
             CloudNativeAnchor cloudNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
             await cloudNativeAnchor.NativeToCloud();
@@ -479,12 +478,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 Debug.Log($"ASA - Move your device to capture more environment data: {createProgress:0%}");
             }
 
-            Debug.Log($"ASA - Saving cloud anchor... ");
+            Debug.Log($"ASA - Ready to save the anchor in the cloud... ");
 
             try
             {
-                // Now that the cloud spatial anchor has been prepared, we can try the actual save here.
-                await _spatialAnchorManager.CreateAnchorAsync(cloudSpatialAnchor);
+                // Save the anchor to the ASA cloud
+                await _spatialAnchorManager.CreateAnchorAsync(cloudSpatialAnchor); 
 
                 bool saveSucceeded = cloudSpatialAnchor != null;
                 if (!saveSucceeded)
@@ -495,12 +494,16 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 }
 
                 Debug.Log($"ASA - Saved cloud anchor with ID: {cloudSpatialAnchor.Identifier}");
+
+                // Create a LocalAnchor class instance and attach the GameObject to it
                 LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _networkManager.Username);
                 createdAnchor.AttachInstance(anchorGameObject);
 
                 if (await _networkManager.PostAnchor(createdAnchor))
                 {
                     Debug.Log("ASA - Succesful API save!");
+                    // Add the created anchor to the list of found anchors 
+
                     _foundLocalAnchors.Add(createdAnchor);
                 } else
                 {
@@ -515,8 +518,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 Debug.LogException(exception);
                 anchorGameObject.SetActive(false);
             }
+
         });
         
+
     }
     // </CreateAnchor>
 
@@ -543,6 +548,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 Debug.Log($"No nearby anchor found! (within {anchorDistanceThreshold}m). First, an anchor is created at this world position.");
 
                 // Create an anchor at the post-it position
+                await CreateLocalAnchor(postitWorldPosition);
+
+                // Get the nearest anchor that was just created!
+
 
             }
 
@@ -563,6 +572,24 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             // Setting the anchor as the parent GameObject (so we can calculate relative tranformations later)
             postItGameObject.transform.SetParent(nearestAnchorGameObject.transform, true);
             
+
+            // We need to get/define the postITID from somewhere!
+
+            // Save the post-it to the backend (cosmos DB)
+            // if (await _networkManager.PostPostIt(postItID))
+            // {
+            //     Debug.Log("Succesful API save!");
+            // }
+            // else
+            // {
+            //     Debug.Log("Error in API save!");
+            //     postItGameObject.SetActive(false);
+            // }
+
+
+
+
+
 
             // relative position and rotation calculation (might not be needed)
             // Calculate relative position (post-it position relative to anchor position)
@@ -587,7 +614,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
         Debug.Log($"ASA - Anchor recognized as a possible anchor {args.Identifier} {args.Status}");
 
-
         switch (args.Status)
         {
             case LocateAnchorStatus.Located:
@@ -610,10 +636,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
                         anchorGameObject.transform.localScale = Vector3.one * 0.07f;
 
-                        // Link to Cloud Anchor
+                        // Link Anchor to Azure Spatial Anchors Cloud 
                         anchorGameObject.AddComponent<CloudNativeAnchor>().CloudToNative(foundAnchor);
                         correspondingAnchor.AttachInstance(anchorGameObject);
                         _foundLocalAnchors.Add(correspondingAnchor);
+
                         if (_state != ManagerState.MAPPING)
                         {
                             anchorGameObject.SetActive(false);
