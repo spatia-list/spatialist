@@ -13,6 +13,7 @@ using UnityEngine.Events;
 using UnityEngine.XR;
 
 
+// STRUCTURES //
 public enum ManagerState
 {
     IDLE, 
@@ -119,6 +120,9 @@ public class PostIt
         return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, Pose.identity);
     }
 }
+// STRUCTURES //
+
+
 
 [RequireComponent(typeof(SpatialAnchorManager))]
 public class AzureSpatialAnchorsScript : MonoBehaviour
@@ -625,7 +629,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     /// <param name="position"> postit_position_W post-it creation (in world space) </param>
     /// <returns> Async Task </returns>
-    private async Task CreatePostIt(Vector3 postitWorldPosition)
+    private void CreatePostIt(Vector3 postitWorldPosition, PostIt obj)
     {
         float anchorDistanceThreshold = 1;
 
