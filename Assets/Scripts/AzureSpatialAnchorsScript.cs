@@ -546,7 +546,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     /// <param name="position">Position where Azure Spatial Anchor will be created</param>
     /// <returns>Async Task</returns>
-    private async Task<GameObject> CreateLocalAnchor(Vector3 position)
+    private async Task CreateLocalAnchor(Vector3 position)
     {
 
         UnityDispatcher.InvokeOnAppThread(async () =>
