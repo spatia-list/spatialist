@@ -2,14 +2,9 @@ using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.XR;
 
 
@@ -182,6 +177,15 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
+#if USING_OPENXR
+        Debug.Log("ASA - USING OPEN XR");
+#endif
+
+#if ASA_UNITY_USE_OPENXR
+        Debug.Log("ASA - USING ASA_UNITY_OPEN_XR");
+#endif
+
         _state = ManagerState.IDLE;
         Debug.Log("starting the session");
 
@@ -201,9 +205,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         RefreshData();
         _refreshTimer = 0.0f;
-
-
-        
 
 
     }
@@ -309,59 +310,70 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     public async void RefreshData()
     {
 
-        Debug.Log("Performing Refresh...");
 
-        try
+        if (_spatialAnchorManager.Session == null)
         {
-            await _spatialAnchorManager.StartSessionAsync();
-            if (_spatialAnchorManager.IsSessionStarted)
+            await _spatialAnchorManager.CreateSessionAsync();
+            try
             {
-                Debug.Log("Session has been started");
-                _spatialAnchorManager.Session.AnchorLocated += SpatialAnchorManager_AnchorLocated;
+                await _spatialAnchorManager.StartSessionAsync();
+                if (_spatialAnchorManager.IsSessionStarted)
+                {
+                    Debug.Log("Session has been started");
+                    _spatialAnchorManager.Session.AnchorLocated += SpatialAnchorManager_AnchorLocated;
+                    Debug.Log(_spatialAnchorManager.Session.Diagnostics);
+
+                    Debug.Log("Detected a need to refresh anchors");
+                    _availableLocalAnchors = await _networkManager.GetAnchors();
+                    SetWatcher();
+                }
+                else
+                {
+                    throw new Exception("Session not registered as started");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.Log("Could not start session");
+                Debug.LogException(e);
+            }
+        } else
+        {
+            Debug.Log("Performing Refresh...");
+            if (await _networkManager.ShouldRefreshAnchors())
+            {
+
+                Debug.Log("Detected a need to refresh anchors");
+                _availableLocalAnchors = await _networkManager.GetAnchors();
+                SetWatcher();
+
             }
             else
             {
-                throw new Exception("Session not registered as started");
+                Debug.Log("Skipping anchor refresh!");
+            }
+
+
+            PostIt swiped = await _networkManager.GetSwipe();
+            if (swiped != null)
+            {
+                Debug.Log("Creating swipe!");
+                CreateSwipe(swiped);
             }
         }
-
-        catch (Exception e)
-        {
-            Debug.Log("Could not start session");
-            Debug.LogException(e);
-        }
-
-        if (await _networkManager.ShouldRefreshAnchors())
-        {
-
-            Debug.Log("Detected a need to refresh anchors");
-            _availableLocalAnchors = await _networkManager.GetAnchors();
-            SetWatcher();
-
-        } else
-        {
-            Debug.Log("Skipping anchor refresh!");
-        }
-
-
-        PostIt swiped = await _networkManager.GetSwipe();
-        if (swiped != null)
-        {
-            Debug.Log("Creating swipe!");
-            CreateSwipe(swiped);
-        }
-
-
 
     }
 
     public async void BeginMapping() {
 
-        await Task.Run(() =>
+        UnityDispatcher.InvokeOnAppThread( () =>
         {
 
             _state = ManagerState.MAPPING;
             ShowAnchors();
+            _spatialAnchorManager.StopSession();
+            _spatialAnchorManager.DestroySession();
+            RefreshData();
 
         });
     }
@@ -412,7 +424,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         {
             Identifiers = localAnchors.ToArray(),
         };
-        anchorLocateCriteria.BypassCache = true;
+        
+        //anchorLocateCriteria.BypassCache = true;
 
         CloudSpatialAnchorWatcher watcher = _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
 
@@ -713,9 +726,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     // Link to Cloud Anchor
                     try
                     {
-                        anchorGameObject.AddComponent<CloudNativeAnchor>().CloudToNative(foundAnchor);
                         Pose pose = foundAnchor.GetPose();
                         Debug.Log("ASA - Pose:" + pose.ToString());
+                        anchorGameObject.AddComponent<CloudNativeAnchor>().CloudToNative(foundAnchor);
+                        
                     } 
                     catch (Exception e)
                     {
