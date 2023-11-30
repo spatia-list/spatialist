@@ -29,7 +29,12 @@ public class SampleScript : MonoBehaviour
     /// </summary>
     private List<String> _createdAnchorIDs = new List<String>();
 
+    /// <summary>
+    ///  Network manager
+    /// </summary>
     private NetworkManager _networkManager = null;
+
+    public GameObject AnchorPrefab;
 
     // <Start>
     // Start is called before the first frame update
@@ -40,7 +45,7 @@ public class SampleScript : MonoBehaviour
         _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"ASA - Debug: {args.Message}");
         _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
         _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
-        ShortTap(new Vector3(0,0,0));
+        TouchSession();
     }
     // </Start>
 
@@ -63,7 +68,7 @@ public class SampleScript : MonoBehaviour
                         //User has been tapping for less than 1 sec. Get hand position and call ShortTap
                         if (device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 handPosition))
                         {
-                            ShortTap(handPosition);
+                            
                         }
                     }
                     _tappingTimer[i] = 0;
@@ -93,7 +98,7 @@ public class SampleScript : MonoBehaviour
     /// Called when a user is air tapping for a short time 
     /// </summary>
     /// <param name="handPosition">Location where tap was registered</param>
-    private async void ShortTap(Vector3 handPosition)
+    private async void TouchSession()
     {
         if (_spatialAnchorManager.IsSessionStarted)
         {
@@ -163,10 +168,8 @@ public class SampleScript : MonoBehaviour
                     Debug.Log($"ASA - Anchor recognized as a possible anchor {args.Identifier} {args.Status}");
 
                     //Create GameObject
-                    GameObject anchorGameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    anchorGameObject.transform.localScale = Vector3.one * 0.1f;
-                    anchorGameObject.GetComponent<MeshRenderer>().material.shader = Shader.Find("Legacy Shaders/Diffuse");
-                    anchorGameObject.GetComponent<MeshRenderer>().material.color = Color.blue;
+                    GameObject anchorGameObject = Instantiate(AnchorPrefab);
+                    anchorGameObject.transform.localScale = Vector3.one * 0.07f;
 
                     // Link to Cloud Anchor
                     anchorGameObject.AddComponent<CloudNativeAnchor>().CloudToNative(cloudSpatialAnchor);
