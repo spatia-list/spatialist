@@ -27,16 +27,16 @@ public class PostItViz : MonoBehaviour
     }
 
     // method to visualize post-its
-    public void VisualizePostIts(PostItContainer postItContainer)
+    public void VisualizePostIts(GetPostItsResponseJSON postItContainer)
     {
         // iterate through post-its
-        foreach (PostIt postIt in postItContainer.postits)
+        foreach (PostItJSON postIt in postItContainer.postits)
         {
             // create a post-it game object
             GameObject postItGameObject = Instantiate(postItPrefab, postIt.pose.position, postIt.pose.orientation);
             // set the text of the post-it game object
             // add title and description in to one text
-            string postItText = postIt.title + "\n" + postIt.text_content;
+            string postItText = postIt.title + "\n" + postIt.content;
             postItGameObject.GetComponentInChildren<PostItUpdater>().UpdateText(postItText);
             // set the color of the post-it game object
             int r = postIt.rgb[0];

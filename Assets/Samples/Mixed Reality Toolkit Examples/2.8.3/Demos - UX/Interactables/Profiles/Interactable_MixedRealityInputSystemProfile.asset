@@ -67,8 +67,7 @@ MonoBehaviour:
     componentName: Input Simulation Service
     priority: 0
     runtimePlatform: 208
-    deviceManagerProfile: {fileID: 11400000, guid: 41478039094d47641bf4e09c20e61a5a,
-      type: 2}
+    deviceManagerProfile: {fileID: 11400000, guid: 41478039094d47641bf4e09c20e61a5a, type: 2}
   - componentType:
       reference: Microsoft.MixedReality.Toolkit.XRSDK.WindowsMixedReality.WindowsMixedRealityDeviceManager,
         Microsoft.MixedReality.Toolkit.Providers.XRSDK.WindowsMixedReality
@@ -82,8 +81,7 @@ MonoBehaviour:
     componentName: XR SDK Oculus Device Manager
     priority: 0
     runtimePlatform: 33
-    deviceManagerProfile: {fileID: 11400000, guid: 8f48cb9c26fb518499c65c9f9e8bb4ed,
-      type: 2}
+    deviceManagerProfile: {fileID: 11400000, guid: 8f48cb9c26fb518499c65c9f9e8bb4ed, type: 2}
   - componentType:
       reference: Microsoft.MixedReality.Toolkit.XRSDK.OpenXR.OpenXRDeviceManager,
         Microsoft.MixedReality.Toolkit.Providers.OpenXR
@@ -91,6 +89,13 @@ MonoBehaviour:
     priority: 0
     runtimePlatform: -1
     deviceManagerProfile: {fileID: 0}
+  - componentType:
+      reference: Microsoft.MixedReality.Toolkit.XRSDK.WindowsMixedReality.WindowsMixedRealityEyeGazeDataProvider,
+        Microsoft.MixedReality.Toolkit.Providers.XRSDK.WindowsMixedReality
+    componentName: XRSDK Windows Mixed Reality Eye Gaze Provider
+    priority: 0
+    runtimePlatform: 8
+    deviceManagerProfile: {fileID: 11400000, guid: 2d87dd11b18f700449c9dab320d19b99, type: 2}
   focusProviderType:
     reference: Microsoft.MixedReality.Toolkit.Input.FocusProvider, Microsoft.MixedReality.Toolkit.Services.InputSystem
   raycastProviderType:
@@ -98,18 +103,12 @@ MonoBehaviour:
   focusQueryBufferSize: 128
   shouldUseGraphicsRaycast: 1
   focusIndividualCompoundCollider: 0
-  inputActionsProfile: {fileID: 11400000, guid: 723eb97b02944311b92861f473eee53e,
-    type: 2}
-  inputActionRulesProfile: {fileID: 11400000, guid: 03945385d89102f41855bc8f5116b199,
-    type: 2}
-  pointerProfile: {fileID: 11400000, guid: 48aa63a9725047b28d4137fd0834bc31, type: 2}
+  inputActionsProfile: {fileID: 11400000, guid: 723eb97b02944311b92861f473eee53e, type: 2}
+  inputActionRulesProfile: {fileID: 11400000, guid: 03945385d89102f41855bc8f5116b199, type: 2}
+  pointerProfile: {fileID: 11400000, guid: 14f4bb7471d72d04ba5b01022c483664, type: 2}
   gesturesProfile: {fileID: 11400000, guid: bd7829a9b29409045a745b5a18299291, type: 2}
-  speechCommandsProfile: {fileID: 11400000, guid: 47f4f33146ce12645b35ab8d0e6c2234,
-    type: 2}
+  speechCommandsProfile: {fileID: 11400000, guid: 47f4f33146ce12645b35ab8d0e6c2234, type: 2}
   enableControllerMapping: 1
-  controllerMappingProfile: {fileID: 11400000, guid: 39ded1fd0711a0c448413d0e1ec4f7f3,
-    type: 2}
-  controllerVisualizationProfile: {fileID: 11400000, guid: 345c06fdf3732db46b96299bd3cba653,
-    type: 2}
-  handTrackingProfile: {fileID: 11400000, guid: 7f1e3cd673742f94ca860ac7ae733024,
-    type: 2}
+  controllerMappingProfile: {fileID: 11400000, guid: 39ded1fd0711a0c448413d0e1ec4f7f3, type: 2}
+  controllerVisualizationProfile: {fileID: 11400000, guid: 345c06fdf3732db46b96299bd3cba653, type: 2}
+  handTrackingProfile: {fileID: 11400000, guid: 7f1e3cd673742f94ca860ac7ae733024, type: 2}
