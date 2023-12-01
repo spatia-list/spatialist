@@ -29,7 +29,7 @@ public class LocalAnchor
     }
 
     public void AttachInstance(GameObject instance)
-    { Instance = instance; }
+    { this.Instance = instance; }
 }
 
 public enum PostItType
@@ -145,9 +145,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private List<LocalAnchor> _foundLocalAnchors = new();
 
     /// <summary>
-    /// Used to keep track of all available local anchors, saved on the cosmos DB server
+    /// Used to keep track of all existing local anchors, saved on the cosmos DB server
     /// </summary>
-    private List<LocalAnchor> _availableLocalAnchors = new();
+    private List<LocalAnchor> _existingLocalAnchors = new();
 
     /// <summary>
     /// Used to keep track of all found postits
@@ -182,72 +182,74 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     void Start()
     {
         // Set state to idle
-        _state = ManagerState.IDLE;
-        Debug.Log("starting the session");
+        // _state = ManagerState.IDLE;
+        // Debug.Log("starting the session");
 
-        // Fetch all managers
-        _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
-        _networkManager = GetComponent<NetworkManager>();
+        // // Fetch all managers
+        // _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
+        // _networkManager = GetComponent<NetworkManager>();
 
-        // Set debuggers
-        _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"ASA - Debug: {args.Message}");
-        _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
+        // // Set debuggers
+        // _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"ASA - Debug: {args.Message}");
+        // _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
         
-        // Set the callback for when anchors are found
-        _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
+        // // Set the callback for when anchors are found
+        // _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
         
-        // Start the session
-        TouchSession();
+        // // Start the ASA session and load all anchors and add to watcher
+        // StartAndLoadASASession();
 
-        // Start the refresh timer
-        _refreshTimer = 0.0f;
+        // // Start the refresh timer
+        // _refreshTimer = 0.0f;
 
     }
     // </Start>
 
-    private async void TouchSession()
+    private async void StartAndLoadASASession()
     {
         if (_spatialAnchorManager.IsSessionStarted)
         {
             // Stop Session and remove all GameObjects. This does not delete the Anchors in the cloud
             _spatialAnchorManager.DestroySession();
-            Debug.Log("ASA - Stopped Session and removed all Anchor Objects");
+            Debug.LogError("ASA - Stopped Session and removed all Anchor Objects");
         }
         else
         {
             //Start session and search for all Anchors previously created
             await _spatialAnchorManager.StartSessionAsync();
-            LocateAnchor();
+            FetchAnchorsFromDBAndAddToWatcher();
         }
     }
 
-    // <LocateAnchor>
+    // <FetchAnchorsFromDBAndAddToWatcher>
     /// <summary>
-    /// Looking for anchors with ID in _createdAnchorIDs
+    /// Fetch all anchors beloging to the group from API and create a watcher to look for them
+    /// This function is called when doing the extending a map or localisation
     /// </summary>
-    private async void LocateAnchor()
+    private async void FetchAnchorsFromDBAndAddToWatcher()
     {
 
-        _availableLocalAnchors = await _networkManager.GetAnchors();
+        _existingLocalAnchors = await _networkManager.GetAnchors();
 
-        List<string> names = new List<String>();
-        foreach (LocalAnchor anchor in _availableLocalAnchors)
+        List<string> existingLocalAnchorIds = new List<String>();
+        foreach (LocalAnchor anchor in _existingLocalAnchors)
         {
             Debug.Log("ASA - api anchor " + anchor.anchorId);
-            names.Add(anchor.anchorId);
+            existingLocalAnchorIds.Add(anchor.anchorId);
         }
 
-        if (names.Count > 0)
+        if (_existingLocalAnchors.Count > 0)
         {
-            //Create watcher to look for all stored anchor IDs
-            Debug.Log($"ASA - Creating watcher to look for {names.Count} spatial anchors");
+            // Create watcher to look for all stored anchor IDs
+            // A watcher tries to locate the anchors in the environment and callback when it finds one
+            Debug.Log($"ASA - Creating watcher to look for {_existingLocalAnchors.Count} spatial anchors");
             AnchorLocateCriteria anchorLocateCriteria = new AnchorLocateCriteria();
-            anchorLocateCriteria.Identifiers = names.ToArray();
+            anchorLocateCriteria.Identifiers = existingLocalAnchorIds.ToArray();
             _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
             Debug.Log($"ASA - Watcher created!");
         }
     }
-    // </LocateAnchor>
+    // </FetchAnchorsFromDBAndAddToWatcher>
 
 
     // <Update>
@@ -255,41 +257,40 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     void Update()
     {
 
-        //Check for any air taps from either hand
-        for (int i = 0; i < 2; i++)
-        {
-            InputDevice device = InputDevices.GetDeviceAtXRNode((i == 0) ? XRNode.RightHand : XRNode.LeftHand);
-            if (device.TryGetFeatureValue(CommonUsages.primaryButton, out bool isTapping))
-            {
-                if (!isTapping)
-                {
-                    //Stopped Tapping or wasn't tapping
-                    if (0f < _tappingTimer[i] && _tappingTimer[i] < 1f)
-                    {
-                        //User has been tapping for less than 1 sec. Get hand position and call ShortTap
-                        if (device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 handPosition))
-                        {
-                            ShortTap(handPosition);
-                        }
-                    }
-                    _tappingTimer[i] = 0;
-                }
-                else
-                {
-                    _tappingTimer[i] += Time.deltaTime;
+        // Check for any air taps from either left hand or right hand
+        // for (int handTypeIndex = 0; handTypeIndex < 2; handTypeIndex++)
+        // {
+        //     InputDevice device = InputDevices.GetDeviceAtXRNode((handTypeIndex == 0) ? XRNode.RightHand : XRNode.LeftHand);
+        //     if (device.TryGetFeatureValue(CommonUsages.primaryButton, out bool isTapping))
+        //     {
+        //         if (!isTapping)
+        //         {
+        //             //Stopped Tapping or wasn't tapping
+        //             if (0f < _tappingTimer[handTypeIndex] && _tappingTimer[handTypeIndex] < 1f)
+        //             {
+        //                 //User has been tapping for less than 1 sec. Get hand position and call ShortTap
+        //                 if (device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 handPosition))
+        //                 {
+        //                     ShortTap(handPosition);
+        //                 }
+        //             }
+        //             _tappingTimer[handTypeIndex] = 0;
+        //         }
+        //         else
+        //         {
+        //             _tappingTimer[handTypeIndex] += Time.deltaTime;
 
-                }
-            }
+        //         }
+        //     }
+        // }
 
-        }
+        // _refreshTimer += Time.deltaTime;
+        // if (_refreshTimer > 5.0f)
+        // {
+        //     RefreshData();
 
-        _refreshTimer += Time.deltaTime;
-        if (_refreshTimer > 5.0f)
-        {
-            RefreshData();
-
-            _refreshTimer = 0.0f;
-        }
+        //     _refreshTimer = 0.0f;
+        // }
     }
     // </Update>
 
@@ -349,20 +350,17 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public async void RefreshData()
     {
+            // Debug.Log("Performing Refresh...");
+            // if (await _networkManager.ShouldRefreshAnchors())
+            // {
 
+            //     FetchAnchorsFromDBAndAddToWatcher();
 
-        
-            Debug.Log("Performing Refresh...");
-            if (await _networkManager.ShouldRefreshAnchors())
-            {
-
-                LocateAnchor();
-
-            }
-            else
-            {
-                Debug.Log("Skipping anchor refresh!");
-            }
+            // }
+            // else
+            // {
+            //     Debug.Log("Skipping anchor refresh!");
+            // }
 
 
             PostIt swiped = await _networkManager.GetSwipe();
@@ -371,8 +369,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 Debug.Log("Creating swipe!");
                 CreateSwipe(swiped);
             }
-        
-
     }
 
     public async void BeginMapping() {
@@ -404,7 +400,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public void SetWatcher()
     { 
-        if (_availableLocalAnchors.Count <= 0)
+        if (_existingLocalAnchors.Count <= 0)
         {
             Debug.Log("No watchers to add.");
             return; // dont add watcher if no anchors defined
@@ -416,7 +412,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
 
         List<String> localAnchors = new List<String>();
-        foreach (var localAnchor in _availableLocalAnchors)
+        foreach (var localAnchor in _existingLocalAnchors)
         {
             localAnchors.Add(localAnchor.anchorId);
             Debug.Log($"Adding to watcher: {localAnchor.anchorId}");
@@ -441,33 +437,33 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <summary>
     /// Start the ASA session
     /// </summary>
-    private async void StartSession()
-    {
-        Debug.Log("Starting Session");
+    // private async void StartSession()
+    // {
+    //     Debug.Log("Starting Session");
 
-        if (_spatialAnchorManager == null)
-        {
-            Debug.Log("Cannot start session, no spatial manager.");
-            return;
-        }
+    //     if (_spatialAnchorManager == null)
+    //     {
+    //         Debug.Log("Cannot start session, no spatial manager.");
+    //         return;
+    //     }
 
         
-        if (_spatialAnchorManager.IsSessionStarted)
-        {
-            CloudSpatialAnchorSession session = _spatialAnchorManager.Session;
-            if (session == null) {
-                Debug.Log("Could not fetch session");
-            } else
-            {
-                session.Dispose();
-                _spatialAnchorManager.StopSession();
-                _spatialAnchorManager.DestroySession();
-            }
+    //     if (_spatialAnchorManager.IsSessionStarted)
+    //     {
+    //         CloudSpatialAnchorSession session = _spatialAnchorManager.Session;
+    //         if (session == null) {
+    //             Debug.Log("Could not fetch session");
+    //         } else
+    //         {
+    //             session.Dispose();
+    //             _spatialAnchorManager.StopSession();
+    //             _spatialAnchorManager.DestroySession();
+    //         }
             
-        }
+    //     }
 
         
-    }
+    // }
     ///</ResetSession>
 
     public void HideAnchors()
@@ -595,17 +591,17 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             }
             Debug.Log("Session is started!");
 
-            //Use ASA to save the position and the rotation of this GameObject.
-            //Add and configure ASA components
+            // Use ASA to save the position and the rotation of this GameObject.
+            // Add and configure ASA components
             CloudNativeAnchor cloudNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
             await cloudNativeAnchor.NativeToCloud();
 
             Debug.Log("Got cloud anchor conversion.");
             CloudSpatialAnchor cloudSpatialAnchor = cloudNativeAnchor.CloudAnchor;
-            cloudSpatialAnchor.Expiration = DateTimeOffset.Now.AddDays(10);
+            cloudSpatialAnchor.Expiration = DateTimeOffset.Now.AddDays(30);
 
             Debug.Log("Finished creating cloud native anchor");
-            //Collect Environment Data
+            // Collect Environment Data
             while (!_spatialAnchorManager.IsReadyForCreate)
             {
                 float createProgress = _spatialAnchorManager.SessionStatus.RecommendedForCreateProgress;
@@ -778,7 +774,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     Debug.Log("ASA - Instantiating found anchor");
 
                     // find in available
-                    LocalAnchor correspondingAnchor = _availableLocalAnchors.Find((anchor) => anchor.anchorId == id);
+                    LocalAnchor correspondingAnchor = _existingLocalAnchors.Find((anchor) => anchor.anchorId == id);
                     if (correspondingAnchor == null) {Debug.Log("Unknown identifier encountered"); return; }
 
                     //Create GameObject
