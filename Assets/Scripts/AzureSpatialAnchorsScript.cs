@@ -2,14 +2,9 @@ using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.XR;
 
 
@@ -186,32 +181,74 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // Set state to idle
         _state = ManagerState.IDLE;
         Debug.Log("starting the session");
 
+        // Fetch all managers
         _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
         _networkManager = GetComponent<NetworkManager>();
 
-        Debug.Log("Setting up further debug watchers");
-        _spatialAnchorManager.LogDebug += (sender, args) =>
-        {
-            Debug.Log($"ASA - Debug: {args.Message}");
-        };
-        _spatialAnchorManager.Error += (sender, args) =>
-        {
-            Debug.Log($"ASA - Error: {args.ErrorMessage}");
-        };
-
-
-        RefreshData();
-        _refreshTimer = 0.0f;
-
-
+        // Set debuggers
+        _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"ASA - Debug: {args.Message}");
+        _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
         
+        // Set the callback for when anchors are found
+        _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
+        
+        // Start the session
+        TouchSession();
 
+        // Start the refresh timer
+        _refreshTimer = 0.0f;
 
     }
     // </Start>
+
+    private async void TouchSession()
+    {
+        if (_spatialAnchorManager.IsSessionStarted)
+        {
+            // Stop Session and remove all GameObjects. This does not delete the Anchors in the cloud
+            _spatialAnchorManager.DestroySession();
+            Debug.Log("ASA - Stopped Session and removed all Anchor Objects");
+        }
+        else
+        {
+            //Start session and search for all Anchors previously created
+            await _spatialAnchorManager.StartSessionAsync();
+            LocateAnchor();
+        }
+    }
+
+    // <LocateAnchor>
+    /// <summary>
+    /// Looking for anchors with ID in _createdAnchorIDs
+    /// </summary>
+    private async void LocateAnchor()
+    {
+
+        _availableLocalAnchors = await _networkManager.GetAnchors();
+
+        List<string> names = new List<String>();
+        foreach (LocalAnchor anchor in _availableLocalAnchors)
+        {
+            Debug.Log("ASA - api anchor " + anchor.anchorId);
+            names.Add(anchor.anchorId);
+        }
+
+        if (names.Count > 0)
+        {
+            //Create watcher to look for all stored anchor IDs
+            Debug.Log($"ASA - Creating watcher to look for {names.Count} spatial anchors");
+            AnchorLocateCriteria anchorLocateCriteria = new AnchorLocateCriteria();
+            anchorLocateCriteria.Identifiers = names.ToArray();
+            _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
+            Debug.Log($"ASA - Watcher created!");
+        }
+    }
+    // </LocateAnchor>
+
 
     // <Update>
     // Update is called once per frame
@@ -313,61 +350,35 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     public async void RefreshData()
     {
 
-        Debug.Log("Performing Refresh...");
 
-        try
-        {
-            await _spatialAnchorManager.StartSessionAsync();
-            if (_spatialAnchorManager.IsSessionStarted)
+        
+            Debug.Log("Performing Refresh...");
+            if (await _networkManager.ShouldRefreshAnchors())
             {
-                Debug.Log("Session has been started");
-                _spatialAnchorManager.Session.AnchorLocated += SpatialAnchorManager_AnchorLocated;
+
+                LocateAnchor();
+
             }
             else
             {
-                throw new Exception("Session not registered as started");
+                Debug.Log("Skipping anchor refresh!");
             }
-        }
-
-        catch (Exception e)
-        {
-            Debug.Log("Could not start session");
-            Debug.LogException(e);
-        }
-
-        if (await _networkManager.ShouldRefreshAnchors())
-        {
-
-            Debug.Log("Detected a need to refresh anchors");
-            _availableLocalAnchors = await _networkManager.GetAnchors();
-            SetWatcher();
-
-        } else
-        {
-            Debug.Log("Skipping anchor refresh!");
-        }
 
 
-        PostIt swiped = await _networkManager.GetSwipe();
-        if (swiped != null)
-        {
-            Debug.Log("Creating swipe!");
-            CreateSwipe(swiped);
-        }
-
-
+            PostIt swiped = await _networkManager.GetSwipe();
+            if (swiped != null)
+            {
+                Debug.Log("Creating swipe!");
+                CreateSwipe(swiped);
+            }
+        
 
     }
 
     public async void BeginMapping() {
 
-        await Task.Run(() =>
-        {
-
-            _state = ManagerState.MAPPING;
-            ShowAnchors();
-
-        });
+        _state = ManagerState.MAPPING;
+        ShowAnchors();
     }
 
     public void BeginCreate() {
@@ -416,7 +427,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         {
             Identifiers = localAnchors.ToArray(),
         };
-        anchorLocateCriteria.BypassCache = true;
+        
+        //anchorLocateCriteria.BypassCache = true;
 
         CloudSpatialAnchorWatcher watcher = _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
 
@@ -770,12 +782,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     if (correspondingAnchor == null) {Debug.Log("Unknown identifier encountered"); return; }
 
                     //Create GameObject
-                    //Create GameObject
-                    GameObject anchorGameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    anchorGameObject.GetComponent<MeshRenderer>().material.shader = Shader.Find("Legacy Shaders/Diffuse");
-                    anchorGameObject.GetComponent<MeshRenderer>().material.color = Color.blue;
-
-                    //GameObject anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
+                    
+                    GameObject anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
                     anchorGameObject.transform.localScale = Vector3.one * 0.07f;
 
                                        
@@ -784,9 +792,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     // Link to Cloud Anchor
                     try
                     {
-                        anchorGameObject.AddComponent<CloudNativeAnchor>().CloudToNative(foundAnchor);
                         Pose pose = foundAnchor.GetPose();
                         Debug.Log("ASA - Pose:" + pose.ToString());
+                        anchorGameObject.AddComponent<CloudNativeAnchor>().CloudToNative(foundAnchor);
+                        
                     } 
                     catch (Exception e)
                     {
@@ -801,7 +810,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     Debug.Log($"ASA - There are now {_foundLocalAnchors.Count} found local anchors");
                     if (_state != ManagerState.MAPPING)
                     {
-                        //anchorGameObject.SetActive(false);
+                        anchorGameObject.SetActive(false);
                         Debug.Log("ASA - Set anchor to disabled as not in mapping mode");
                     }
                 });
