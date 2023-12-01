@@ -1,4 +1,5 @@
 using Microsoft.Azure.SpatialAnchors.Unity;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -38,12 +39,30 @@ public class PostItManager : MonoBehaviour
 
     public void SetObject(PostIt obj)
     {
+        if (obj == null)
+        {
+            Debug.Log("PostIt - Tried to assign a null data obj");
+        }
         _object = obj;
+        
+        Pose? poseTransform = null;
+
+        if (obj.Pose != null)
+        {
+            poseTransform = _script.ApplySavedPose(obj.AnchorId, obj.Pose.Value);
+        }
+
+
         UnityDispatcher.InvokeOnAppThread(() =>
         {
             Text.SetText(_object.Content);
             Debug.Log("Setting content to:" +  _object.Content);
             Title.SetText(_object.Title);
+
+            if (poseTransform != null)
+            {
+                transform.SetPositionAndRotation(poseTransform.Value.position, poseTransform.Value.rotation);
+            }
         });
             
     }
@@ -53,6 +72,11 @@ public class PostItManager : MonoBehaviour
         _state = PostItState.LOCKED;
         UnlockButton.SetActive(true);
         LockButton.SetActive(false);
+        Exception ex = _script.SavePostIt(_object, gameObject);
+        if (ex != null)
+        {
+            Debug.LogException(ex);
+        }
     }
 
     public void Unlock()
