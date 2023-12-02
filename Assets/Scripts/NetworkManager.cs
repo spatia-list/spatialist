@@ -26,7 +26,7 @@ public class PostItJSON
     public string anchor_id { get; set; }
     public string owner { get; set; }
     public string title { get; set; }
-    public string type { get; set; }
+    public string content_type { get; set; }
     public string content { get; set; }
     public List<int> rgb { get; set; }
     public PoseJSON pose { get; set; }
