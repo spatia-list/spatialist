@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 
 
@@ -36,7 +37,7 @@ public class PostItManager : MonoBehaviour
         _script = script;
     }
 
-    public void SetObject(PostIt data)
+    public void SetObject(PostIt data, LocalAnchor parent)
     {
         if (data == null)
         {
@@ -47,10 +48,11 @@ public class PostItManager : MonoBehaviour
 
         Pose? poseTransform = null;
 
-        if (data.Pose != null)
+        if (data.Pose != null && parent != null)
         {
             Debug.Log("ASA - Applying Pose on PostIt from server");
-            poseTransform = _script.ApplyPoseFromCosmos(data.AnchorId, data.Pose.Value);
+            transform.SetParent(parent.Instance.transform);
+            transform.SetLocalPose(data.Pose.Value);
         }
 
         UnityDispatcher.InvokeOnAppThread(() =>

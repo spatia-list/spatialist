@@ -422,7 +422,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                         // Attach the the
                         PostItManager manager = go.GetComponent<PostItManager>();
                         manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
-                        manager.SetObject(postIt);
+                        manager.SetObject(postIt, anchor);
 
                         Debug.DrawRay(anchor.Instance.transform.position, go.transform.position, Color.red);
 
@@ -456,7 +456,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 }
             default:
                 {
-                    Debug.Log("APP_DEBUG: TODO");
+                    _state = ManagerState.CREATE;
                     break;
                 }
         }
@@ -656,7 +656,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             // Attach the post-it Game Object to the PostItManager script
             PostItManager manager = postItGameObject.GetComponent<PostItManager>();
             manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
-            manager.SetObject(data);
+            manager.SetObject(data, null);
 
 
             // Ones the user presses on the save button, the post-it is saved
@@ -732,15 +732,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         Debug.Log($"APP_DEBUG: ASA - Found closest Anchor {closestAnchor.anchorId} has distance {anchorDistance}");
 
-        //relative position and rotation calculation
-        // Calculate relative position (post-it position relative to anchor position)
-        Vector3 postitRelativePosition = closestAnchor.Instance.transform.InverseTransformPoint(postitWorldPosition);
+        postit.transform.SetParent(closestAnchor.Instance.transform);
 
-        // Calculate relative rotation (post-it rotation relative to anchor rotation)
-        Quaternion postitWorldRotation = postit.transform.rotation;
-        Quaternion postitRelativeRotation = Quaternion.Inverse(closestAnchor.Instance.transform.rotation) * postitWorldRotation;
-
-        Pose poseTransform = new Pose(postitRelativePosition, postitRelativeRotation);
+        Pose poseTransform = postit.transform.GetLocalPose();
 
         Debug.Log("APP_DEBUG: ASA - Found pose transform " + poseTransform.ToString());
         return new Tuple<Pose?, string>(poseTransform, closest.Item1.anchorId);
