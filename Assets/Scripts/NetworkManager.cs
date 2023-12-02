@@ -411,6 +411,34 @@ public class NetworkManager : MonoBehaviour
 
     }
 
+    // Delete post-it from the DB
+    public async Task<bool> DeletePostIt(PostIt postIt)
+    {
+        try
+        {
+            // Do the actual request and await the response
+            var httpClient = new HttpClient();
+            var httpResponse = await httpClient.DeleteAsync(EndpointURL + $"/postit/{postIt.Id}");
+
+            // If the response contains content we want to read it!
+            if (httpResponse.Content != null)
+            {
+                var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                // MessageResponseJSON res = Newtonsoft.Json.JsonConvert.DeserializeObject<MessageResponseJSON>(responseContent);
+                Debug.Log(responseContent);
+            }
+            // Call RefreshData 
+            return true;
+
+        }
+        catch (Exception e)
+        {
+            Debug.Log("APP_DEBUG: NetManager - " + e.Message);
+            return false;
+        }
+    }
+
 
 
 }
