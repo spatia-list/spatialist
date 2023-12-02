@@ -70,6 +70,7 @@ public class PostItManager : MonoBehaviour
     // Called when the user locks (saves) the post it, by clicking on the lock button
     public void Lock()
     {
+        Debug.Log("Locking post it");
         _state = PostItState.LOCKED;
         UnlockButton.SetActive(true);
         LockButton.SetActive(false);
