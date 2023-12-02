@@ -428,7 +428,6 @@ public class NetworkManager : MonoBehaviour
                 // MessageResponseJSON res = Newtonsoft.Json.JsonConvert.DeserializeObject<MessageResponseJSON>(responseContent);
                 Debug.Log(responseContent);
             }
-            // Call RefreshData 
             return true;
 
         }
