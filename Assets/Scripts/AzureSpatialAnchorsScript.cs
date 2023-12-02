@@ -182,7 +182,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <summary>
     /// The distance threshold to attach a post-it to an anchor (in meters)
     /// </summary>
-    private float _anchorDistanceThreshold = 1;
+    private float _anchorDistanceThreshold = 3;
 
     // <Start>
     // Start is called before the first frame update
