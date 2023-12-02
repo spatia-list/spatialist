@@ -160,6 +160,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// Used to keep track of all found postits
     /// </summary>
     private List<PostIt> _foundPostIts = new();
+    private List<PostItManager> _foundPostItManagers = new();
 
     /// <summary>
     /// Used to keep track of all available postits
@@ -382,12 +383,59 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Debug.Log("APP_DEBUG: Skipping anchor refresh!");
         }
 
+        if(await  _networkManager.ShouldRefreshPostIts())
+        {
+            await GetAndPlacePostIts();
+        }
+
         // Check if we have a swipe from the API for the current user
         PostIt swiped = await _networkManager.GetSwipe();
         if (swiped != null)
         {
             Debug.Log("APP_DEBUG: Creating swipe!");
             CreateSwipe(swiped);
+        }
+    }
+
+    public async Task GetAndPlacePostIts()
+    {
+        _availablePostIts = await _networkManager.GetPostIts();
+
+        // construct list of found anchor IDs
+        List<string> anchors = new List<string>();
+        foreach(LocalAnchor anchor in _foundLocalAnchors)
+        {
+            anchors.Add(anchor.anchorId);
+        }
+
+        _foundPostItManagers.Clear();
+        _foundPostIts.Clear();
+
+        // filter the available postits 
+        foreach(PostIt postIt in _availablePostIts)
+        {
+            foreach (string id in anchors)
+            {
+                if (id == postIt.AnchorId)
+                {
+                    Debug.Log("ASA - Found a local postit, placing...");
+                    _foundPostIts.Add(postIt);
+                    UnityDispatcher.InvokeOnAppThread(() =>
+                    {
+                        GameObject go = Instantiate(PostItPrefab);
+                        // Attach the the
+                        PostItManager manager = go.GetComponent<PostItManager>();
+                        manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
+                        manager.SetObject(postIt);
+
+                        _foundPostItManagers.Add(manager);
+                        _foundPostIts.Add(postIt);
+                    });
+
+                    Debug.Log("ASA - Postit successfully placed!");
+                    break;
+                }
+            }
         }
     }
 
@@ -418,75 +466,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public void SetStateIdle() { _state = ManagerState.IDLE; }
 
-
-    public void SetWatcher()
-    {
-        if (_existingLocalAnchors.Count <= 0)
-        {
-            Debug.Log("APP_DEBUG: No watchers to add.");
-            return; // dont add watcher if no anchors defined
-        }
-
-
-
-        Debug.Log("APP_DEBUG: Setting up watcher...");
-
-
-        List<String> localAnchors = new List<String>();
-        foreach (var localAnchor in _existingLocalAnchors)
-        {
-            localAnchors.Add(localAnchor.anchorId);
-            Debug.Log($"APP_DEBUG: Adding to watcher: {localAnchor.anchorId}");
-        }
-
-        // Set the session's locate criteria
-        AnchorLocateCriteria anchorLocateCriteria = new AnchorLocateCriteria
-        {
-            Identifiers = localAnchors.ToArray(),
-        };
-
-        //anchorLocateCriteria.BypassCache = true;
-
-        CloudSpatialAnchorWatcher watcher = _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
-
-        Debug.Log($"APP_DEBUG: ASA - Watcher created!");
-
-    }
-
-
-    /// <ResetSession>
-    /// <summary>
-    /// Start the ASA session
-    /// </summary>
-    private async void StartSession()
-    {
-        Debug.Log("APP_DEBUG: Starting Session");
-
-        if (_spatialAnchorManager == null)
-        {
-            Debug.Log("APP_DEBUG: Cannot start session, no spatial manager.");
-            return;
-        }
-
-
-        if (_spatialAnchorManager.IsSessionStarted)
-        {
-            CloudSpatialAnchorSession session = _spatialAnchorManager.Session;
-            if (session == null)
-            {
-                Debug.Log("APP_DEBUG: Could not fetch session");
-            }
-            else
-            {
-                session.Dispose();
-                _spatialAnchorManager.StopSession();
-                _spatialAnchorManager.DestroySession();
-            }
-
-        }
-
-    }
-    ///</ResetSession>
 
     public void HideAnchors()
     {
@@ -788,6 +767,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
 
         // Find the found anchor in list
+        Debug.Log("ASA - Trying to find local anchor corresponding to postit");
         LocalAnchor localAnchor = null;
         foreach (LocalAnchor anchor in _foundLocalAnchors)
         {
@@ -802,6 +782,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         {
             Debug.Log("APP_DEBUG: ASA - Did not find source anchor in ApplyPoseFromCosmos"); return null;
         }
+
+        Debug.Log("ASA - Found corresponding local anchor, attaching");
 
         Vector3 postitPositionTransform = localAnchor.Instance.transform.position + savedPose.position;
         Quaternion postitRotationTransform = localAnchor.Instance.transform.rotation * savedPose.rotation;

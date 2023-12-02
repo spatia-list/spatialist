@@ -49,6 +49,7 @@ public class PostItManager : MonoBehaviour
 
         if (data.Pose != null)
         {
+            Debug.Log("ASA - Applying Pose on PostIt from server");
             poseTransform = _script.ApplyPoseFromCosmos(data.AnchorId, data.Pose.Value);
         }
 
