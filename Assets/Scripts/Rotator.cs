@@ -13,7 +13,7 @@ public class Rotator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Debug.Log("Starting rotation");
+        Debug.Log("APP_DEBUG: Starting rotation");
     }
 
     // Update is called once per frame

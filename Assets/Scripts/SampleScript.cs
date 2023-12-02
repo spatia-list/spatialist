@@ -42,7 +42,7 @@ public class SampleScript : MonoBehaviour
     {
         _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
         _networkManager = GetComponent<NetworkManager>();
-        _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"ASA - Debug: {args.Message}");
+        _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"APP_DEBUG: ASA - Debug: {args.Message}");
         _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
         _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
         TouchSession();
@@ -68,7 +68,7 @@ public class SampleScript : MonoBehaviour
                         //User has been tapping for less than 1 sec. Get hand position and call ShortTap
                         if (device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 handPosition))
                         {
-                            
+
                         }
                     }
                     _tappingTimer[i] = 0;
@@ -81,7 +81,7 @@ public class SampleScript : MonoBehaviour
                         //User has been air tapping for at least 2sec. Get hand position and call LongTap
                         if (device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 handPosition))
                         {
-                           
+
                         }
                         _tappingTimer[i] = -float.MaxValue; // reset the timer, to avoid retriggering if user is still holding tap
                     }
@@ -104,7 +104,7 @@ public class SampleScript : MonoBehaviour
         {
             // Stop Session and remove all GameObjects. This does not delete the Anchors in the cloud
             _spatialAnchorManager.DestroySession();
-            Debug.Log("ASA - Stopped Session and removed all Anchor Objects");
+            Debug.Log("APP_DEBUG: ASA - Stopped Session and removed all Anchor Objects");
         }
         else
         {
@@ -129,18 +129,18 @@ public class SampleScript : MonoBehaviour
         List<string> names = new List<String>();
         foreach (LocalAnchor anchor in anchors)
         {
-            Debug.Log("ASA - api anchor " + anchor.anchorId);
+            Debug.Log("APP_DEBUG: ASA - api anchor " + anchor.anchorId);
             names.Add(anchor.anchorId);
         }
 
         if (anchors.Count > 0)
         {
             //Create watcher to look for all stored anchor IDs
-            Debug.Log($"ASA - Creating watcher to look for {anchors.Count} spatial anchors");
+            Debug.Log($"APP_DEBUG: ASA - Creating watcher to look for {anchors.Count} spatial anchors");
             AnchorLocateCriteria anchorLocateCriteria = new AnchorLocateCriteria();
             anchorLocateCriteria.Identifiers = names.ToArray();
             _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
-            Debug.Log($"ASA - Watcher created!");
+            Debug.Log($"APP_DEBUG: ASA - Watcher created!");
         }
     }
     // </LocateAnchor>
@@ -153,7 +153,7 @@ public class SampleScript : MonoBehaviour
     /// <param name="args">Callback AnchorLocatedEventArgs</param>
     private void SpatialAnchorManager_AnchorLocated(object sender, AnchorLocatedEventArgs args)
     {
-        Debug.Log($"ASA - Anchor recognized as a possible anchor {args.Identifier} {args.Status}");
+        Debug.Log($"APP_DEBUG: ASA - Anchor recognized as a possible anchor {args.Identifier} {args.Status}");
 
         if (args.Status == LocateAnchorStatus.Located)
         {
@@ -165,7 +165,7 @@ public class SampleScript : MonoBehaviour
                     // Read out Cloud Anchor values
                     CloudSpatialAnchor cloudSpatialAnchor = args.Anchor;
 
-                    Debug.Log($"ASA - Anchor recognized as a possible anchor {args.Identifier} {args.Status}");
+                    Debug.Log($"APP_DEBUG: ASA - Anchor recognized as a possible anchor {args.Identifier} {args.Status}");
 
                     //Create GameObject
                     GameObject anchorGameObject = Instantiate(AnchorPrefab);
@@ -177,10 +177,10 @@ public class SampleScript : MonoBehaviour
                 }
                 catch (Exception ex)
                 {
-                    Debug.Log("ASA - ERROR in relocalize");
+                    Debug.Log("APP_DEBUG: ASA - ERROR in relocalize");
                     Debug.LogException(ex);
                 }
-                
+
             });
         }
     }

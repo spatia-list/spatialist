@@ -36,7 +36,7 @@ public class PostItJSON
     public string _attachments { get; set; }
     public int _ts { get; set; }
 
-    
+
 }
 
 public class SwipeJSON
@@ -113,7 +113,8 @@ public class PostItUploadJSON
         {
             res.type = "media";
             res.media_content = postIt.Content;
-        } else
+        }
+        else
         {
             res.type = "text";
             res.text_content = postIt.Content;
@@ -124,15 +125,15 @@ public class PostItUploadJSON
 }
 
 
-    public class GetPostItsResponseJSON
+public class GetPostItsResponseJSON
 {
     public List<PostItJSON> postits { get; set; }
 }
 
 public class AnchorJSON
-{ 
+{
     public string id { get; set; }
-    public string anchor_id { get; set;}
+    public string anchor_id { get; set; }
     public string owner { get; set; }
     public string _rid { get; set; }
     public string _self { get; set; }
@@ -143,7 +144,7 @@ public class AnchorJSON
 
 public class GetAnchorsResponseJSON
 {
-    public List<AnchorJSON> anchors { get; set;}
+    public List<AnchorJSON> anchors { get; set; }
 }
 
 public class HashMessageJSON
@@ -165,23 +166,23 @@ public class NetworkManager : MonoBehaviour
     private string _lastPostItsHash;
     private string _lastAnchorsHash;
 
-    
+
 
     // Start is called before the first frame update
     void Start()
     {
         if (string.IsNullOrEmpty(EndpointURL))
         {
-            Debug.Log("Unassigned Endpoint URL");
+            Debug.Log("APP_DEBUG: Unassigned Endpoint URL");
         }
 
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     private async Task<string> getAsync(string endpoint)
@@ -199,7 +200,7 @@ public class NetworkManager : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.Log($" NetManager::{endpoint} - {ex.Message}");
+            Debug.Log($"APP_DEBUG:  NetManager::{endpoint} - {ex.Message}");
             return "";
         }
     }
@@ -237,8 +238,9 @@ public class NetworkManager : MonoBehaviour
     {
         string newHash = await GetPostItsHash();
         if (_lastPostItsHash == null || newHash != _lastPostItsHash)
-        { _lastPostItsHash = newHash; 
-            return true; 
+        {
+            _lastPostItsHash = newHash;
+            return true;
         }
         return false;
     }
@@ -255,10 +257,10 @@ public class NetworkManager : MonoBehaviour
         GetPostItsResponseJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<GetPostItsResponseJSON>(textResponse);
 
         // print the number of postits
-        Debug.Log("Total post-it count: " + response.postits.Count);
+        Debug.Log("APP_DEBUG: Total post-it count: " + response.postits.Count);
 
         // print all post-its titles, text content and rgb in one line
-        Debug.Log("all post-its titles:");
+        Debug.Log("APP_DEBUG: all post-its titles:");
         foreach (PostItJSON postIt in response.postits)
         {
             Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2]);
@@ -283,7 +285,7 @@ public class NetworkManager : MonoBehaviour
         GetAnchorsResponseJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<GetAnchorsResponseJSON>(textResponse);
 
         // print the number of postits
-        Debug.Log("Total anchor count: " + response.anchors.Count);
+        Debug.Log("APP_DEBUG: Total anchor count: " + response.anchors.Count);
 
 
         List<LocalAnchor> anchorList = new();
@@ -293,7 +295,7 @@ public class NetworkManager : MonoBehaviour
                     anchor.anchor_id,
                     anchor.owner
                 ));
-            Debug.Log("Found anchor with id:" + anchor.anchor_id);
+            Debug.Log("APP_DEBUG: Found anchor with id:" + anchor.anchor_id);
         }
 
         return anchorList;
@@ -310,7 +312,7 @@ public class NetworkManager : MonoBehaviour
         SwipeJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<SwipeJSON>(textResponse);
 
         // print the number of postits
-        Debug.Log("New swipe available:" + response.hasSwipe);
+        Debug.Log("APP_DEBUG: New swipe available:" + response.hasSwipe);
 
         if (response.hasSwipe == "true")
         {
@@ -367,9 +369,10 @@ public class NetworkManager : MonoBehaviour
             }
             return true;
 
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
-            Debug.Log("NetManager - " + e.Message);
+            Debug.Log("APP_DEBUG: NetManager - " + e.Message);
             return false;
         }
     }
@@ -400,11 +403,12 @@ public class NetworkManager : MonoBehaviour
                 // MessageResponseJSON res = Newtonsoft.Json.JsonConvert.DeserializeObject<MessageResponseJSON>(responseContent);
                 Debug.Log(responseContent);
             }
-        } catch (Exception e)
-        {
-            Debug.Log("NetManager - " + e.Message);
         }
-        
+        catch (Exception e)
+        {
+            Debug.Log("APP_DEBUG: NetManager - " + e.Message);
+        }
+
 
     }
 

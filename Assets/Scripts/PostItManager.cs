@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine;
 
 
-public enum PostItState {LOCKED, UNLOCKED}
+public enum PostItState { LOCKED, UNLOCKED }
 
 public class PostItManager : MonoBehaviour
 {
@@ -40,11 +40,11 @@ public class PostItManager : MonoBehaviour
     {
         if (data == null)
         {
-            Debug.Log("PostIt - Tried to assign a null data obj");
+            Debug.Log("APP_DEBUG: PostIt - Tried to assign a null data obj");
             return; // stops the execution
         }
         _data = data;
-        
+
         Pose? poseTransform = null;
 
         if (data.Pose != null)
@@ -55,7 +55,7 @@ public class PostItManager : MonoBehaviour
         UnityDispatcher.InvokeOnAppThread(() =>
         {
             Text.SetText(_data.Content);
-            Debug.Log("Setting content to:" +  _data.Content);
+            Debug.Log("APP_DEBUG: Setting content to:" + _data.Content);
             Title.SetText(_data.Title);
 
             if (poseTransform != null)
@@ -63,14 +63,14 @@ public class PostItManager : MonoBehaviour
                 transform.SetPositionAndRotation(poseTransform.Value.position, poseTransform.Value.rotation);
             }
         });
-            
+
     }
 
 
     // Called when the user locks (saves) the post it, by clicking on the lock button
     public void Lock()
     {
-        Debug.Log("Locking post it");
+        Debug.Log("APP_DEBUG: Locking post it");
         _state = PostItState.LOCKED;
         UnlockButton.SetActive(true);
         LockButton.SetActive(false);
@@ -84,7 +84,7 @@ public class PostItManager : MonoBehaviour
     // Called when the user unlocks (to edit) the post it, by clicking on the unlock button
     public void Unlock()
     {
-        _state= PostItState.UNLOCKED;
+        _state = PostItState.UNLOCKED;
         UnlockButton.SetActive(false);
         LockButton.SetActive(true);
     }

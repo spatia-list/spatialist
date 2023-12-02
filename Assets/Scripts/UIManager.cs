@@ -81,61 +81,61 @@ public class UIManager : MonoBehaviour
         {
             case UIState.WELCOME:
                 {
-                    
+
                     break;
                 }
 
             case UIState.LAUNCH:
                 {
-                    
+
                     break;
                 }
 
             case UIState.SELECT_MAP:
                 {
-                    
+
                     break;
                 }
 
             case UIState.MAPPING_MAIN:
                 {
-                    
+
                     break;
                 }
 
             case UIState.MAPPING_MODE:
                 {
-                    
+
                     break;
                 }
 
             case UIState.MAPPING_CHANGE_NAME:
                 {
-                    
+
                     break;
                 }
 
             case UIState.MAPPING_CONFIRM_CANCEL:
                 {
-                    
+
                     break;
                 }
 
             case UIState.LOCALIZATION:
                 {
-                    
+
                     break;
                 }
 
             case UIState.POSTIT:
                 {
-                    
+
                     break;
                 }
 
             default:
                 {
-                    
+
                     break;
                 }
         }
@@ -147,7 +147,7 @@ public class UIManager : MonoBehaviour
     /// <param name="state">UIState that represents the next view that we want to display</param>
     private GameObject getView(UIState state)
     {
-        return _list[(int) state];
+        return _list[(int)state];
     }
 
     /// <summary>
@@ -161,12 +161,12 @@ public class UIManager : MonoBehaviour
         if (_currentView)
         {
             _currentView.SetActive(false);
-        }     
+        }
 
         _currentState = state;
 
         _currentView = getView(state);
-        
+
         if (_currentView != null)
         {
             _currentView.SetActive(true);
@@ -179,7 +179,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void SetU1() { SetState(UIState.WELCOME); }
 
-    public void SetU2() { SetState(UIState.LAUNCH);}
+    public void SetU2() { SetState(UIState.LAUNCH); }
 
     public void SetU3() { SetState(UIState.SELECT_MAP); }
 
