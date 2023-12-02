@@ -87,5 +87,6 @@ public class PostItManager : MonoBehaviour
         _state = PostItState.UNLOCKED;
         UnlockButton.SetActive(false);
         LockButton.SetActive(true);
+
     }
 }

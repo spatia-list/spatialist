@@ -831,6 +831,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         return null;
     }
 
+    public void ChangePostItColor()
+    {
+
+    }
+
     public void CreateSwipe(PostIt content)
     {
         //Create Anchor GameObject. We will use ASA to save the position and the rotation of this GameObject.
