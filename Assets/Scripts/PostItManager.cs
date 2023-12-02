@@ -46,14 +46,8 @@ public class PostItManager : MonoBehaviour
         }
         _data = data;
 
-        Pose? poseTransform = null;
 
-        if (data.Pose != null && parent != null)
-        {
-            Debug.Log("ASA - Applying Pose on PostIt from server");
-            transform.SetParent(parent.Instance.transform);
-            transform.SetLocalPose(data.Pose.Value);
-        }
+        
 
         UnityDispatcher.InvokeOnAppThread(() =>
         {
@@ -61,9 +55,11 @@ public class PostItManager : MonoBehaviour
             Debug.Log("APP_DEBUG: Setting content to:" + _data.Content);
             Title.SetText(_data.Title);
 
-            if (poseTransform != null)
+            if (data.Pose != null && parent != null)
             {
-                transform.SetPositionAndRotation(poseTransform.Value.position, poseTransform.Value.rotation);
+                Debug.Log("ASA - Applying Pose on PostIt from server");
+                transform.SetParent(parent.Instance.transform);
+                transform.SetLocalPose(data.Pose.Value);
             }
 
             transform.localScale = Vector3.one * data.Scale;
