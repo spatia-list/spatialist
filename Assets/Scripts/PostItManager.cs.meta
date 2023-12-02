@@ -3,7 +3,16 @@ guid: 5c661c02840662e4fa7f7f3651bf1552
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - Text: {instanceID: 0}
+  - Title: {instanceID: 0}
+  - LockButton: {instanceID: 0}
+  - UnlockButton: {instanceID: 0}
+  - Material1: {fileID: 2100000, guid: cb74390ea57642f8b5ca0aa8f5fb38c1, type: 2}
+  - Material2: {fileID: 2100000, guid: 67e4ae112f094f3082e033060c3cd298, type: 2}
+  - Material3: {fileID: 2100000, guid: 47f3c5e1cb6142ba9697cd4c86d74321, type: 2}
+  - Material4: {fileID: 2100000, guid: c4a1b7475a654dd0acaa0cfdfba2e20c, type: 2}
+  - Material5: {fileID: 2100000, guid: 3c55769e893c4f4c8c51b7fa69bee2b9, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

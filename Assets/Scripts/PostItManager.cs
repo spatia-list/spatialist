@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using Unity.XR.CoreUtils;
+using Unity.Mathematics;
 using UnityEngine;
 
 
@@ -20,6 +20,21 @@ public class PostItManager : MonoBehaviour
     public TextMeshPro Title;
     public GameObject LockButton;
     public GameObject UnlockButton;
+
+    /// <summary>
+    /// New material to change for post it
+    /// </summary>
+    public Material Material_1;
+    public Material Material_2;
+    public Material Material_3;
+    public Material Material_4;
+    public Material Material_5;
+
+    public GameObject Color1Button;
+    public GameObject Color2Button;
+    public GameObject Color3Button;
+    public GameObject Color4Button;
+    public GameObject Color5Button;
 
     // Start is called before the first frame update
     void Start()
@@ -67,14 +82,67 @@ public class PostItManager : MonoBehaviour
 
     }
 
+    public void ChangeColorYellow()
+    {
+        ChangePostItColor(Material_1);
+    }
+
+    public void ChangeColorPink()
+    {
+        ChangePostItColor(Material_2);
+    }
+
+    public void ChangeColorGreen()
+    {
+        ChangePostItColor(Material_3);
+    }
+
+    public void ChangeColorRed()
+    {
+        ChangePostItColor(Material_4);
+    }
+
+    public void ChangeColorBlue()
+    {
+        ChangePostItColor(Material_5);
+    }
+
+    public void ChangePostItColor(Material mat)
+    {
+        Transform quad = gameObject.transform.Find("ContentQuad");
+        Transform backPlate = gameObject.transform.Find("TitleBar/BackPlate");
+
+        Debug.Log("APP_DEBUG: Getting ContentQuad from PostItPrefab");
+
+        if (quad != null && backPlate != null)
+        {
+            GameObject quadGO = quad.gameObject;
+            GameObject backPlateGO = backPlate.gameObject; 
+
+            MeshRenderer quadRend = quadGO.GetComponent<MeshRenderer>();
+            MeshRenderer backPlateRend = backPlateGO.GetComponent<MeshRenderer>();
+
+            quadRend.material = mat;
+            backPlateRend.material = mat;
+
+            Debug.Log("APP_DEBUG: Setting ContentQuad material.");
+        }
+    }
+
 
     // Called when the user locks (saves) the post it, by clicking on the lock button
     public void Lock()
     {
         Debug.Log("APP_DEBUG: Locking post it");
-        _state = PostItState.LOCKED; // implemented just in case
+        _state = PostItState.LOCKED;
         UnlockButton.SetActive(true);
         LockButton.SetActive(false);
+        Color1Button.SetActive(false);
+        Color2Button.SetActive(false);
+        Color3Button.SetActive(false);
+        Color4Button.SetActive(false);
+        Color5Button.SetActive(false);
+
         Exception ex = _script.SavePostIt(_data, gameObject);
         if (ex != null)
         {
@@ -86,7 +154,12 @@ public class PostItManager : MonoBehaviour
     public void Unlock()
     {
         _state = PostItState.UNLOCKED;
-        UnlockButton.SetActive(false);
+        //UnlockButton.SetActive(false);
         LockButton.SetActive(true);
+        Color1Button.SetActive(true);
+        Color2Button.SetActive(true);
+        Color3Button.SetActive(true);
+        Color4Button.SetActive(true);
+        Color5Button.SetActive(true);
     }
 }
