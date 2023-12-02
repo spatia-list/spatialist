@@ -1,5 +1,6 @@
 using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
+using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Experimental.UI;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.XR;
 using UnityEngine.XR.ARFoundation;
 
@@ -187,6 +189,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     private float _anchorDistanceThreshold = 3;
 
+    // Create a new UnityEvent that can be assigned in the Unity editor
+    public UnityEvent onShortTap; 
+
     // <Start>
     // Start is called before the first frame update
     void Start()
@@ -315,6 +320,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
 
         Debug.Log("APP_DEBUG: Detected a tap!");
+
+        // Fire the onShortTap event
+        onShortTap?.Invoke();
 
         switch (_state)
         {
