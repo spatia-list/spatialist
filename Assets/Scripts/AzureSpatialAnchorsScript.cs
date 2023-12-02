@@ -620,7 +620,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     /// <param name="position"> postit_position_W post-it creation (in world space) </param>
     /// <returns> Async Task </returns>
-    private void CreatePostIt(Vector3 postitWorldPosition, PostIt obj)
+    private void CreatePostIt(Vector3 postitWorldPosition, PostIt data)
     {
         UnityDispatcher.InvokeOnAppThread(async () =>
         {
@@ -649,21 +649,21 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 headWorldPosition = Vector3.zero;
             }
             
+            /// Create the post-it GameObject ///
             // Calculate rotation in the world coordinate frame towards the headset
             Quaternion worldRotationTowardsHead = Quaternion.LookRotation(postitWorldPosition - headWorldPosition, Vector3.up);
-            
             // Initializing the post it GameObject
             GameObject postItGameObject = Instantiate(PostItPrefab, postitWorldPosition, worldRotationTowardsHead);
             // Scale the post-it to be 30cm in height
             postItGameObject.transform.localScale = Vector3.one * 0.3f;
 
+            // Attach the the
             PostItManager manager = postItGameObject.GetComponent<PostItManager>();
-            manager.AttachToInstance(this);
-            manager.SetObject(obj);
+            manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
+            manager.SetObject(data);
 
 
             // Ones the user presses on the save button, the post-it is saved
-
 
             // Features to develop:
             // Setting the anchor as the parent GameObject (so we can calculate relative tranformations later)
@@ -785,10 +785,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Debug.Log("ASA - Did not find source anchor in ApplyPoseFromCosmos"); return null;
         }
 
-        Vector3 positionTransform = localAnchor.Instance.transform.position + savedPose.position;
-        Quaternion rotationTransform = Quaternion.Euler(localAnchor.Instance.transform.rotation.eulerAngles + savedPose.rotation.eulerAngles);
+        Vector3 postitPositionTransform = localAnchor.Instance.transform.position + savedPose.position;
+        Quaternion postitRotationTransform = localAnchor.Instance.transform.rotation * savedPose.rotation;
 
-        return new Pose(positionTransform, rotationTransform);
+        return new Pose(postitPositionTransform, postitRotationTransform);
 
     }
 
