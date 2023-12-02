@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Mathematics;
 using UnityEngine;
 
 
@@ -23,7 +24,17 @@ public class PostItManager : MonoBehaviour
     /// <summary>
     /// New material to change for post it
     /// </summary>
-    public Material newMaterial;
+    public Material Material_1;
+    public Material Material_2;
+    public Material Material_3;
+    public Material Material_4;
+    public Material Material_5;
+
+    public GameObject Color1Button;
+    public GameObject Color2Button;
+    public GameObject Color3Button;
+    public GameObject Color4Button;
+    public GameObject Color5Button;
 
     // Start is called before the first frame update
     void Start()
@@ -71,15 +82,49 @@ public class PostItManager : MonoBehaviour
 
     }
 
-    public void ChangePostItColor()
+    public void ChangeColorYellow()
     {
-        Transform t = gameObject.transform.Find("ContentQuad");
+        ChangePostItColor(Material_1);
+    }
+
+    public void ChangeColorPink()
+    {
+        ChangePostItColor(Material_2);
+    }
+
+    public void ChangeColorGreen()
+    {
+        ChangePostItColor(Material_3);
+    }
+
+    public void ChangeColorRed()
+    {
+        ChangePostItColor(Material_4);
+    }
+
+    public void ChangeColorBlue()
+    {
+        ChangePostItColor(Material_5);
+    }
+
+    public void ChangePostItColor(Material mat)
+    {
+        Transform quad = gameObject.transform.Find("ContentQuad");
+        Transform backPlate = gameObject.transform.Find("TitleBar/BackPlate");
+
         Debug.Log("APP_DEBUG: Getting ContentQuad from PostItPrefab");
-        if (t != null)
+
+        if (quad != null && backPlate != null)
         {
-            GameObject go = t.gameObject;
-            MeshRenderer rend = go.GetComponent<MeshRenderer>();
-            rend.material = newMaterial;
+            GameObject quadGO = quad.gameObject;
+            GameObject backPlateGO = backPlate.gameObject; 
+
+            MeshRenderer quadRend = quadGO.GetComponent<MeshRenderer>();
+            MeshRenderer backPlateRend = backPlateGO.GetComponent<MeshRenderer>();
+
+            quadRend.material = mat;
+            backPlateRend.material = mat;
+
             Debug.Log("APP_DEBUG: Setting ContentQuad material.");
         }
     }
@@ -92,6 +137,12 @@ public class PostItManager : MonoBehaviour
         _state = PostItState.LOCKED;
         UnlockButton.SetActive(true);
         LockButton.SetActive(false);
+        Color1Button.SetActive(false);
+        Color2Button.SetActive(false);
+        Color3Button.SetActive(false);
+        Color4Button.SetActive(false);
+        Color5Button.SetActive(false);
+
         Exception ex = _script.SavePostIt(_data, gameObject);
         if (ex != null)
         {
@@ -103,8 +154,12 @@ public class PostItManager : MonoBehaviour
     public void Unlock()
     {
         _state = PostItState.UNLOCKED;
-        UnlockButton.SetActive(false);
+        //UnlockButton.SetActive(false);
         LockButton.SetActive(true);
-        ChangePostItColor();
+        Color1Button.SetActive(true);
+        Color2Button.SetActive(true);
+        Color3Button.SetActive(true);
+        Color4Button.SetActive(true);
+        Color5Button.SetActive(true);
     }
 }
