@@ -48,7 +48,7 @@ public class PostItManager : MonoBehaviour
 
         if (obj.Pose != null)
         {
-            poseTransform = _script.ApplySavedPose(obj.AnchorId, obj.Pose.Value);
+            poseTransform = _script.ApplyPoseFromCosmos(obj.AnchorId, obj.Pose.Value);
         }
 
         UnityDispatcher.InvokeOnAppThread(() =>
