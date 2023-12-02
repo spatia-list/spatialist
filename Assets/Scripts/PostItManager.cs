@@ -71,7 +71,7 @@ public class PostItManager : MonoBehaviour
     public void Lock()
     {
         Debug.Log("APP_DEBUG: Locking post it");
-        _state = PostItState.LOCKED;
+        _state = PostItState.LOCKED; // implemented just in case
         UnlockButton.SetActive(true);
         LockButton.SetActive(false);
         Exception ex = _script.SavePostIt(_data, gameObject);

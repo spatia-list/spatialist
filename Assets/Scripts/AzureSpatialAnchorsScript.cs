@@ -667,7 +667,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             // Scale the post-it to be 30cm in height
             postItGameObject.transform.localScale = Vector3.one * 0.3f;
 
-            // Attach the the
+            // Attach the post-it Game Object to the PostItManager script
             PostItManager manager = postItGameObject.GetComponent<PostItManager>();
             manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
             manager.SetObject(data);
