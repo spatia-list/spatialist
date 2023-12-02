@@ -181,26 +181,26 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // Set state to idle
-        // _state = ManagerState.IDLE;
-        // Debug.Log("starting the session");
+        //Set state to idle
+        _state = ManagerState.IDLE;
+        Debug.Log("starting the session");
 
-        // // Fetch all managers
-        // _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
-        // _networkManager = GetComponent<NetworkManager>();
+        // Fetch all managers
+        _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
+        _networkManager = GetComponent<NetworkManager>();
 
-        // // Set debuggers
-        // _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"ASA - Debug: {args.Message}");
-        // _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
+        // Set debuggers
+        _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"ASA - Debug: {args.Message}");
+        _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
         
-        // // Set the callback for when anchors are found
-        // _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
+        // Set the callback for when anchors are found
+        _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
         
-        // // Start the ASA session and load all anchors and add to watcher
-        // StartAndLoadASASession();
+        // Start the ASA session and load all anchors and add to watcher
+        StartAndLoadASASession();
 
-        // // Start the refresh timer
-        // _refreshTimer = 0.0f;
+        // Start the refresh timer
+        _refreshTimer = 0.0f;
 
     }
     // </Start>
@@ -257,40 +257,40 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     void Update()
     {
 
-        // Check for any air taps from either left hand or right hand
-        // for (int handTypeIndex = 0; handTypeIndex < 2; handTypeIndex++)
-        // {
-        //     InputDevice device = InputDevices.GetDeviceAtXRNode((handTypeIndex == 0) ? XRNode.RightHand : XRNode.LeftHand);
-        //     if (device.TryGetFeatureValue(CommonUsages.primaryButton, out bool isTapping))
-        //     {
-        //         if (!isTapping)
-        //         {
-        //             //Stopped Tapping or wasn't tapping
-        //             if (0f < _tappingTimer[handTypeIndex] && _tappingTimer[handTypeIndex] < 1f)
-        //             {
-        //                 //User has been tapping for less than 1 sec. Get hand position and call ShortTap
-        //                 if (device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 handPosition))
-        //                 {
-        //                     ShortTap(handPosition);
-        //                 }
-        //             }
-        //             _tappingTimer[handTypeIndex] = 0;
-        //         }
-        //         else
-        //         {
-        //             _tappingTimer[handTypeIndex] += Time.deltaTime;
+        //Check for any air taps from either left hand or right hand
+        for (int handTypeIndex = 0; handTypeIndex < 2; handTypeIndex++)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode((handTypeIndex == 0) ? XRNode.RightHand : XRNode.LeftHand);
+            if (device.TryGetFeatureValue(CommonUsages.primaryButton, out bool isTapping))
+            {
+                if (!isTapping)
+                {
+                    //Stopped Tapping or wasn't tapping
+                    if (0f < _tappingTimer[handTypeIndex] && _tappingTimer[handTypeIndex] < 1f)
+                    {
+                        //User has been tapping for less than 1 sec. Get hand position and call ShortTap
+                        if (device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 handPosition))
+                        {
+                            ShortTap(handPosition);
+                        }
+                    }
+                    _tappingTimer[handTypeIndex] = 0;
+                }
+                else
+                {
+                    _tappingTimer[handTypeIndex] += Time.deltaTime;
 
-        //         }
-        //     }
-        // }
+                }
+            }
+        }
 
-        // _refreshTimer += Time.deltaTime;
-        // if (_refreshTimer > 5.0f)
-        // {
-        //     RefreshData();
+        _refreshTimer += Time.deltaTime;
+        if (_refreshTimer > 5.0f)
+        {
+            RefreshData();
 
-        //     _refreshTimer = 0.0f;
-        // }
+            _refreshTimer = 0.0f;
+        }
     }
     // </Update>
 
