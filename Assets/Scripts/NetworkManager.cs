@@ -328,8 +328,8 @@ public class NetworkManager : MonoBehaviour
 
         public NewLocalAnchorJSON(LocalAnchor anchor, string groupName)
         {
-            anchor_id = anchor.anchorId;
-            owner = groupName;
+            this.anchor_id = anchor.anchorId;
+            this.owner = groupName;
         }
     }
 
@@ -338,10 +338,9 @@ public class NetworkManager : MonoBehaviour
         public string message { get; set; }
     }
 
+    // POST local anchor to the DB
     public async Task<bool> PostAnchor(LocalAnchor newAnchor)
     {
-
-        
         try
         {
             NewLocalAnchorJSON entry = new NewLocalAnchorJSON(newAnchor, GroupName);
@@ -373,9 +372,6 @@ public class NetworkManager : MonoBehaviour
             Debug.Log("NetManager - " + e.Message);
             return false;
         }
-                                   
-
-
     }
 
     public async void PostPostIt(PostIt postIt)

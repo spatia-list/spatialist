@@ -1,14 +1,18 @@
 using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
+using Microsoft.MixedReality.Toolkit.Experimental.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+// using System.Numerics;
 using System.Threading.Tasks;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.XR.ARFoundation;
 
+
+// STRUCTURES //
 public enum ManagerState
 {
     IDLE, 
@@ -29,7 +33,7 @@ public class LocalAnchor
     }
 
     public void AttachInstance(GameObject instance)
-    { Instance = instance; }
+    { this.Instance = instance; }
 }
 
 public enum PostItType
@@ -76,8 +80,6 @@ public class PostIt
             type = PostItType.TEXT;
         }
 
-        
-
         if (data.rgb != null && data.rgb.Count >= 3)
         {
             color = new Color(data.rgb[0], data.rgb[1], data.rgb[2]);
@@ -117,6 +119,9 @@ public class PostIt
         return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null);
     }
 }
+// STRUCTURES //
+
+
 
 [RequireComponent(typeof(SpatialAnchorManager))]
 public class AzureSpatialAnchorsScript : MonoBehaviour
@@ -139,14 +144,14 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private NetworkManager _networkManager;
 
     /// <summary>
-    /// Used to keep track of all found local anchors
+    /// Used to keep track of all found local anchors, coming from Azure Spatial Anchors
     /// </summary>
     private List<LocalAnchor> _foundLocalAnchors = new();
 
     /// <summary>
-    /// Used to keep track of all available local anchors
+    /// Used to keep track of all existing local anchors, saved on the cosmos DB server
     /// </summary>
-    private List<LocalAnchor> _availableLocalAnchors = new();
+    private List<LocalAnchor> _existingLocalAnchors = new();
 
     /// <summary>
     /// Used to keep track of all found postits
@@ -176,11 +181,16 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     private String _currentGroup = "TestRoom";
 
+    /// <summary>
+    /// The distance threshold to attach a post-it to an anchor (in meters)
+    /// </summary>
+    private float _anchorDistanceThreshold = 3;
+
     // <Start>
     // Start is called before the first frame update
     void Start()
     {
-        // Set state to idle
+        //Set state to idle
         _state = ManagerState.IDLE;
         Debug.Log("starting the session");
 
@@ -195,8 +205,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         // Set the callback for when anchors are found
         _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
         
-        // Start the session
-        TouchSession();
+        // Start the ASA session and load all anchors and add to watcher
+        StartAndLoadASASession();
 
         // Start the refresh timer
         _refreshTimer = 0.0f;
@@ -204,49 +214,51 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
     // </Start>
 
-    private async void TouchSession()
+    private async void StartAndLoadASASession()
     {
         if (_spatialAnchorManager.IsSessionStarted)
         {
             // Stop Session and remove all GameObjects. This does not delete the Anchors in the cloud
             _spatialAnchorManager.DestroySession();
-            Debug.Log("ASA - Stopped Session and removed all Anchor Objects");
+            Debug.LogError("ASA - Stopped Session and removed all Anchor Objects");
         }
         else
         {
             //Start session and search for all Anchors previously created
             await _spatialAnchorManager.StartSessionAsync();
-            LocateAnchor();
+            FetchAnchorsFromDBAndAddToWatcher();
         }
     }
 
-    // <LocateAnchor>
+    // <FetchAnchorsFromDBAndAddToWatcher>
     /// <summary>
-    /// Set the ASA watcher to look for anchor IDs in _availableLocalAnchors (queried from the API)
+    /// Fetch all anchors beloging to the group from API and create a watcher to look for them
+    /// This function is called when doing the extending a map or localisation
     /// </summary>
-    private async void LocateAnchor()
+    private async void FetchAnchorsFromDBAndAddToWatcher()
     {
 
-        _availableLocalAnchors = await _networkManager.GetAnchors();
+        _existingLocalAnchors = await _networkManager.GetAnchors();
 
-        List<string> names = new List<String>();
-        foreach (LocalAnchor anchor in _availableLocalAnchors)
+        List<string> existingLocalAnchorIds = new List<String>();
+        foreach (LocalAnchor anchor in _existingLocalAnchors)
         {
             Debug.Log("ASA - api anchor " + anchor.anchorId);
-            names.Add(anchor.anchorId);
+            existingLocalAnchorIds.Add(anchor.anchorId);
         }
 
-        if (names.Count > 0)
+        if (_existingLocalAnchors.Count > 0)
         {
-            //Create watcher to look for all stored anchor IDs
-            Debug.Log($"ASA - Creating watcher to look for {names.Count} spatial anchors");
+            // Create watcher to look for all stored anchor IDs
+            // A watcher tries to locate the anchors in the environment and callback when it finds one
+            Debug.Log($"ASA - Creating watcher to look for {_existingLocalAnchors.Count} spatial anchors");
             AnchorLocateCriteria anchorLocateCriteria = new AnchorLocateCriteria();
-            anchorLocateCriteria.Identifiers = names.ToArray();
+            anchorLocateCriteria.Identifiers = existingLocalAnchorIds.ToArray();
             _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
             Debug.Log($"ASA - Watcher created!");
         }
     }
-    // </LocateAnchor>
+    // </FetchAnchorsFromDBAndAddToWatcher>
 
 
     // <Update>
@@ -254,16 +266,16 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     void Update()
     {
 
-        //Check for any air taps from either hand
-        for (int i = 0; i < 2; i++)
+        //Check for any air taps from either left hand or right hand
+        for (int handTypeIndex = 0; handTypeIndex < 2; handTypeIndex++)
         {
-            InputDevice device = InputDevices.GetDeviceAtXRNode((i == 0) ? XRNode.RightHand : XRNode.LeftHand);
+            InputDevice device = InputDevices.GetDeviceAtXRNode((handTypeIndex == 0) ? XRNode.RightHand : XRNode.LeftHand);
             if (device.TryGetFeatureValue(CommonUsages.primaryButton, out bool isTapping))
             {
                 if (!isTapping)
                 {
                     //Stopped Tapping or wasn't tapping
-                    if (0f < _tappingTimer[i] && _tappingTimer[i] < 1f)
+                    if (0f < _tappingTimer[handTypeIndex] && _tappingTimer[handTypeIndex] < 1f)
                     {
                         //User has been tapping for less than 1 sec. Get hand position and call ShortTap
                         if (device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 handPosition))
@@ -271,17 +283,15 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                             ShortTap(handPosition);
                         }
                     }
-                    _tappingTimer[i] = 0;
+                    _tappingTimer[handTypeIndex] = 0;
                 }
                 else
                 {
-                    _tappingTimer[i] += Time.deltaTime;
+                    _tappingTimer[handTypeIndex] += Time.deltaTime;
 
                 }
             }
-
         }
-
 
         // Refresh the data every 5 seconds
         _refreshTimer += Time.deltaTime;
@@ -351,17 +361,16 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     public async void RefreshData()
     {
             Debug.Log("Performing Refresh...");
-
-            // Only refresh the whole system if API says the hash of anchors has changed
             if (await _networkManager.ShouldRefreshAnchors())
             {
-                LocateAnchor(); // Restart watcher
+
+                FetchAnchorsFromDBAndAddToWatcher();
+
             }
             else
             {
                 Debug.Log("Skipping anchor refresh!");
             }
-
 
             // Check if we have a swipe from the API for the current user
             PostIt swiped = await _networkManager.GetSwipe();
@@ -396,6 +405,73 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public void SetStateIdle() { _state = ManagerState.IDLE; }
 
+
+    public void SetWatcher()
+    { 
+        if (_existingLocalAnchors.Count <= 0)
+        {
+            Debug.Log("No watchers to add.");
+            return; // dont add watcher if no anchors defined
+        }
+
+        
+
+        Debug.Log("Setting up watcher...");
+
+
+        List<String> localAnchors = new List<String>();
+        foreach (var localAnchor in _existingLocalAnchors)
+        {
+            localAnchors.Add(localAnchor.anchorId);
+            Debug.Log($"Adding to watcher: {localAnchor.anchorId}");
+        }
+
+        // Set the session's locate criteria
+        AnchorLocateCriteria anchorLocateCriteria = new AnchorLocateCriteria
+        {
+            Identifiers = localAnchors.ToArray(),
+        };
+        
+        //anchorLocateCriteria.BypassCache = true;
+
+        CloudSpatialAnchorWatcher watcher = _spatialAnchorManager.Session.CreateWatcher(anchorLocateCriteria);
+
+        Debug.Log($"ASA - Watcher created!");
+
+    }
+
+
+    /// <ResetSession>
+    /// <summary>
+    /// Start the ASA session
+    /// </summary>
+    private async void StartSession()
+    {
+        Debug.Log("Starting Session");
+
+        if (_spatialAnchorManager == null)
+        {
+            Debug.Log("Cannot start session, no spatial manager.");
+            return;
+        }
+
+        
+        if (_spatialAnchorManager.IsSessionStarted)
+        {
+            CloudSpatialAnchorSession session = _spatialAnchorManager.Session;
+            if (session == null) {
+                Debug.Log("Could not fetch session");
+            } else
+            {
+                session.Dispose();
+                _spatialAnchorManager.StopSession();
+                _spatialAnchorManager.DestroySession();
+            }
+            
+        }
+
+    }
+    ///</ResetSession>
 
     public void HideAnchors()
     {
@@ -433,9 +509,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     }
 
-    
-
-    // <CreateAnchor>
+    // <CreateLocalAnchor>
     /// <summary>
     /// Creates an Azure Spatial Anchor at the given position rotated towards the user
     /// </summary>
@@ -443,12 +517,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <returns>Async Task</returns>
     private async Task CreateLocalAnchor(Vector3 position)
     {
+
         UnityDispatcher.InvokeOnAppThread(async () =>
         {
-            //Create Anchor GameObject. We will use ASA to save the position and the rotation of this GameObject.
-            Debug.Log("Beginning local anchor creation");
+            //Create Anchor GameObject
+            Debug.Log("Beginning local anchor creation (generation of GameObject)");
             Quaternion orientation = new(0,0,0,1);
-
             GameObject anchorGameObject = Instantiate(AnchorPrefab, position, orientation);
             anchorGameObject.transform.localScale = Vector3.one * 0.07f;
 
@@ -465,28 +539,42 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             }
             Debug.Log("Session is started!");
 
-            //Add and configure ASA components
+            Debug.Log("Instantiated marker");
+            if (_spatialAnchorManager == null)
+            {
+                Debug.Log("Null manager error"); return;
+            }
+            Debug.Log("SM is OK!");
+
+            if (!_spatialAnchorManager.IsSessionStarted)
+            {
+                Debug.Log("ASA - Session is not started"); return;
+            }
+            Debug.Log("Session is started!");
+
+            // Use ASA to save the position and the rotation of this GameObject.
+            // Add and configure ASA components
             CloudNativeAnchor cloudNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
             await cloudNativeAnchor.NativeToCloud();
 
             Debug.Log("Got cloud anchor conversion.");
             CloudSpatialAnchor cloudSpatialAnchor = cloudNativeAnchor.CloudAnchor;
-            cloudSpatialAnchor.Expiration = DateTimeOffset.Now.AddDays(10);
+            cloudSpatialAnchor.Expiration = DateTimeOffset.Now.AddDays(30);
 
             Debug.Log("Finished creating cloud native anchor");
-            //Collect Environment Data
+            // Collect Environment Data
             while (!_spatialAnchorManager.IsReadyForCreate)
             {
                 float createProgress = _spatialAnchorManager.SessionStatus.RecommendedForCreateProgress;
                 Debug.Log($"ASA - Move your device to capture more environment data: {createProgress:0%}");
             }
 
-            Debug.Log($"ASA - Saving cloud anchor... ");
+            Debug.Log($"ASA - Ready to save the anchor in the cloud... ");
 
             try
             {
-                // Now that the cloud spatial anchor has been prepared, we can try the actual save here.
-                await _spatialAnchorManager.CreateAnchorAsync(cloudSpatialAnchor);
+                // Save the anchor to the ASA cloud
+                await _spatialAnchorManager.CreateAnchorAsync(cloudSpatialAnchor); 
 
                 bool saveSucceeded = cloudSpatialAnchor != null;
                 if (!saveSucceeded)
@@ -497,12 +585,16 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 }
 
                 Debug.Log($"ASA - Saved cloud anchor with ID: {cloudSpatialAnchor.Identifier}");
+
+                // Create a LocalAnchor class instance and attach the GameObject to it
                 LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _currentGroup);
                 createdAnchor.AttachInstance(anchorGameObject);
 
                 if (await _networkManager.PostAnchor(createdAnchor))
                 {
                     Debug.Log("ASA - Succesful API save!");
+                    // Add the created anchor to the list of found anchors 
+
                     _foundLocalAnchors.Add(createdAnchor);
                 } else
                 {
@@ -517,44 +609,82 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 Debug.LogException(exception);
                 anchorGameObject.SetActive(false);
             }
+
         });
         
+
     }
-    // </CreateAnchor>
+    // </CreateLocalAnchor>
 
     // <CreatePostIt>
     /// <summary>
     /// Creates a PostIt instance
     /// </summary>
-    /// <param name="position">Position where Azure Spatial Anchor will be created</param>
-    /// <returns>Async Task</returns>
-    private void CreatePostIt(Vector3 position, PostIt obj)
+    /// <param name="position"> postit_position_W post-it creation (in world space) </param>
+    /// <returns> Async Task </returns>
+    private void CreatePostIt(Vector3 postitWorldPosition, PostIt data)
     {
         UnityDispatcher.InvokeOnAppThread(async () =>
         {
+            Debug.Log("Beginning post-it creation");
+            // Find the nearest anchor (within the treshold) to the post-it position
+            (LocalAnchor ClosestAnchor, float anchorDistance) = GetClosestAnchor(postitWorldPosition);
 
-            //Create Anchor GameObject. We will use ASA to save the position and the rotation of this GameObject.
-            if (!InputDevices.GetDeviceAtXRNode(XRNode.Head).TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 headPosition))
+            Debug.Log($"Found nearby anchor!");
+
+            if (anchorDistance < _anchorDistanceThreshold)
             {
-                headPosition = Vector3.zero;
+                Debug.Log($"Found nearby anchor! (within {_anchorDistanceThreshold}m)");
+            }
+            else
+            {
+                Debug.Log($"No nearby anchor found! (within {_anchorDistanceThreshold}m). Anchor is being created at the tapped position");
+
+                // Create an anchor at the post-it position
+                await CreateLocalAnchor(postitWorldPosition);
+
             }
 
-            Quaternion orientationTowardsHead = Quaternion.LookRotation(position - headPosition, Vector3.up);
-
-
-            GameObject postItGameObject = Instantiate(PostItPrefab, position, orientationTowardsHead);
+            // Get head world position
+            if (!InputDevices.GetDeviceAtXRNode(XRNode.Head).TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 headWorldPosition))
+            {
+                headWorldPosition = Vector3.zero;
+            }
+            
+            /// Create the post-it GameObject ///
+            // Calculate rotation in the world coordinate frame towards the headset
+            Quaternion worldRotationTowardsHead = Quaternion.LookRotation(postitWorldPosition - headWorldPosition, Vector3.up);
+            // Initializing the post it GameObject
+            GameObject postItGameObject = Instantiate(PostItPrefab, postitWorldPosition, worldRotationTowardsHead);
+            // Scale the post-it to be 30cm in height
             postItGameObject.transform.localScale = Vector3.one * 0.3f;
 
+            // Attach the the
             PostItManager manager = postItGameObject.GetComponent<PostItManager>();
-            manager.AttachToInstance(this);
-            manager.SetObject(obj);
+            manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
+            manager.SetObject(data);
 
+
+            // Ones the user presses on the save button, the post-it is saved
+
+            // Features to develop:
+            // Setting the anchor as the parent GameObject (so we can calculate relative tranformations later)
+
+            // postItGameObject.transform.SetParent(nearestAnchorGameObject.transform, true);
             
         });
 
     }
-    // </CreateAnchor>
+    // </CreatePostIt>
 
+
+    // <GetClosestAnchor>
+    /// <summary>
+    /// Returns the closest anchor to the received position of a postit
+    /// </summary>
+    /// <param name="position">position of the postit</param>
+    /// <returns>closest anchor</returns>
+    /// <returns>distance to closest anchor</returns>
     private Tuple<LocalAnchor, float> GetClosestAnchor(Vector3 position)
     {
 
@@ -564,7 +694,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             return new Tuple<LocalAnchor, float>(null, Mathf.Infinity);
         }
 
-        //Iterate over existing anchor gameobjects to find the nearest
+        //Iterate over existing anchor gameobjects to find the closest one
         return _foundLocalAnchors.Aggregate(
             new Tuple<LocalAnchor, float>(null, Mathf.Infinity), // Base case
             (currentBest, itemToCompare) =>
@@ -577,53 +707,68 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 return distance < currentBest.Item2 ? new Tuple<LocalAnchor, float>(itemToCompare, distance) : currentBest;
             });
     }
+    // </GetClosestAnchor>
 
-    // Directly get the pose to closest anchor, if it exists (nullable pose)
-    private Pose? GetPoseToClosestAnchor(GameObject postit)
+
+    // <GetPoseToClosestAnchor>
+    /// <summary>
+    /// Directly get the pose to closest anchor, if it exists (nullable pose)
+    /// </summary>
+    private Pose? GetPoseToClosestAnchor(GameObject postit) // Pose? (optional type) -> nullable pose, we can check if a pose was not found
     {
-        // null check
+        // null check postit
         if (postit == null)
         {
             Debug.Log("ASA - Cannot get pose to null gameobject");
             return null;
         }
 
-        Vector3 postItPosition = postit.transform.position;
-        Tuple<LocalAnchor, float> closest = GetClosestAnchor(postItPosition);
-        if (closest == null || closest.Item1 == null)
+        // Get closest LocalAnchor and distance
+        Vector3 postitWorldPosition = postit.transform.position;
+        Tuple<LocalAnchor, float> closest = GetClosestAnchor(postitWorldPosition);
+        LocalAnchor closestAnchor = closest.Item1;
+        float anchorDistance = closest.Item2;
+
+        // null check closest anchor
+        if (closest == null || closestAnchor == null)
         {
             Debug.Log("ASA - No closest anchor found");
             return null;
         }
 
-        LocalAnchor closestAnchor = closest.Item1;
-        float distance = closest.Item2;
-        Debug.Log($"ASA - Found closest Anchor {closestAnchor.anchorId} has distance {distance}");
+        Debug.Log($"ASA - Found closest Anchor {closestAnchor.anchorId} has distance {anchorDistance}");
 
-        // Inverse position transform
-        Vector3 positionTransform = postItPosition - closestAnchor.Instance.transform.position;
+        //relative position and rotation calculation
+        // Calculate relative position (post-it position relative to anchor position)
+        Vector3 postitRelativePosition = closestAnchor.Instance.transform.InverseTransformPoint(postitWorldPosition);
 
-        // Inverse rotation transform
-        Vector3 postitRot = postit.transform.rotation.eulerAngles;
-        Vector3 anchorRot = closestAnchor.Instance.transform.rotation.eulerAngles;
-        Quaternion quaternionTransform = Quaternion.Euler(postitRot - anchorRot);
+        // Calculate relative rotation (post-it rotation relative to anchor rotation)
+        Quaternion postitWorldRotation = postit.transform.rotation;
+        Quaternion postitRelativeRotation = Quaternion.Inverse(closestAnchor.Instance.transform.rotation) * postitWorldRotation;
 
-        Pose res = new Pose(positionTransform, quaternionTransform);
+        Pose poseTransform = new Pose(postitRelativePosition, postitRelativeRotation);
 
-        Debug.Log("ASA - Found pose transform " +  res);
-        return res;
+        Debug.Log("ASA - Found pose transform " +  poseTransform.ToString());
+        return poseTransform;
+           
     }
 
-    public Pose? ApplySavedPose(string anchorId, Pose savedPose)
+    // <ApplyPoseFromCosmos>
+    /// <summary>
+    /// Applies the saved pose (saved in cosmosDB) to the post-it
+    /// </summary>
+    /// <param name="anchorId">anchor id of the post-it</param>
+    /// <param name="savedPose">saved pose of the post-it</param>
+    public Pose? ApplyPoseFromCosmos(string anchorId, Pose savedPose)
     {
         if (!string.IsNullOrEmpty(anchorId)) 
         {
-            Debug.Log("ASA - Received empty anchor id in ApplySavedPose"); return null;
+            Debug.Log("ASA - Received empty anchor id in ApplyPoseFromCosmos"); return null;
         }
 
         if (_foundLocalAnchors.Count <= 0)
         {
-            Debug.Log("ASA - No anchors to apply on in ApplySavedPose"); return null;
+            Debug.Log("ASA - No anchors to apply on in ApplyPoseFromCosmos"); return null;
         }
 
         // Find the found anchor in list
@@ -639,16 +784,21 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         if (localAnchor == null)
         {
-            Debug.Log("ASA - Did not find source anchor in ApplySavedPose"); return null;
+            Debug.Log("ASA - Did not find source anchor in ApplyPoseFromCosmos"); return null;
         }
 
-        Vector3 positionTransform = localAnchor.Instance.transform.position + savedPose.position;
-        Quaternion rotationTransform = Quaternion.Euler(localAnchor.Instance.transform.rotation.eulerAngles + savedPose.rotation.eulerAngles);
+        Vector3 postitPositionTransform = localAnchor.Instance.transform.position + savedPose.position;
+        Quaternion postitRotationTransform = localAnchor.Instance.transform.rotation * savedPose.rotation;
 
-        return new Pose(positionTransform, rotationTransform);
+        return new Pose(postitPositionTransform, postitRotationTransform);
 
     }
 
+    // <SavePostIt>
+    /// <summary>
+    /// Saves the post-it relative transformation (to the anchor position) to the backend (cosmos DB)
+    /// </summary>
+    /// <param name="data">post-it data</param>
     public Exception SavePostIt(PostIt data, GameObject obj)
     {
         Pose? pose = GetPoseToClosestAnchor(obj);
@@ -659,7 +809,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
         data.Pose = pose.Value;
 
-        // Attempt save
+        // Attempt save of the postit data
         try
         {
             _networkManager.PostPostIt(data);
@@ -688,7 +838,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
 
 
-
     // <SpatialAnchorManagerAnchorLocated>
     /// <summary>
     /// Callback when an anchor is located
@@ -698,7 +847,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private void SpatialAnchorManager_AnchorLocated(object sender, AnchorLocatedEventArgs args)
     {
         Debug.Log($"ASA - Anchor recognized as a possible anchor {args.Identifier} {args.Status}");
-
 
         switch (args.Status)
         {
@@ -715,7 +863,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     Debug.Log("ASA - Instantiating found anchor");
 
                     // find in available
-                    LocalAnchor correspondingAnchor = _availableLocalAnchors.Find((anchor) => anchor.anchorId == id);
+                    LocalAnchor correspondingAnchor = _existingLocalAnchors.Find((anchor) => anchor.anchorId == id);
                     if (correspondingAnchor == null) {Debug.Log("Unknown identifier encountered"); return; }
 
                     //Create GameObject

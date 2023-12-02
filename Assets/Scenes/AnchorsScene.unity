@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641252, b: 0.5748171, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -558,7 +558,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 937906662203130604, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 963822469022056367, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -1207,6 +1207,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 110123287243307132, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       insertIndex: -1
       addedObject: {fileID: 870294859}
+    - targetCorrespondingSourceObject: {fileID: 609506377724395537, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 3574933374182179451, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 3877547666281663460, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
     - targetCorrespondingSourceObject: {fileID: 5568599115249741518, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       insertIndex: -1
       addedObject: {fileID: 810674826}
@@ -1637,7 +1646,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4650336336052702775, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4650336336369554838, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_IsActive
@@ -1855,7 +1864,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EndpointURL: http://185.224.139.115:8000
   Username: TestUser
-  GroupName: TestUser
+  GroupName: TestRoom
 --- !u!114 &967253954
 MonoBehaviour:
   m_ObjectHideFlags: 0
