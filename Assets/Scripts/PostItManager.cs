@@ -65,6 +65,8 @@ public class PostItManager : MonoBehaviour
             {
                 transform.SetPositionAndRotation(poseTransform.Value.position, poseTransform.Value.rotation);
             }
+
+            transform.localScale = Vector3.one * data.Scale;
         });
 
     }

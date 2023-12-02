@@ -53,10 +53,11 @@ public class PostIt
     public string Content;
     public Color Color;
     public Pose? Pose;
+    public float Scale;
 
     public GameObject Instance;
 
-    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content, Color color, Pose? pose)
+    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content, Color color, Pose? pose, float scale)
     {
         Id = id;
         AnchorId = anchorId;
@@ -66,6 +67,7 @@ public class PostIt
         Content = content;
         Color = color;
         Pose = pose;
+        Scale = scale;
     }
 
     public static PostIt ParseJSON(PostItJSON data)
@@ -113,13 +115,14 @@ public class PostIt
                 type,
                 data.content,
                 color,
-                pose
+                pose,
+                data.scale
             );
     }
 
     public static PostIt Test()
     {
-        return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null);
+        return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, 0.3f);
     }
 }
 // STRUCTURES //
@@ -423,8 +426,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                         PostItManager manager = go.GetComponent<PostItManager>();
                         manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
                         manager.SetObject(postIt, anchor);
+                        manager.Lock();
 
-                        Debug.DrawRay(anchor.Instance.transform.position, go.transform.position, Color.red);
 
                         _foundPostItManagers.Add(manager);
                         _foundPostIts.Add(postIt);
@@ -451,7 +454,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case ManagerState.MAPPING:
                 {
                     _state = ManagerState.CREATE;
-                    HideAnchors();
+                    //HideAnchors();
                     break;
                 }
             default:
@@ -650,8 +653,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Quaternion worldRotationTowardsHead = Quaternion.LookRotation(postitWorldPosition - headWorldPosition, Vector3.up);
             // Initializing the post it GameObject
             GameObject postItGameObject = Instantiate(PostItPrefab, postitWorldPosition, worldRotationTowardsHead);
-            // Scale the post-it to be 30cm in height
-            postItGameObject.transform.localScale = Vector3.one * 0.3f;
+            
 
             // Attach the post-it Game Object to the PostItManager script
             PostItManager manager = postItGameObject.GetComponent<PostItManager>();
@@ -807,6 +809,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
         data.Pose = pose.Value;
         data.AnchorId = res.Item2;
+        data.Scale = obj.transform.localScale[0];
 
         // Attempt save of the postit data
         try
@@ -851,7 +854,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         switch (args.Status)
         {
             case LocateAnchorStatus.Located:
-            case LocateAnchorStatus.AlreadyTracked:
+            //case LocateAnchorStatus.AlreadyTracked:
 
                 // Go add your anchor to the scene...
 
@@ -895,7 +898,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
                     if (_state != ManagerState.MAPPING)
                     {
-                        anchorGameObject.SetActive(false);
+                        //anchorGameObject.SetActive(false);
                         Debug.Log("APP_DEBUG: ASA - Set anchor to disabled as not in mapping mode");
                     }
                 });
