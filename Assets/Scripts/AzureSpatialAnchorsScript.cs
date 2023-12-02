@@ -709,7 +709,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <summary>
     /// Directly get the pose to closest anchor, if it exists (nullable pose)
     /// </summary>
-    private Pose? GetPoseToClosestAnchor(GameObject postit) // Pose? (optional type) -> nullable pose, we can check if a pose was not found
+    private Tuple<Pose?, string> GetPoseToClosestAnchor(GameObject postit) // Pose? (optional type) -> nullable pose, we can check if a pose was not found
     {
         // null check postit
         if (postit == null)
@@ -744,7 +744,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         Pose poseTransform = new Pose(postitRelativePosition, postitRelativeRotation);
 
         Debug.Log("APP_DEBUG: ASA - Found pose transform " + poseTransform.ToString());
-        return poseTransform;
+        return new Tuple<Pose?, string>(poseTransform, closest.Item1.anchorId);
 
     }
 
@@ -799,13 +799,21 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <param name="data">post-it data</param>
     public Exception SavePostIt(PostIt data, GameObject obj)
     {
-        Pose? pose = GetPoseToClosestAnchor(obj);
+        Tuple<Pose?, string> res = GetPoseToClosestAnchor(obj);
+
+        if (res == null)
+        {
+            Debug.LogError("ASA - Error while saving postit"); return null;
+        }
+
+        Pose? pose = res.Item1;
         if (pose == null)
         {
             Debug.Log("APP_DEBUG: ASA - Could not find a pose transform for the PostIt");
             return new Exception("ASA - No anchor found for postit");
         }
         data.Pose = pose.Value;
+        data.AnchorId = res.Item2;
 
         // Attempt save of the postit data
         try
