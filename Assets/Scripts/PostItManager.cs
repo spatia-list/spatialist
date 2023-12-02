@@ -20,6 +20,11 @@ public class PostItManager : MonoBehaviour
     public GameObject LockButton;
     public GameObject UnlockButton;
 
+    /// <summary>
+    /// New material to change for post it
+    /// </summary>
+    public Material newMaterial;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -66,6 +71,19 @@ public class PostItManager : MonoBehaviour
 
     }
 
+    public void ChangePostItColor()
+    {
+        Transform t = gameObject.transform.Find("ContentQuad");
+        Debug.Log("APP_DEBUG: Getting ContentQuad from PostItPrefab");
+        if (t != null)
+        {
+            GameObject go = t.gameObject;
+            MeshRenderer rend = go.GetComponent<MeshRenderer>();
+            rend.material = newMaterial;
+            Debug.Log("APP_DEBUG: Setting ContentQuad material.");
+        }
+    }
+
 
     // Called when the user locks (saves) the post it, by clicking on the lock button
     public void Lock()
@@ -87,6 +105,6 @@ public class PostItManager : MonoBehaviour
         _state = PostItState.UNLOCKED;
         UnlockButton.SetActive(false);
         LockButton.SetActive(true);
-
+        ChangePostItColor();
     }
 }
