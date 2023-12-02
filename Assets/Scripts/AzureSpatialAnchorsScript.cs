@@ -654,12 +654,20 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             // Calculate rotation in the world coordinate frame towards the headset
             Quaternion worldRotationTowardsHead = Quaternion.LookRotation(postitWorldPosition - headWorldPosition, Vector3.up);
             
-
             // Initializing the post it GameObject
             GameObject postItGameObject = Instantiate(PostItPrefab, postitWorldPosition, worldRotationTowardsHead);
             // Scale the post-it to be 30cm in height
             postItGameObject.transform.localScale = Vector3.one * 0.3f;
+            
+
+            PostItManager manager = postItGameObject.GetComponent<PostItManager>();
+            manager.AttachToInstance(this);
+            manager.SetObject(obj);
+
+
+            // Features to develop:
             // Setting the anchor as the parent GameObject (so we can calculate relative tranformations later)
+
             // postItGameObject.transform.SetParent(nearestAnchorGameObject.transform, true);
             
 
@@ -675,10 +683,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             //     Debug.Log("Error in API save!");
             //     postItGameObject.SetActive(false);
             // }
-
-
-
-
 
 
             // relative position and rotation calculation (might not be needed)

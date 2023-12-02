@@ -31,7 +31,6 @@ public class PostItManager : MonoBehaviour
     {
     }
 
-
     public void AttachToInstance(AzureSpatialAnchorsScript script)
     {
         _script = script;
@@ -51,7 +50,6 @@ public class PostItManager : MonoBehaviour
         {
             poseTransform = _script.ApplySavedPose(obj.AnchorId, obj.Pose.Value);
         }
-
 
         UnityDispatcher.InvokeOnAppThread(() =>
         {
