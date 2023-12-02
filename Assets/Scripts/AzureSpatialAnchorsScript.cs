@@ -4,6 +4,7 @@ using Microsoft.MixedReality.Toolkit.Experimental.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+// using System.Numerics;
 using System.Threading.Tasks;
 using Unity.XR.CoreUtils;
 using UnityEngine;
@@ -357,18 +358,17 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public async void RefreshData()
     {
-            // Debug.Log("Performing Refresh...");
-            // if (await _networkManager.ShouldRefreshAnchors())
-            // {
+            Debug.Log("Performing Refresh...");
+            if (await _networkManager.ShouldRefreshAnchors())
+            {
 
-            //     FetchAnchorsFromDBAndAddToWatcher();
+                FetchAnchorsFromDBAndAddToWatcher();
 
-            // }
-            // else
-            // {
-            //     Debug.Log("Skipping anchor refresh!");
-            // }
-
+            }
+            else
+            {
+                Debug.Log("Skipping anchor refresh!");
+            }
 
             // Check if we have a swipe from the API for the current user
             PostIt swiped = await _networkManager.GetSwipe();
@@ -636,12 +636,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             }
             else
             {
-                Debug.Log($"No nearby anchor found! (within {_anchorDistanceThreshold}m).");
+                Debug.Log($"No nearby anchor found! (within {_anchorDistanceThreshold}m). Anchor is being created at the tapped position");
 
                 // Create an anchor at the post-it position
                 await CreateLocalAnchor(postitWorldPosition);
-
-                // Get the nearest anchor that was just created!
 
             }
 
@@ -658,38 +656,19 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             GameObject postItGameObject = Instantiate(PostItPrefab, postitWorldPosition, worldRotationTowardsHead);
             // Scale the post-it to be 30cm in height
             postItGameObject.transform.localScale = Vector3.one * 0.3f;
-            
 
             PostItManager manager = postItGameObject.GetComponent<PostItManager>();
             manager.AttachToInstance(this);
             manager.SetObject(obj);
 
 
+            // Ones the user presses on the save button, the post-it is saved
+
+
             // Features to develop:
             // Setting the anchor as the parent GameObject (so we can calculate relative tranformations later)
 
             // postItGameObject.transform.SetParent(nearestAnchorGameObject.transform, true);
-            
-
-            // We need to get/define the postITID from somewhere!
-
-            // Save the post-it to the backend (cosmos DB)
-            // if (await _networkManager.PostPostIt(postItID))
-            // {
-            //     Debug.Log("Succesful API save!");
-            // }
-            // else
-            // {
-            //     Debug.Log("Error in API save!");
-            //     postItGameObject.SetActive(false);
-            // }
-
-
-            // relative position and rotation calculation (might not be needed)
-            // Calculate relative position (post-it position relative to anchor position)
-            //Vector3 relativePosition = nearestAnchorGameObject.transform.InverseTransformPoint(postitWorldPosition);
-            // Calculate relative rotation (post-it rotation relative to anchor rotation)
-            //Quaternion relativeRotationTowardsHead = Quaternion.Inverse(nearestAnchorGameObject.transform.rotation) * worldRotationTowardsHead;
             
         });
 
@@ -729,52 +708,65 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     // </GetClosestAnchor>
 
 
-    // Directly get the pose to closest anchor, if it exists (nullable pose)
-    private Pose? GetPoseToClosestAnchor(GameObject postit)
+    // <GetPoseToClosestAnchor>
+    /// <summary>
+    /// Directly get the pose to closest anchor, if it exists (nullable pose)
+    /// </summary>
+    private Pose? GetPoseToClosestAnchor(GameObject postit) // Pose? (optional type) -> nullable pose, we can check if a pose was not found
     {
-        // null check
+        // null check postit
         if (postit == null)
         {
             Debug.Log("ASA - Cannot get pose to null gameobject");
             return null;
         }
 
-        Vector3 postItPosition = postit.transform.position;
-        Tuple<LocalAnchor, float> closest = GetClosestAnchor(postItPosition);
-        if (closest == null || closest.Item1 == null)
+        // Get closest LocalAnchor and distance
+        Vector3 postitWorldPosition = postit.transform.position;
+        Tuple<LocalAnchor, float> closest = GetClosestAnchor(postitWorldPosition);
+        LocalAnchor closestAnchor = closest.Item1;
+        float anchorDistance = closest.Item2;
+
+        // null check closest anchor
+        if (closest == null || closestAnchor == null)
         {
             Debug.Log("ASA - No closest anchor found");
             return null;
         }
 
-        LocalAnchor closestAnchor = closest.Item1;
-        float distance = closest.Item2;
-        Debug.Log($"ASA - Found closest Anchor {closestAnchor.anchorId} has distance {distance}");
+        Debug.Log($"ASA - Found closest Anchor {closestAnchor.anchorId} has distance {anchorDistance}");
 
-        // Inverse position transform
-        Vector3 positionTransform = postItPosition - closestAnchor.Instance.transform.position;
+        //relative position and rotation calculation
+        // Calculate relative position (post-it position relative to anchor position)
+        Vector3 postitRelativePosition = closestAnchor.Instance.transform.InverseTransformPoint(postitWorldPosition);
 
-        // Inverse rotation transform
-        Vector3 postitRot = postit.transform.rotation.eulerAngles;
-        Vector3 anchorRot = closestAnchor.Instance.transform.rotation.eulerAngles;
-        Quaternion quaternionTransform = Quaternion.Euler(postitRot - anchorRot);
+        // Calculate relative rotation (post-it rotation relative to anchor rotation)
+        Quaternion postitWorldRotation = postit.transform.rotation;
+        Quaternion postitRelativeRotation = Quaternion.Inverse(closestAnchor.Instance.transform.rotation) * postitWorldRotation;
 
-        Pose res = new Pose(positionTransform, quaternionTransform);
+        Pose poseTransform = new Pose(postitRelativePosition, postitRelativeRotation);
 
-        Debug.Log("ASA - Found pose transform " +  res);
-        return res;
+        Debug.Log("ASA - Found pose transform " +  poseTransform.ToString());
+        return poseTransform;
+           
     }
 
-    public Pose? ApplySavedPose(string anchorId, Pose savedPose)
+    // <ApplyPoseFromCosmos>
+    /// <summary>
+    /// Applies the saved pose (saved in cosmosDB) to the post-it
+    /// </summary>
+    /// <param name="anchorId">anchor id of the post-it</param>
+    /// <param name="savedPose">saved pose of the post-it</param>
+    public Pose? ApplyPoseFromCosmos(string anchorId, Pose savedPose)
     {
         if (!string.IsNullOrEmpty(anchorId)) 
         {
-            Debug.Log("ASA - Received empty anchor id in ApplySavedPose"); return null;
+            Debug.Log("ASA - Received empty anchor id in ApplyPoseFromCosmos"); return null;
         }
 
         if (_foundLocalAnchors.Count <= 0)
         {
-            Debug.Log("ASA - No anchors to apply on in ApplySavedPose"); return null;
+            Debug.Log("ASA - No anchors to apply on in ApplyPoseFromCosmos"); return null;
         }
 
         // Find the found anchor in list
@@ -790,7 +782,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         if (localAnchor == null)
         {
-            Debug.Log("ASA - Did not find source anchor in ApplySavedPose"); return null;
+            Debug.Log("ASA - Did not find source anchor in ApplyPoseFromCosmos"); return null;
         }
 
         Vector3 positionTransform = localAnchor.Instance.transform.position + savedPose.position;
@@ -800,6 +792,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     }
 
+    // <SavePostIt>
+    /// <summary>
+    /// Saves the post-it relative transformation (to the anchor position) to the backend (cosmos DB)
+    /// </summary>
+    /// <param name="data">post-it data</param>
     public Exception SavePostIt(PostIt data, GameObject obj)
     {
         Pose? pose = GetPoseToClosestAnchor(obj);
@@ -810,7 +807,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
         data.Pose = pose.Value;
 
-        // Attempt save
+        // Attempt save of the postit data
         try
         {
             _networkManager.PostPostIt(data);
@@ -837,7 +834,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         CreatePostIt(final, content);
     }
-
 
 
     // <SpatialAnchorManagerAnchorLocated>
