@@ -1,5 +1,6 @@
 using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
+using Microsoft.MixedReality.Toolkit.Experimental.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,8 +78,6 @@ public class PostIt
         {
             type = PostItType.TEXT;
         }
-
-        
 
         if (data.rgb != null && data.rgb.Count >= 3)
         {
@@ -178,6 +177,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private ManagerState _state;
 
     private String _currentGroup = "TestRoom";
+
+    /// <summary>
+    /// The distance threshold to attach a post-it to an anchor (in meters)
+    /// </summary>
+    private float _anchorDistanceThreshold = 1;
 
     // <Start>
     // Start is called before the first frame update
@@ -285,7 +289,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 }
             }
         }
-
 
         // Refresh the data every 5 seconds
         _refreshTimer += Time.deltaTime;
@@ -403,7 +406,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public void SetWatcher()
     { 
-        if (_availableLocalAnchors.Count <= 0)
+        if (_existingLocalAnchors.Count <= 0)
         {
             Debug.Log("No watchers to add.");
             return; // dont add watcher if no anchors defined
@@ -415,7 +418,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
 
         List<String> localAnchors = new List<String>();
-        foreach (var localAnchor in _availableLocalAnchors)
+        foreach (var localAnchor in _existingLocalAnchors)
         {
             localAnchors.Add(localAnchor.anchorId);
             Debug.Log($"Adding to watcher: {localAnchor.anchorId}");
@@ -465,7 +468,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             
         }
 
-        
     }
     ///</ResetSession>
 
@@ -505,53 +507,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     }
 
-
-    // <NearestAnchorInThreshold>
-    /// <summary>
-    /// Returns true if an Anchor GameObject is within 1m of the received reference position
-    /// </summary>
-    /// <param name="position">Reference position</param>
-    /// <param name="anchorGameObject"> (output) Anchor GameObject within the distance threshold of received position. 
-    /// If no AnchorObject is within the threshold distance, this value will be null </param>
-    /// <returns> True if a Anchor GameObject is within the distance threshold </returns>
-    private bool NearestAnchorInThreshold(Vector3 position, float distanceThreshold, out GameObject nearestAnchorGameObject)
-    {
-        // Initialize output
-        nearestAnchorGameObject = null;
-
-        if (_foundLocalAnchors.Count <= 0)
-        {
-            return false;
-        }
-
-        //Iterate over existing anchor gameobjects (with an aggregation process) to find the nearest
-        //Idea: implement spatial partitioning datastructure such as an octree to speed up the search
-        var (distance, closestObject) = _foundLocalAnchors.Aggregate(
-            new Tuple<float, GameObject>(Mathf.Infinity, null),
-            (minPair, anchor) =>
-            {
-                if (anchor.Instance == null) return new Tuple<float, GameObject>(Mathf.Infinity, null);
-                GameObject gameobject = anchor.Instance;
-                Vector3 gameObjectPosition = gameobject.transform.position;
-                float distance = (position - gameObjectPosition).magnitude;
-                return distance < minPair.Item1 ? new Tuple<float, GameObject>(distance, gameobject) : minPair;
-            });
-            
-        if (distance <= distanceThreshold)
-        {
-            //Output the nearest anchor
-            nearestAnchorGameObject = closestObject;
-            return true;
-        }
-        else
-        {
-            // Output the null GameObject
-            return false;
-        }
-    }
-    // </NearestAnchorInThreshold>
-
-    // <CreateAnchor>
+    // <CreateLocalAnchor>
     /// <summary>
     /// Creates an Azure Spatial Anchor at the given position rotated towards the user
     /// </summary>
@@ -656,7 +612,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         
 
     }
-    // </CreateAnchor>
+    // </CreateLocalAnchor>
 
     // <CreatePostIt>
     /// <summary>
@@ -666,25 +622,26 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <returns> Async Task </returns>
     private void CreatePostIt(Vector3 postitWorldPosition, PostIt obj)
     {
-        float anchorDistanceThreshold = 1;
-
         UnityDispatcher.InvokeOnAppThread(async () =>
         {
             Debug.Log("Beginning post-it creation");
             // Find the nearest anchor (within the treshold) to the post-it position
-            if (NearestAnchorInThreshold(postitWorldPosition, anchorDistanceThreshold, out GameObject nearestAnchorGameObject)) 
+            (LocalAnchor ClosestAnchor, float anchorDistance) = GetClosestAnchor(postitWorldPosition);
+
+            Debug.Log($"Found nearby anchor!");
+
+            if (anchorDistance < _anchorDistanceThreshold)
             {
-                Debug.Log($"Found nearby anchor! (within {anchorDistanceThreshold}m)");
+                Debug.Log($"Found nearby anchor! (within {_anchorDistanceThreshold}m)");
             }
             else
             {
-                Debug.Log($"No nearby anchor found! (within {anchorDistanceThreshold}m). First, an anchor is created at this world position.");
+                Debug.Log($"No nearby anchor found! (within {_anchorDistanceThreshold}m).");
 
                 // Create an anchor at the post-it position
                 await CreateLocalAnchor(postitWorldPosition);
 
                 // Get the nearest anchor that was just created!
-
 
             }
 
@@ -703,7 +660,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             // Scale the post-it to be 30cm in height
             postItGameObject.transform.localScale = Vector3.one * 0.3f;
             // Setting the anchor as the parent GameObject (so we can calculate relative tranformations later)
-            postItGameObject.transform.SetParent(nearestAnchorGameObject.transform, true);
+            // postItGameObject.transform.SetParent(nearestAnchorGameObject.transform, true);
             
 
             // We need to get/define the postITID from somewhere!
@@ -735,6 +692,14 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
     // </CreatePostIt>
 
+
+    // <GetClosestAnchor>
+    /// <summary>
+    /// Returns the closest anchor to the received position of a postit
+    /// </summary>
+    /// <param name="position">position of the postit</param>
+    /// <returns>closest anchor</returns>
+    /// <returns>distance to closest anchor</returns>
     private Tuple<LocalAnchor, float> GetClosestAnchor(Vector3 position)
     {
 
@@ -744,7 +709,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             return new Tuple<LocalAnchor, float>(null, Mathf.Infinity);
         }
 
-        //Iterate over existing anchor gameobjects to find the nearest
+        //Iterate over existing anchor gameobjects to find the closest one
         return _foundLocalAnchors.Aggregate(
             new Tuple<LocalAnchor, float>(null, Mathf.Infinity), // Base case
             (currentBest, itemToCompare) =>
@@ -757,6 +722,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 return distance < currentBest.Item2 ? new Tuple<LocalAnchor, float>(itemToCompare, distance) : currentBest;
             });
     }
+    // </GetClosestAnchor>
+
 
     // Directly get the pose to closest anchor, if it exists (nullable pose)
     private Pose? GetPoseToClosestAnchor(GameObject postit)

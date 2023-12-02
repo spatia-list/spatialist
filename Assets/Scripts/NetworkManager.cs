@@ -63,8 +63,15 @@ public class PostItUploadJSON
         rgb.Add((int)(postIt.Color.b * 255));
 
         PoseJSON pose = new PoseJSON();
-        pose.position = postIt.Pose.position;
-        pose.orientation = postIt.Pose.rotation;
+        if(postIt.Pose.HasValue) {
+            pose.position = postIt.Pose.Value.position;
+            pose.orientation = postIt.Pose.Value.rotation;
+        } else {
+            pose.position = Vector3.zero;
+            pose.orientation = Quaternion.identity;
+        }
+        ///pose.position = postIt.Pose.position;
+        ///pose.orientation = postIt.Pose.rotation;
 
         PostItUploadJSON res = new();
         res.rgb = rgb;
