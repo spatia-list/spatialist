@@ -51,9 +51,8 @@ public class PostItUploadJSON
     public string anchor_id { get; set; }
     public string owner { get; set; }
     public string title { get; set; }
-    public string type { get; set; }
-    public string text_content { get; set; }
-    public string media_content { get; set; }
+    public string content_type { get; set; }
+    public string content { get; set; }
     public List<int> rgb { get; set; }
     public PoseJSON pose { get; set; }
 
@@ -109,15 +108,15 @@ public class PostItUploadJSON
         res.anchor_id = postIt.AnchorId;
         res.owner = postIt.Owner;
         res.title = postIt.Title;
+        res.content = postIt.Content;
         if (postIt.Type == PostItType.MEDIA)
         {
-            res.type = "media";
-            res.media_content = postIt.Content;
+            res.content_type = "media";
+            
         }
         else
         {
-            res.type = "text";
-            res.text_content = postIt.Content;
+            res.content_type = "text";
         }
         return res;
 

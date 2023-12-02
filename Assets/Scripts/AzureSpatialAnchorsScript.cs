@@ -72,7 +72,7 @@ public class PostIt
         Color color;
         Pose pose;
 
-        if (data.type == "media")
+        if (data.content_type == "media")
         {
             type = PostItType.MEDIA;
         }
