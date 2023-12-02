@@ -69,6 +69,7 @@ public class PostItManager : MonoBehaviour
 
     public void Lock()
     {
+        Debug.Log("Locking post it");
         _state = PostItState.LOCKED;
         UnlockButton.SetActive(true);
         LockButton.SetActive(false);

@@ -90,11 +90,13 @@ public class PostIt
 
         if (data.pose != null && data.pose.position != null && data.pose.orientation != null)
         {
-            pose = new Pose(data.pose.position, data.pose.orientation);
+            List<float> tempPose = data.pose.position;
+            List<float> tempRot = data.pose.orientation;
+            pose = new Pose(new Vector3(tempPose[0], tempPose[1], tempPose[2]), new Quaternion(tempRot[0], tempRot[1], tempRot[2], tempRot[3]));
         }
         else
         {  
-            pose = new Pose(new Vector3(0,0,0), new Quaternion(0,0,0,1));
+            pose = new Pose(new Vector3(0,0,0), new Quaternion(1,0,0,0));
         }
 
 

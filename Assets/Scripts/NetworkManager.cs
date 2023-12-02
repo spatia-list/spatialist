@@ -14,8 +14,10 @@ using System;
 
 public class PoseJSON
 {
-    public Vector3 position { get; set; }
-    public Quaternion orientation { get; set; }
+    // fixed size array of 3 floats without using vector3
+
+    public List<float> position { get; set; }
+    public List<float> orientation { get; set; }
 }
 
 public class PostItJSON
@@ -63,8 +65,43 @@ public class PostItUploadJSON
         rgb.Add((int)(postIt.Color.b * 255));
 
         PoseJSON pose = new PoseJSON();
-        pose.position = postIt.Pose.position;
-        pose.orientation = postIt.Pose.rotation;
+        // check if the Pose is not null 
+        if (postIt.Pose.HasValue)
+        {
+            Vector3 pos = postIt.Pose.Value.position;
+            pose.position = new List<float>
+            {
+                pos[0],
+                pos[1],
+                pos[2]
+            };
+
+            Quaternion rot = postIt.Pose.Value.rotation;
+            pose.orientation = new List<float>
+            {
+                rot[0],
+                rot[1],
+                rot[2],
+                rot[3]
+            };
+        }
+        else
+        {
+            // create a float with 3 zeros
+            pose.position = new List<float>
+            {
+                0,
+                0,
+                0
+            };
+            pose.orientation = new List<float>
+            {
+                1,
+                0,
+                0,
+                0
+            };
+        }
 
         PostItUploadJSON res = new();
         res.rgb = rgb;
