@@ -30,12 +30,12 @@ public class PostItJSON
     public string content { get; set; }
     public List<int> rgb { get; set; }
     public PoseJSON pose { get; set; }
+    public float scale { get; set; }
     public string _rid { get; set; }
     public string _self { get; set; }
     public string _etag { get; set; }
     public string _attachments { get; set; }
     public int _ts { get; set; }
-
 
 }
 

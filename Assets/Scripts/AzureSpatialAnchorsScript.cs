@@ -53,10 +53,11 @@ public class PostIt
     public string Content;
     public Color Color;
     public Pose? Pose;
+    public float Scale;
 
     public GameObject Instance;
 
-    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content, Color color, Pose? pose)
+    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content, Color color, Pose? pose, float scale)
     {
         Id = id;
         AnchorId = anchorId;
@@ -66,6 +67,7 @@ public class PostIt
         Content = content;
         Color = color;
         Pose = pose;
+        Scale = scale;
     }
 
     public static PostIt ParseJSON(PostItJSON data)
@@ -113,13 +115,14 @@ public class PostIt
                 type,
                 data.content,
                 color,
-                pose
+                pose,
+                data.scale
             );
     }
 
     public static PostIt Test()
     {
-        return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null);
+        return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, 0.3f);
     }
 }
 // STRUCTURES //
@@ -401,12 +404,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
         _availablePostIts = await _networkManager.GetPostIts();
 
-        // construct list of found anchor IDs
-        List<string> anchors = new List<string>();
-        foreach(LocalAnchor anchor in _foundLocalAnchors)
-        {
-            anchors.Add(anchor.anchorId);
-        }
 
         _foundPostItManagers.Clear();
         _foundPostIts.Clear();
@@ -414,22 +411,27 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         // filter the available postits 
         foreach(PostIt postIt in _availablePostIts)
         {
-            foreach (string id in anchors)
+            foreach (LocalAnchor anchor in _foundLocalAnchors)
             {
-                if (id == postIt.AnchorId)
+                if (anchor.anchorId == postIt.AnchorId)
                 {
                     Debug.Log("ASA - Found a local postit, placing...");
                     _foundPostIts.Add(postIt);
                     UnityDispatcher.InvokeOnAppThread(() =>
                     {
                         GameObject go = Instantiate(PostItPrefab);
+                        go.transform.localScale = Vector3.one * 0.3f;
+                        
                         // Attach the the
                         PostItManager manager = go.GetComponent<PostItManager>();
                         manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
-                        manager.SetObject(postIt);
+                        manager.SetObject(postIt, anchor);
+                        manager.Lock();
+
 
                         _foundPostItManagers.Add(manager);
                         _foundPostIts.Add(postIt);
+
                     });
 
                     Debug.Log("ASA - Postit successfully placed!");
@@ -452,12 +454,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case ManagerState.MAPPING:
                 {
                     _state = ManagerState.CREATE;
-                    HideAnchors();
+                    //HideAnchors();
                     break;
                 }
             default:
                 {
-                    Debug.Log("APP_DEBUG: TODO");
+                    _state = ManagerState.CREATE;
                     break;
                 }
         }
@@ -651,13 +653,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Quaternion worldRotationTowardsHead = Quaternion.LookRotation(postitWorldPosition - headWorldPosition, Vector3.up);
             // Initializing the post it GameObject
             GameObject postItGameObject = Instantiate(PostItPrefab, postitWorldPosition, worldRotationTowardsHead);
-            // Scale the post-it to be 30cm in height
-            postItGameObject.transform.localScale = Vector3.one * 0.3f;
+            
 
             // Attach the post-it Game Object to the PostItManager script
             PostItManager manager = postItGameObject.GetComponent<PostItManager>();
             manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
-            manager.SetObject(data);
+            manager.SetObject(data, null);
 
 
             // Ones the user presses on the save button, the post-it is saved
@@ -733,15 +734,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         Debug.Log($"APP_DEBUG: ASA - Found closest Anchor {closestAnchor.anchorId} has distance {anchorDistance}");
 
-        //relative position and rotation calculation
-        // Calculate relative position (post-it position relative to anchor position)
-        Vector3 postitRelativePosition = closestAnchor.Instance.transform.InverseTransformPoint(postitWorldPosition);
+        postit.transform.SetParent(closestAnchor.Instance.transform);
 
-        // Calculate relative rotation (post-it rotation relative to anchor rotation)
-        Quaternion postitWorldRotation = postit.transform.rotation;
-        Quaternion postitRelativeRotation = Quaternion.Inverse(closestAnchor.Instance.transform.rotation) * postitWorldRotation;
-
-        Pose poseTransform = new Pose(postitRelativePosition, postitRelativeRotation);
+        Pose poseTransform = postit.transform.GetLocalPose();
 
         Debug.Log("APP_DEBUG: ASA - Found pose transform " + poseTransform.ToString());
         return new Tuple<Pose?, string>(poseTransform, closest.Item1.anchorId);
@@ -814,6 +809,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
         data.Pose = pose.Value;
         data.AnchorId = res.Item2;
+        data.Scale = obj.transform.localScale[0];
 
         // Attempt save of the postit data
         try
@@ -858,7 +854,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         switch (args.Status)
         {
             case LocateAnchorStatus.Located:
-            case LocateAnchorStatus.AlreadyTracked:
+            //case LocateAnchorStatus.AlreadyTracked:
 
                 // Go add your anchor to the scene...
 
@@ -902,7 +898,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
                     if (_state != ManagerState.MAPPING)
                     {
-                        anchorGameObject.SetActive(false);
+                        //anchorGameObject.SetActive(false);
                         Debug.Log("APP_DEBUG: ASA - Set anchor to disabled as not in mapping mode");
                     }
                 });
