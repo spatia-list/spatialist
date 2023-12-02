@@ -755,7 +755,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <param name="savedPose">saved pose of the post-it</param>
     public Pose? ApplyPoseFromCosmos(string anchorId, Pose savedPose)
     {
-        if (!string.IsNullOrEmpty(anchorId))
+        if (string.IsNullOrEmpty(anchorId))
         {
             Debug.Log("APP_DEBUG: ASA - Received empty anchor id in ApplyPoseFromCosmos"); return null;
         }
