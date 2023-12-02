@@ -401,12 +401,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
         _availablePostIts = await _networkManager.GetPostIts();
 
-        // construct list of found anchor IDs
-        List<string> anchors = new List<string>();
-        foreach(LocalAnchor anchor in _foundLocalAnchors)
-        {
-            anchors.Add(anchor.anchorId);
-        }
 
         _foundPostItManagers.Clear();
         _foundPostIts.Clear();
@@ -414,22 +408,27 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         // filter the available postits 
         foreach(PostIt postIt in _availablePostIts)
         {
-            foreach (string id in anchors)
+            foreach (LocalAnchor anchor in _foundLocalAnchors)
             {
-                if (id == postIt.AnchorId)
+                if (anchor.anchorId == postIt.AnchorId)
                 {
                     Debug.Log("ASA - Found a local postit, placing...");
                     _foundPostIts.Add(postIt);
                     UnityDispatcher.InvokeOnAppThread(() =>
                     {
                         GameObject go = Instantiate(PostItPrefab);
+                        go.transform.localScale = Vector3.one * 0.3f;
+                        
                         // Attach the the
                         PostItManager manager = go.GetComponent<PostItManager>();
                         manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
                         manager.SetObject(postIt);
 
+                        Debug.DrawRay(anchor.Instance.transform.position, go.transform.position, Color.red);
+
                         _foundPostItManagers.Add(manager);
                         _foundPostIts.Add(postIt);
+
                     });
 
                     Debug.Log("ASA - Postit successfully placed!");
