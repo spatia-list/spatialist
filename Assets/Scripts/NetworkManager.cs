@@ -48,6 +48,7 @@ public class SwipeJSON
 
 public class PostItUploadJSON
 {
+    public string id { get; set; }
     public string anchor_id { get; set; }
     public string owner { get; set; }
     public string title { get; set; }
@@ -105,15 +106,15 @@ public class PostItUploadJSON
 
         List<float> scale = new();
 
-        if (scale != null && scale.Count >= 3)
+        if (postIt.Scale != null)
         {
-            scale.Add(scale[0]);
-            scale.Add(scale[1]);
-            scale.Add(scale[2]);
-
+            scale.Add(postIt.Scale[0]);
+            scale.Add(postIt.Scale[1]);
+            scale.Add(postIt.Scale[2]);
         }
 
         PostItUploadJSON res = new();
+        res.id = postIt.Id;
         res.rgb = rgb;
         res.pose = pose;
         res.anchor_id = postIt.AnchorId;
