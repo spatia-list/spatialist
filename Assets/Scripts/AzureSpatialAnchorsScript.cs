@@ -654,19 +654,13 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             // Initializing the post it GameObject
             GameObject postItGameObject = Instantiate(PostItPrefab, postitWorldPosition, worldRotationTowardsHead);
             
-
             // Attach the post-it Game Object to the PostItManager script
             PostItManager manager = postItGameObject.GetComponent<PostItManager>();
             manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
             manager.SetObject(data, null);
 
 
-            // Ones the user presses on the save button, the post-it is saved
-
-            // Features to develop:
-            // Setting the anchor as the parent GameObject (so we can calculate relative tranformations later)
-
-            // postItGameObject.transform.SetParent(nearestAnchorGameObject.transform, true);
+            // Ones the user presses on the save button, the post-it is saved (implemented in save button script)
 
         });
 
