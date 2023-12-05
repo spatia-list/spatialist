@@ -963,6 +963,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         Debug.Log("APP_DEBUG: Deleting post it ASA");
         // print length of _foundPostIts
         Debug.Log("APP_DEBUG: Length of _foundPostIts: " + _foundPostIts.Count);
+        // print the id of the post it to delete
+        Debug.Log("APP_DEBUG: Post it to delete: " + data.Id);
 
         // check if the post it is in _foundPostIts
         PostIt postIt = _foundPostIts.Find((post) => post.Id == data.Id);
@@ -974,11 +976,14 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
         else
         {
+            Debug.Log("APP_DEBUG: Post it found in _foundPostIts");
             Boolean ex = await _networkManager.DeletePostIt(data);
             if (ex == true)
             {
                 // refresh data
                 Debug.Log("APP_DEBUG: Post it deleted in backend");
+                // disable game object
+                obj.SetActive(false);
                 RefreshData();
             }
             return;
