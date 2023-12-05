@@ -949,6 +949,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     public async void DeletePostIt(PostIt data, GameObject obj)
     {
         Debug.Log("APP_DEBUG: Deleting post it ASA");
+        // print length of _foundPostIts
+        Debug.Log("APP_DEBUG: Length of _foundPostIts: " + _foundPostIts.Count);
+
         // check if the post it is in _foundPostIts
         PostIt postIt = _foundPostIts.Find((post) => post.Id == data.Id);
         if (postIt == null)
