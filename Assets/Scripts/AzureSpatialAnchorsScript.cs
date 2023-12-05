@@ -635,6 +635,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <returns> Async Task </returns>
     private void CreatePostIt(Vector3 postitWorldPosition, PostIt data)
     {
+
+        SetStateIdle();
+
         UnityDispatcher.InvokeOnAppThread(async () =>
         {
             Debug.Log("APP_DEBUG: Beginning post-it creation");
