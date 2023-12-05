@@ -32,10 +32,15 @@ public class PostItManager : MonoBehaviour
     /// New material to change for post it
     /// </summary>
     public Material MaterialYellow;
+    public Material Material_1_trans;
     public Material MaterialPink;
+    public Material Material_2_trans;
     public Material MaterialGreen;
+    public Material Material_3_trans;
     public Material MaterialRed;
+    public Material Material_4_trans;
     public Material MaterialBlue;
+    public Material Material_5_trans;
 
     public GameObject Color1Button;
     public GameObject Color2Button;
@@ -110,43 +115,44 @@ public class PostItManager : MonoBehaviour
                 transform.SetParent(parent.Instance.transform);
                 transform.SetLocalPose(data.Pose.Value);
             }
-            transform.localScale = Vector3.one * data.Scale;
 
+            Debug.Log("ASA - Setting scale to: " + data.Scale);
+            transform.localScale = data.Scale;
         });
 
     }
 
     public void ChangeColorYellow()
     {
-        ChangePostItColor(MaterialYellow);
+        ChangePostItColor(MaterialYellow, Material_1_trans);
     }
 
     public void ChangeColorPink()
     {
-        ChangePostItColor(MaterialPink);
+        ChangePostItColor(MaterialPink, Material_2_trans);
     }
 
     public void ChangeColorGreen()
     {
-        ChangePostItColor(MaterialGreen);
+        ChangePostItColor(MaterialGreen, Material_3_trans);
     }
 
     public void ChangeColorRed()
     {
-        ChangePostItColor(MaterialRed);
+        ChangePostItColor(MaterialRed, Material_4_trans);
     }
 
     public void ChangeColorBlue()
     {
-        ChangePostItColor(MaterialBlue);
+        ChangePostItColor(MaterialBlue, Material_5_trans);
     }
 
     // Changes the postit color (back plate and title bar) to the specified material
-    public void ChangePostItColor(Material mat)
+    public void ChangePostItColor(Material mat, Material mat_trans)
     {
 
             this.quadRend.material = mat;
-            this.backPlateRend.material = mat;
+            this.backPlateRend.material = mat_trans;
             Debug.Log("APP_DEBUG: Setting ContentQuad material.");
 
 
