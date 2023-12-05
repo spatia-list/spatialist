@@ -48,6 +48,7 @@ public class SwipeJSON
 
 public class PostItUploadJSON
 {
+    public string id { get; set; }
     public string anchor_id { get; set; }
     public string owner { get; set; }
     public string title { get; set; }
@@ -105,15 +106,15 @@ public class PostItUploadJSON
 
         List<float> scale = new();
 
-        if (scale != null && scale.Count >= 3)
+        if (postIt.Scale != null)
         {
-            scale.Add(scale[0]);
-            scale.Add(scale[1]);
-            scale.Add(scale[2]);
-
+            scale.Add(postIt.Scale[0]);
+            scale.Add(postIt.Scale[1]);
+            scale.Add(postIt.Scale[2]);
         }
 
         PostItUploadJSON res = new();
+        res.id = postIt.Id;
         res.rgb = rgb;
         res.pose = pose;
         res.anchor_id = postIt.AnchorId;
@@ -274,7 +275,7 @@ public class NetworkManager : MonoBehaviour
         Debug.Log("APP_DEBUG: all post-its titles:");
         foreach (PostItJSON postIt in response.postits)
         {
-            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2]);
+            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2] );
         }
         List<PostIt> objectList = new List<PostIt>();
         for (int i = 0; i < response.postits.Count; i++)
@@ -282,6 +283,10 @@ public class NetworkManager : MonoBehaviour
             objectList.Add(PostIt.ParseJSON(response.postits[i]));
         }
 
+        foreach (var item in objectList)
+        {
+            Debug.Log($"ASA - {item.Title} , {item.Scale}");
+        }
         return objectList;
     }
 
