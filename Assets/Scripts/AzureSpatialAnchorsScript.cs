@@ -487,7 +487,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                         PostItManager manager = go.GetComponent<PostItManager>();
                         manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
                         manager.SetObject(postIt, anchor);
-                        manager.Lock();
 
 
                         _foundPostItManagers.Add(manager);
@@ -506,6 +505,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         {
             foreach (PostIt p in toDelete)
             {
+
+                Debug.Log("ASA - Deleting postit");
                 if (p.Instance != null)
                 {
                     p.Instance.SetActive(false);
