@@ -53,11 +53,11 @@ public class PostIt
     public string Content;
     public Color Color;
     public Pose? Pose;
-    public float Scale;
+    public Vector3 Scale;
 
     public GameObject Instance;
 
-    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content, Color color, Pose? pose, float scale)
+    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content, Color color, Pose? pose, Vector3 scale)
     {
         Id = id;
         AnchorId = anchorId;
@@ -75,6 +75,7 @@ public class PostIt
         PostItType type;
         Color color;
         Pose pose;
+        Vector3 scale;
 
         if (data.content_type == "media")
         {
@@ -106,6 +107,15 @@ public class PostIt
             pose = new Pose(new Vector3(0, 0, 0), new Quaternion(1, 0, 0, 0));
         }
 
+        if (data.scale != null)
+        {
+            scale = new Vector3(data.scale[0], data.scale[1], data.scale[2]);
+        }
+        else
+        {
+            scale = new Vector3();
+        }
+
 
         return new PostIt(
                 data.id,
@@ -116,13 +126,13 @@ public class PostIt
                 data.content,
                 color,
                 pose,
-                data.scale
+                scale
             );
     }
 
     public static PostIt Test()
     {
-        return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, 0.3f);
+        return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, Vector3.one * 0.3f);
     }
 }
 // STRUCTURES //
@@ -809,7 +819,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
         data.Pose = pose.Value;
         data.AnchorId = res.Item2;
-        data.Scale = obj.transform.localScale[0];
+        data.Scale = obj.transform.localScale;
+
+        Debug.Log("ASA - Saving with scale of " + data.Scale);
 
         // Attempt save of the postit data
         try

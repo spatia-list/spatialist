@@ -28,9 +28,9 @@ public class PostItJSON
     public string title { get; set; }
     public string content_type { get; set; }
     public string content { get; set; }
-    public List<int> rgb { get; set; }
+    public List<float> rgb { get; set; }
     public PoseJSON pose { get; set; }
-    public float scale { get; set; }
+    public List<float> scale { get; set; }
     public string _rid { get; set; }
     public string _self { get; set; }
     public string _etag { get; set; }
@@ -55,6 +55,7 @@ public class PostItUploadJSON
     public string content { get; set; }
     public List<int> rgb { get; set; }
     public PoseJSON pose { get; set; }
+    public List<float> scale { get; set; }
 
     public static PostItUploadJSON FromObject(PostIt postIt)
     {
@@ -102,6 +103,16 @@ public class PostItUploadJSON
             };
         }
 
+        List<float> scale = new();
+
+        if (scale != null && scale.Count >= 3)
+        {
+            scale.Add(scale[0]);
+            scale.Add(scale[1]);
+            scale.Add(scale[2]);
+
+        }
+
         PostItUploadJSON res = new();
         res.rgb = rgb;
         res.pose = pose;
@@ -109,6 +120,7 @@ public class PostItUploadJSON
         res.owner = postIt.Owner;
         res.title = postIt.Title;
         res.content = postIt.Content;
+        res.scale = scale;
         if (postIt.Type == PostItType.MEDIA)
         {
             res.content_type = "media";
