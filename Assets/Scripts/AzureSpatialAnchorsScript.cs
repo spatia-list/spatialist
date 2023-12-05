@@ -1011,4 +1011,43 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
     // </DeleteAnchor>
 
+    // <DeletePostIt>
+    /// <summary>
+    /// Delete a post it from the UI and from the backend
+    /// </summary>
+    public async void DeletePostIt(PostIt data, GameObject obj)
+    {
+        Debug.Log("APP_DEBUG: Deleting post it ASA");
+        // print length of _foundPostIts
+        Debug.Log("APP_DEBUG: Length of _foundPostIts: " + _foundPostIts.Count);
+        // print the id of the post it to delete
+        Debug.Log("APP_DEBUG: Post it to delete: " + data.Id);
+
+        // check if the post it is in _foundPostIts
+        PostIt postIt = _foundPostIts.Find((post) => post.Id == data.Id);
+        if (postIt == null)
+        {
+            Debug.Log("APP_DEBUG: Post it not found in _foundPostIts");
+            Destroy(obj);
+            return;
+        }
+        else
+        {
+            Debug.Log("APP_DEBUG: Post it found in _foundPostIts");
+            Boolean ex = await _networkManager.DeletePostIt(data);
+            if (ex == true)
+            {
+                // refresh data
+                Debug.Log("APP_DEBUG: Post it deleted in backend");
+                // disable game object
+                obj.SetActive(false);
+                RefreshData();
+            }
+            return;
+            //if (ex != null)
+            //{
+            //    Debug.LogException(ex);
+            //}
+        } 
+    }
 }
