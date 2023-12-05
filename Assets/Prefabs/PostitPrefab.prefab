@@ -2807,7 +2807,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 8898175426490573819}
         m_TargetAssemblyTypeName: PostItManager, Assembly-CSharp
-        m_MethodName: Lock
+        m_MethodName: Delete
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
