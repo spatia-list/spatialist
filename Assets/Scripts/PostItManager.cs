@@ -78,7 +78,7 @@ public class PostItManager : MonoBehaviour
                 transform.SetLocalPose(data.Pose.Value);
             }
 
-            transform.localScale = Vector3.one * data.Scale;
+            transform.localScale = data.Scale;
         });
 
     }
