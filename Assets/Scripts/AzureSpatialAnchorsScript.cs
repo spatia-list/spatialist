@@ -745,6 +745,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             if (!InputDevices.GetDeviceAtXRNode(XRNode.Head).TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 headWorldPosition))
             {
                 headWorldPosition = Vector3.zero;
+                
             }
 
             /// Create the post-it GameObject ///
@@ -887,13 +888,20 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public void CreateSwipe(PostIt content)
     {
-        //Create Anchor GameObject. We will use ASA to save the position and the rotation of this GameObject.
+        // Get position of the headset
         if (!InputDevices.GetDeviceAtXRNode(XRNode.Head).TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 headPosition))
         {
             headPosition = Vector3.zero;
+
         }
 
-        Vector3 final = headPosition + new Vector3(0, 0, 1);
+        // Get rotation of the headset
+        if (!InputDevices.GetDeviceAtXRNode(XRNode.Head).TryGetFeatureValue(CommonUsages.deviceRotation, out Quaternion headRotation))
+        {
+            headRotation = Quaternion.identity;
+        }
+
+        Vector3 final = headPosition + headRotation * Vector3.forward * 0.35f;
 
         Debug.Log("APP_DEBUG: PostIt - " + final);
 
