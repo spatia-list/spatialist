@@ -26,10 +26,15 @@ public class PostItManager : MonoBehaviour
     /// New material to change for post it
     /// </summary>
     public Material Material_1;
+    public Material Material_1_trans;
     public Material Material_2;
+    public Material Material_2_trans;
     public Material Material_3;
+    public Material Material_3_trans;
     public Material Material_4;
+    public Material Material_4_trans;
     public Material Material_5;
+    public Material Material_5_trans;
 
     public GameObject Color1Button;
     public GameObject Color2Button;
@@ -86,30 +91,30 @@ public class PostItManager : MonoBehaviour
 
     public void ChangeColorYellow()
     {
-        ChangePostItColor(Material_1);
+        ChangePostItColor(Material_1, Material_1_trans);
     }
 
     public void ChangeColorPink()
     {
-        ChangePostItColor(Material_2);
+        ChangePostItColor(Material_2, Material_2_trans);
     }
 
     public void ChangeColorGreen()
     {
-        ChangePostItColor(Material_3);
+        ChangePostItColor(Material_3, Material_3_trans);
     }
 
     public void ChangeColorRed()
     {
-        ChangePostItColor(Material_4);
+        ChangePostItColor(Material_4, Material_4_trans);
     }
 
     public void ChangeColorBlue()
     {
-        ChangePostItColor(Material_5);
+        ChangePostItColor(Material_5, Material_5_trans);
     }
 
-    public void ChangePostItColor(Material mat)
+    public void ChangePostItColor(Material mat, Material mat_trans)
     {
         Transform quad = gameObject.transform.Find("ContentQuad");
         Transform backPlate = gameObject.transform.Find("TitleBar/BackPlate");
@@ -125,7 +130,7 @@ public class PostItManager : MonoBehaviour
             MeshRenderer backPlateRend = backPlateGO.GetComponent<MeshRenderer>();
 
             quadRend.material = mat;
-            backPlateRend.material = mat;
+            backPlateRend.material = mat_trans;
 
             Debug.Log("APP_DEBUG: Setting ContentQuad material.");
         }
