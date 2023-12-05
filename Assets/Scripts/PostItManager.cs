@@ -78,6 +78,7 @@ public class PostItManager : MonoBehaviour
                 transform.SetLocalPose(data.Pose.Value);
             }
 
+            Debug.Log("ASA - Setting scale to: " + data.Scale);
             transform.localScale = data.Scale;
         });
 

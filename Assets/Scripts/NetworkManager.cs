@@ -274,7 +274,7 @@ public class NetworkManager : MonoBehaviour
         Debug.Log("APP_DEBUG: all post-its titles:");
         foreach (PostItJSON postIt in response.postits)
         {
-            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2]);
+            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2] );
         }
         List<PostIt> objectList = new List<PostIt>();
         for (int i = 0; i < response.postits.Count; i++)
@@ -282,6 +282,10 @@ public class NetworkManager : MonoBehaviour
             objectList.Add(PostIt.ParseJSON(response.postits[i]));
         }
 
+        foreach (var item in objectList)
+        {
+            Debug.Log($"ASA - {item.Title} , {item.Scale}");
+        }
         return objectList;
     }
 
