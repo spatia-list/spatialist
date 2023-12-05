@@ -32,15 +32,15 @@ public class PostItManager : MonoBehaviour
     /// New material to change for post it
     /// </summary>
     public Material MaterialYellow;
-    public Material Material_1_trans;
+    public Material MaterialYellowTrans;
     public Material MaterialPink;
-    public Material Material_2_trans;
+    public Material MaterialPinkTrans;
     public Material MaterialGreen;
-    public Material Material_3_trans;
+    public Material MaterialGreenTrans;
     public Material MaterialRed;
-    public Material Material_4_trans;
+    public Material MaterialRedTrans;
     public Material MaterialBlue;
-    public Material Material_5_trans;
+    public Material MaterialBlueTrans;
 
     public GameObject Color1Button;
     public GameObject Color2Button;
@@ -124,27 +124,27 @@ public class PostItManager : MonoBehaviour
 
     public void ChangeColorYellow()
     {
-        ChangePostItColor(MaterialYellow, Material_1_trans);
+        ChangePostItColor(MaterialYellow, MaterialYellowTrans);
     }
 
     public void ChangeColorPink()
     {
-        ChangePostItColor(MaterialPink, Material_2_trans);
+        ChangePostItColor(MaterialPink, MaterialPinkTrans);
     }
 
     public void ChangeColorGreen()
     {
-        ChangePostItColor(MaterialGreen, Material_3_trans);
+        ChangePostItColor(MaterialGreen, MaterialGreenTrans);
     }
 
     public void ChangeColorRed()
     {
-        ChangePostItColor(MaterialRed, Material_4_trans);
+        ChangePostItColor(MaterialRed, MaterialRedTrans);
     }
 
     public void ChangeColorBlue()
     {
-        ChangePostItColor(MaterialBlue, Material_5_trans);
+        ChangePostItColor(MaterialBlue, MaterialBlueTrans);
     }
 
     // Changes the postit color (back plate and title bar) to the specified material
@@ -165,23 +165,23 @@ public class PostItManager : MonoBehaviour
 
             if (postItColor == Color.yellow)
             {
-                ChangePostItColor(MaterialYellow);
+                ChangePostItColor(MaterialYellow, MaterialYellowTrans);
             }
             else if (postItColor == Color.magenta)
             {
-                ChangePostItColor(MaterialPink);
+                ChangePostItColor(MaterialPink, MaterialPinkTrans);
             }
             else if (postItColor == Color.green)
             {
-                ChangePostItColor(MaterialGreen);
+                ChangePostItColor(MaterialGreen, MaterialGreenTrans);
             }
             else if (postItColor == Color.red)
             {
-                ChangePostItColor(MaterialRed);
+                ChangePostItColor(MaterialRed, MaterialRedTrans);
             }
             else if (postItColor == Color.blue)
             {
-                ChangePostItColor(MaterialBlue);
+                ChangePostItColor(MaterialBlue, MaterialBlueTrans);
             }
         }
 

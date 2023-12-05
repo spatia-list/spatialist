@@ -8036,7 +8036,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8599915592138753139}
   - component: {fileID: 542655963985024860}
-  - component: {fileID: 6897358202300671141}
   - component: {fileID: 8703382384291705240}
   m_Layer: 0
   m_Name: TextMeshPro
@@ -8106,14 +8105,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!222 &6897358202300671141
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5736740044323105287}
-  m_CullTransparentMesh: 0
 --- !u!114 &8703382384291705240
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10150,15 +10141,15 @@ MonoBehaviour:
   LockButton: {fileID: 6453909679477303663}
   UnlockButton: {fileID: 3942161033633954378}
   MaterialYellow: {fileID: 2100000, guid: cb74390ea57642f8b5ca0aa8f5fb38c1, type: 2}
-  Material_1_trans: {fileID: 2100000, guid: 6a92a01febd262544a43a7fe54b88013, type: 2}
+  MaterialYellowTrans: {fileID: 2100000, guid: 6a92a01febd262544a43a7fe54b88013, type: 2}
   MaterialPink: {fileID: 2100000, guid: 67e4ae112f094f3082e033060c3cd298, type: 2}
-  Material_2_trans: {fileID: 2100000, guid: 0e3f68a0b25245e4d9a3e2380c8ac1d6, type: 2}
+  MaterialPinkTrans: {fileID: 2100000, guid: 0e3f68a0b25245e4d9a3e2380c8ac1d6, type: 2}
   MaterialGreen: {fileID: 2100000, guid: 47f3c5e1cb6142ba9697cd4c86d74321, type: 2}
-  Material_3_trans: {fileID: 2100000, guid: 163c37494bc2d0540b3488a9d901ee07, type: 2}
+  MaterialGreenTrans: {fileID: 2100000, guid: 163c37494bc2d0540b3488a9d901ee07, type: 2}
   MaterialRed: {fileID: 2100000, guid: c4a1b7475a654dd0acaa0cfdfba2e20c, type: 2}
-  Material_4_trans: {fileID: 2100000, guid: 635a27f13b7b26b4483bc1283d04803e, type: 2}
+  MaterialRedTrans: {fileID: 2100000, guid: 635a27f13b7b26b4483bc1283d04803e, type: 2}
   MaterialBlue: {fileID: 2100000, guid: 3c55769e893c4f4c8c51b7fa69bee2b9, type: 2}
-  Material_5_trans: {fileID: 2100000, guid: 0530d90ba2a117e4f95c7a6345e8bb14, type: 2}
+  MaterialBlueTrans: {fileID: 2100000, guid: 0530d90ba2a117e4f95c7a6345e8bb14, type: 2}
   Color1Button: {fileID: 8883398530109647713}
   Color2Button: {fileID: 8322341175623043729}
   Color3Button: {fileID: 1785231901386598245}
@@ -12289,7 +12280,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7776976876956342306}
   - component: {fileID: 1689637070847921318}
-  - component: {fileID: 4480671807903432042}
   - component: {fileID: 584529799456230040}
   m_Layer: 0
   m_Name: TextMeshPro
@@ -12359,14 +12349,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!222 &4480671807903432042
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7489540643884908489}
-  m_CullTransparentMesh: 0
 --- !u!114 &584529799456230040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15288,7 +15270,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8394106169437333783}
   - component: {fileID: 3406620105263691837}
-  - component: {fileID: 5786544009807271569}
   - component: {fileID: 5697452716112576768}
   m_Layer: 0
   m_Name: TextMeshPro
@@ -15358,14 +15339,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!222 &5786544009807271569
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9119985945561961192}
-  m_CullTransparentMesh: 0
 --- !u!114 &5697452716112576768
 MonoBehaviour:
   m_ObjectHideFlags: 0
