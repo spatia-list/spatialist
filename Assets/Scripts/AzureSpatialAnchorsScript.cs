@@ -43,7 +43,7 @@ public enum PostItType
     TEXT, MEDIA
 }
 
-public class PostIt
+public class PostIt : IEquatable<PostIt>
 {
     public string Id;
     public string AnchorId;
@@ -68,6 +68,25 @@ public class PostIt
         Color = color;
         Pose = pose;
         Scale = scale;
+    }
+
+    public bool Same(PostIt other)
+    {
+        return this.Id == other.Id;
+    }
+
+    public bool Modified(PostIt other)
+    {
+        if (!this.Same(other)) return false;
+
+        return this.AnchorId != other.AnchorId
+            || this.Owner != other.Owner
+            || this.Title != other.Title
+            || this.Type != other.Type
+            || this.Content != other.Content
+            || this.Pose != other.Pose
+            || this.Scale != other.Scale;
+
     }
 
     public static PostIt ParseJSON(PostItJSON data)
@@ -131,9 +150,14 @@ public class PostIt
             );
     }
 
-    public static PostIt Test()
+    public static PostIt Initial()
     {
-        return new PostIt("1", "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, Vector3.one * 0.4f);
+        return new PostIt(Guid.NewGuid().ToString(), "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, Vector3.one * 0.4f);
+    }
+
+    public bool Equals(PostIt other)
+    {
+        return this.Same(other);
     }
 }
 // STRUCTURES //
@@ -351,7 +375,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case ManagerState.CREATE:
                 {
                     Debug.Log("APP_DEBUG: CREATE MODE");
-                    CreatePostIt(handPosition, PostIt.Test());
+                    CreatePostIt(handPosition, PostIt.Initial());
                     break;
                 }
 
@@ -418,25 +442,48 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
         _availablePostIts = await _networkManager.GetPostIts();
 
+        List<PostIt> neverSeen = new();
+        List<PostIt> toModify = new();
+        List<PostIt> toDelete = new();
 
-        _foundPostItManagers.Clear();
-        _foundPostIts.Clear();
+
+        foreach (PostIt item in _availablePostIts)
+        {
+            if (!_foundPostIts.Contains(item))
+            {
+                Debug.Log("ASA - Found a new post it");
+                neverSeen.Add(item);
+            }
+        }
+
+        foreach (PostIt item in _foundPostIts)
+        {
+            PostIt res = _availablePostIts.Find((p) => p == item);
+
+            if (res == null)
+            {
+                Debug.Log("ASA - Found a postit deletion event");
+                toDelete.Add(item);
+            }
+            else if (res.Modified(item))
+            {
+                Debug.Log("ASA - Found a postit modification event");
+                toDelete.Add(item);
+            }
+        }
 
         // filter the available postits 
-        foreach(PostIt postIt in _availablePostIts)
+        foreach (PostIt postIt in neverSeen)
         {
             foreach (LocalAnchor anchor in _foundLocalAnchors)
             {
                 if (anchor.anchorId == postIt.AnchorId)
                 {
-                    Debug.Log("ASA - Found a local postit, placing...");
-                    _foundPostIts.Add(postIt);
+                    Debug.Log("ASA - Found a local postit");
+
                     UnityDispatcher.InvokeOnAppThread(() =>
                     {
                         GameObject go = Instantiate(PostItPrefab);
-                        go.transform.localScale = Vector3.one * 0.3f;
-                        
-                        // Attach the the
                         PostItManager manager = go.GetComponent<PostItManager>();
                         manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
                         manager.SetObject(postIt, anchor);
@@ -449,6 +496,41 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     });
 
                     Debug.Log("ASA - Postit successfully placed!");
+                    break;
+                }
+            }
+        }
+
+        // Perform deletion
+        UnityDispatcher.InvokeOnAppThread(() =>
+        {
+            foreach (PostIt p in toDelete)
+            {
+                if (p.Instance != null)
+                {
+                    p.Instance.SetActive(false);
+                }
+            }
+        });
+
+        // Perform modifications
+
+        foreach (PostIt postIt in toModify)
+        {
+            foreach (LocalAnchor anchor in _foundLocalAnchors)
+            {
+                if (anchor.anchorId == postIt.AnchorId)
+                {
+                    Debug.Log("ASA - Found a local postit to modify");
+
+
+                    if (postIt.Instance != null)
+                    {
+                        PostItManager manager = postIt.Instance.GetComponent<PostItManager>();
+                        manager.SetObject(postIt, anchor);
+                    }
+
+                    Debug.Log("ASA - Postit successfully modified!");
                     break;
                 }
             }
@@ -676,6 +758,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             PostItManager manager = postItGameObject.GetComponent<PostItManager>();
             manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
             manager.SetObject(data, null);
+
+            _foundPostIts.Add(data);
 
 
             // Ones the user presses on the save button, the post-it is saved

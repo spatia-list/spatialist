@@ -105,12 +105,11 @@ public class PostItUploadJSON
 
         List<float> scale = new();
 
-        if (scale != null && scale.Count >= 3)
+        if (postIt.Scale != null)
         {
-            scale.Add(scale[0]);
-            scale.Add(scale[1]);
-            scale.Add(scale[2]);
-
+            scale.Add(postIt.Scale[0]);
+            scale.Add(postIt.Scale[1]);
+            scale.Add(postIt.Scale[2]);
         }
 
         PostItUploadJSON res = new();
