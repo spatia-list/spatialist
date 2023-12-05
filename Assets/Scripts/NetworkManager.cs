@@ -163,6 +163,23 @@ public class HashMessageJSON
     public string hash { get; set; }
 }
 
+public class GroupJSON
+{
+    public string id { get; set; }
+    public string group_name { get; set; }
+    public List<string> users { get; set; }
+    public string _rid { get; set; }
+    public string _self { get; set; }
+    public string _etag { get; set; }
+    public string _attachments { get; set; }
+    public int _ts { get; set; }
+}
+
+public class GroupResponseJSON
+{
+    public List<GroupJSON> groups { get; set; }
+}
+
 
 public class NetworkManager : MonoBehaviour
 {
@@ -425,6 +442,37 @@ public class NetworkManager : MonoBehaviour
         }
 
 
+    }
+
+
+    // method to get list of groups
+    public async Task<List<GroupJSON>> GetGroups()
+    {
+        try
+        {
+            string textResponse = await getAsync("/groups");
+
+            GroupResponseJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<GroupResponseJSON>(textResponse);
+
+            // print the number of groups
+            Debug.Log("APP_DEBUG: Total group count: " + response.groups.Count);
+
+            // print all groups            
+            //Debug.Log("APP_DEBUG: all groups:");
+            //foreach (GroupJSON group in response.groups)
+            //{
+            //    Debug.Log("APP_DEBUG: group id: " + group.id + " group name: " + group.group_name);
+            //}
+
+
+            return response.groups;
+        }
+        catch (Exception e)
+        {
+            Debug.Log("APP_DEBUG: NetManager - " + e.Message);
+        }
+
+        return null;
     }
 
 

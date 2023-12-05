@@ -161,6 +161,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private NetworkManager _networkManager;
 
     /// <summary>
+    /// Use to keep all groups
+    /// </summary>
+    private List<GroupJSON> _groups;
+
+    /// <summary>
     /// Used to keep track of all found local anchors, coming from Azure Spatial Anchors
     /// </summary>
     private List<LocalAnchor> _foundLocalAnchors = new();
@@ -226,6 +231,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         // Set the callback for when anchors are found
         _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
 
+        // Fetch all groups
+        LoadGroups();
+
         // Start the ASA session and load all anchors and add to watcher
         StartAndLoadASASession();
 
@@ -234,6 +242,17 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     }
     // </Start>
+
+    private async void LoadGroups()
+    {
+        _groups = await _networkManager.GetGroups();
+
+        // print group name and id
+        foreach (GroupJSON group in _groups)
+        {
+            Debug.Log("APP_DEBUG: Group - " + group.group_name + " " + group.id);
+        }
+    }
 
     private async void StartAndLoadASASession()
     {
