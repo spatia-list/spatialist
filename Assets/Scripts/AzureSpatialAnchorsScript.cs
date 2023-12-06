@@ -1,8 +1,10 @@
 using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
 using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Audio;
 using Microsoft.MixedReality.Toolkit.Experimental.UI;
 using Microsoft.MixedReality.Toolkit.UI;
+using Microsoft.MixedReality.Toolkit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -240,10 +242,16 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     // Group prefab
     public GameObject GroupPrefab;
 
+    // TextToSpeech
+    private TextToSpeech _textToSpeech;
+
     // <Start>
     // Start is called before the first frame update
     void Start()
     {
+        // Set audio source of speech to text
+        _textToSpeech = gameObject.GetComponent<TextToSpeech>();
+
         //Set state to idle
         _state = ManagerState.IDLE;
         Debug.Log("APP_DEBUG: starting the session");
@@ -275,6 +283,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
         _groups = await _networkManager.GetGroups();
 
+        // sort groups
+        _groups.Sort((a, b) => a.group_name.CompareTo(b.group_name));
+
         // print group name and id
         foreach (GroupJSON group in _groups)
         {
@@ -293,7 +304,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
             // get reference to GroupDropdown gameobject
             GameObject selectMap = UIPrefab_Instance.transform.Find("UI3-SelectMapEnterMap instance").gameObject;
-            GameObject GroupDropdown = UIPrefab_Instance.transform.Find("UI3-SelectMapEnterMap instance/Select Map for Entering Map [Frame]/Canvas/Organizer").gameObject;
+            GameObject GroupDropdown = UIPrefab_Instance.transform.Find("UI3-SelectMapEnterMap instance/Select Map for Entering Map [Frame]/ScrollingOC_PressableBtn_32x96/ScrollingObjectCollection/Container/GridObjectCollection").gameObject;
             if (GroupDropdown == null)
             {
                 Debug.Log("APP_DEBUG: dropdown not found");
@@ -312,10 +323,24 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 {
                     GameObject newOption = Instantiate(GroupPrefab);
                     newOption.transform.SetParent(GroupDropdown.transform, false);
-                    newOption.GetComponent<Interactable>().OnClick.AddListener(() => { SetCurrentGroup(group.group_name); selectMap.SetActive(false); });
+                    newOption.GetComponent<Interactable>().OnClick.AddListener(() => 
+                    { 
+                        SetCurrentGroup(group.group_name); 
+                        selectMap.SetActive(false); 
+                        // say group name using TextToSpeech
+                        this._textToSpeech.StartSpeaking("Moving to " + group.group_name);
+                    });
                     newOption.GetComponentInChildren<TextMeshPro>().text = group.group_name;
                     //break;
                 }
+
+                GridObjectCollection grid = GroupDropdown.GetComponent<GridObjectCollection>();
+
+                // delay
+                await Task.Delay(1000);
+
+                grid.UpdateCollection();
+                Debug.Log("APP_DEBUG: dropdown updated");
             }
 
         }
