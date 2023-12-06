@@ -8,6 +8,7 @@ using Unity.Mathematics;
 using Unity.VisualScripting;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+using Microsoft.MixedReality.Toolkit.Experimental.UI;
 
 
 public enum PostItState { LOCKED, UNLOCKED }
@@ -20,8 +21,8 @@ public class PostItManager : MonoBehaviour
     private PostIt _data;
 
     // TextMeshPro objects
-    public TextMeshPro TitleTextInput;
-    public TextMeshPro ContentTextInput;
+    private MRTKTMPInputField TitleTextInput;
+    private MRTKTMPInputField ContentTextInput;
     private TextMeshPro TitleTextDisplay;
     private TextMeshPro ContentTextDisplay;
 
@@ -91,8 +92,8 @@ public class PostItManager : MonoBehaviour
             this.titleBackPlateRend = titleBackPlateGO.GetComponent<MeshRenderer>();
             this.TitleTextDisplay = titleTextGO.GetComponent<TextMeshPro>();
 
-            this.ContentTextInput = contentInputTextGO.GetComponent<TextMeshPro>();
-            this.TitleTextInput = titleInputTextGO.GetComponent<TextMeshPro>();
+            this.ContentTextInput = contentInputTextGO.GetComponent<MRTKTMPInputField>();
+            this.TitleTextInput = titleInputTextGO.GetComponent<MRTKTMPInputField>();
             
         }
         else
@@ -126,8 +127,8 @@ public class PostItManager : MonoBehaviour
             // sets content and title text
             Debug.Log("APP_DEBUG: Setting content to:" + _data.Content);
             Debug.Log("APP_DEBUG: Setting title to:" + _data.Title);
-            ContentTextInput.SetText(_data.Content);
-            TitleTextInput.SetText(_data.Title);
+            ContentTextInput.text = _data.Content;
+            TitleTextInput.text = _data.Title;
 
             // sets the color of the postit
             SetMaterialFromColor(_data.Color);
