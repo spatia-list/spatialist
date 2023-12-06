@@ -481,16 +481,46 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
     // </ShortTap>
 
-
+    /// <summary>
+    /// Change the current group to the one with the given name
+    /// </summary>
+    /// <param name="name"></param>
     public void SetCurrentGroup(String name)
     {
-        if (_networkManager.GroupName == name) return;  
-        _networkManager.GroupName = name;
+        // check if the username is in the group and if not add the username to the group
+        // find the group object from name
+        GroupJSON group = _groups.Find((g) => g.group_name == name);
+        if (group != null)
+        {
+            // get group usernames
+            List<string> usernames = group.users;
+            if (usernames.Contains(_networkManager.Username))
+            {
+                Debug.Log("APP_DEBUG: Username is in group");
+            }
+            else
+            {
+                Debug.Log("APP_DEBUG: Username is not in group");
+                // add username to group
+                usernames.Add(_networkManager.Username);
+                group.users = usernames;
+                _networkManager.JoinGroup(name);
+            }   
+        }
+
+        // if group name is the same, return
+        if (_networkManager.GroupName == name) return;
+
         Debug.Log("APP_DEBUG: Setting group to " + name);
+        _networkManager.GroupName = name;
         _networkManager.ResetHashes();
         RefreshData();
     }
 
+    /// <summary>
+    /// Set username to a given name
+    /// </summary>
+    /// <param name="name"></param>
     public void SetUsername(String name)
     {
         _networkManager.Username = name;
