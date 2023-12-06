@@ -186,6 +186,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private NetworkManager _networkManager;
 
     /// <summary>
+    /// Use to keep all groups
+    /// </summary>
+    private List<GroupJSON> _groups;
+
+    /// <summary>
     /// Used to keep track of all found local anchors, coming from Azure Spatial Anchors
     /// </summary>
     private List<LocalAnchor> _foundLocalAnchors = new();
@@ -222,8 +227,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     private ManagerState _state;
 
-    private String _currentGroup = "TestRoom";
-
     /// <summary>
     /// The distance threshold to attach a post-it to an anchor (in meters)
     /// </summary>
@@ -251,6 +254,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         // Set the callback for when anchors are found
         _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
 
+        // Fetch all groups
+        LoadGroups();
+
         // Start the ASA session and load all anchors and add to watcher
         StartAndLoadASASession();
 
@@ -259,6 +265,17 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     }
     // </Start>
+
+    private async void LoadGroups()
+    {
+        _groups = await _networkManager.GetGroups();
+
+        // print group name and id
+        foreach (GroupJSON group in _groups)
+        {
+            Debug.Log("APP_DEBUG: Group - " + group.group_name + " " + group.id);
+        }
+    }
 
     private async void StartAndLoadASASession()
     {
@@ -398,7 +415,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public void SetCurrentGroup(String name)
     {
-        _currentGroup = name;
+        _networkManager.GroupName = name;
         RefreshData();
     }
 
@@ -681,7 +698,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 Debug.Log($"APP_DEBUG: ASA - Saved cloud anchor with ID: {cloudSpatialAnchor.Identifier}");
 
                 // Create a LocalAnchor class instance and attach the GameObject to it
-                LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _currentGroup);
+                LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _networkManager.GroupName);
                 createdAnchor.AttachInstance(anchorGameObject);
 
                 if (await _networkManager.PostAnchor(createdAnchor))
