@@ -2,11 +2,13 @@ using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Experimental.UI;
+using Microsoft.MixedReality.Toolkit.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 // using System.Numerics;
 using System.Threading.Tasks;
+using TMPro;
 using Unity.VisualScripting;
 using Unity.XR.CoreUtils;
 using UnityEngine;
@@ -235,6 +237,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     // Create a new UnityEvent that can be assigned in the Unity editor
     public UnityEvent onShortTap; 
 
+    // Group prefab
+    public GameObject GroupPrefab;
+
     // <Start>
     // Start is called before the first frame update
     void Start()
@@ -274,6 +279,45 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         foreach (GroupJSON group in _groups)
         {
             Debug.Log("APP_DEBUG: Group - " + group.group_name + " " + group.id);
+        }
+
+        // get reference to UIPrefab_Instance gameobject
+        GameObject UIPrefab_Instance = GameObject.Find("UIPrefab instance");
+        if (UIPrefab_Instance == null)
+        {
+            Debug.Log("APP_DEBUG: UIPrefab_Instance not found");
+        }
+        else
+        {
+            Debug.Log("APP_DEBUG: UIPrefab_Instance found");
+
+            // get reference to GroupDropdown gameobject
+            GameObject selectMap = UIPrefab_Instance.transform.Find("UI3-SelectMapEnterMap instance").gameObject;
+            GameObject GroupDropdown = UIPrefab_Instance.transform.Find("UI3-SelectMapEnterMap instance/Select Map for Entering Map [Frame]/Canvas/Organizer").gameObject;
+            if (GroupDropdown == null)
+            {
+                Debug.Log("APP_DEBUG: dropdown not found");
+            } 
+            else
+            {
+                Debug.Log("APP_DEBUG: dropdown found");
+                // Delete all children of the dropdown
+                foreach (Transform child in GroupDropdown.transform)
+                {
+                    GameObject.Destroy(child.gameObject);
+                }
+
+                // Create a new option for each group
+                foreach (GroupJSON group in _groups)
+                {
+                    GameObject newOption = Instantiate(GroupPrefab);
+                    newOption.transform.SetParent(GroupDropdown.transform, false);
+                    newOption.GetComponent<Interactable>().OnClick.AddListener(() => { SetCurrentGroup(group.group_name); selectMap.SetActive(false); });
+                    newOption.GetComponentInChildren<TextMeshPro>().text = group.group_name;
+                    //break;
+                }
+            }
+
         }
     }
 
@@ -415,7 +459,10 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public void SetCurrentGroup(String name)
     {
+        if (_networkManager.GroupName == name) return;  
         _networkManager.GroupName = name;
+        Debug.Log("APP_DEBUG: Setting group to " + name);
+        _networkManager.ResetHashes();
         RefreshData();
     }
 

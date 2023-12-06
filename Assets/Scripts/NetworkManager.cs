@@ -263,6 +263,12 @@ public class NetworkManager : MonoBehaviour
         return false;
     }
 
+    public void ResetHashes()
+    {
+        _lastAnchorsHash = null;
+        _lastPostItsHash = null;
+    }
+
     public async Task<bool> ShouldRefreshPostIts()
     {
         string newHash = await GetPostItsHash();
