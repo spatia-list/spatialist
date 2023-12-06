@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 // using System.Numerics;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Events;
@@ -150,9 +151,9 @@ public class PostIt : IEquatable<PostIt>
             );
     }
 
-    public static PostIt Initial()
+    public static PostIt Initial(string username)
     {
-        return new PostIt(Guid.NewGuid().ToString(), "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, Vector3.one * 0.4f);
+        return new PostIt(Guid.NewGuid().ToString(), "1", username , "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, Vector3.one * 0.4f);
     }
 
     public bool Equals(PostIt other)
@@ -375,7 +376,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case ManagerState.CREATE:
                 {
                     Debug.Log("APP_DEBUG: CREATE MODE");
-                    CreatePostIt(handPosition, PostIt.Initial());
+                    CreatePostIt(handPosition, PostIt.Initial(this._networkManager.Username));
                     break;
                 }
 
@@ -1019,21 +1020,21 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     {
         Debug.Log("APP_DEBUG: Deleting post it ASA");
         // print length of _foundPostIts
-        Debug.Log("APP_DEBUG: Length of _foundPostIts: " + _foundPostIts.Count);
+        Debug.Log("APP_DEBUG: Length of _availablePostIts: " + _availablePostIts.Count);
         // print the id of the post it to delete
         Debug.Log("APP_DEBUG: Post it to delete: " + data.Id);
 
         // check if the post it is in _foundPostIts
-        PostIt postIt = _foundPostIts.Find((post) => post.Id == data.Id);
+        PostIt postIt = _availablePostIts.Find((post) => post.Id == data.Id);
         if (postIt == null)
         {
-            Debug.Log("APP_DEBUG: Post it not found in _foundPostIts");
-            Destroy(obj);
+            Debug.Log("APP_DEBUG: Post it not found in _availablePostIts");
+            obj.SetActive(false);
             return;
         }
         else
         {
-            Debug.Log("APP_DEBUG: Post it found in _foundPostIts");
+            Debug.Log("APP_DEBUG: Post it found in _availablePostIts");
             Boolean ex = await _networkManager.DeletePostIt(data);
             if (ex == true)
             {
@@ -1041,13 +1042,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 Debug.Log("APP_DEBUG: Post it deleted in backend");
                 // disable game object
                 obj.SetActive(false);
-                RefreshData();
             }
             return;
-            //if (ex != null)
-            //{
-            //    Debug.LogException(ex);
-            //}
         } 
     }
 }
