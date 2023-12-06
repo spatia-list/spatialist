@@ -20,10 +20,10 @@ public class PostItManager : MonoBehaviour
     private PostIt _data;
 
     // TextMeshPro objects
-    public TextMeshPro ContentTextDisplay;
-    public TextMeshPro ContentTextInput;
-    public TextMeshPro TitleTextDisplay;
     public TextMeshPro TitleTextInput;
+    public TextMeshPro ContentTextInput;
+    private TextMeshPro TitleTextDisplay;
+    private TextMeshPro ContentTextDisplay;
 
     // Renderer objects (for the material of the postit)
     private MeshRenderer contentQuadRend;
@@ -52,10 +52,6 @@ public class PostItManager : MonoBehaviour
     public GameObject ColorGreenButton;
     public GameObject ColorRedButton;
     public GameObject ColorBlueButton;
-
-    
-
-
     
 
 
@@ -70,8 +66,12 @@ public class PostItManager : MonoBehaviour
     	Transform titleBackPlate = gameObject.transform.Find("TitleBar/BackPlate");
 
         // Find where we can access the text of the content and title in the prefab
-        Transform contentText = gameObject.transform.Find("ContentQuad/TextInputField/TextContent");
-        Transform titleText = gameObject.transform.Find("TitleBar/BackPlate/TextInputField/TextContent");
+        Transform contentText = gameObject.transform.Find("ContentQuad/TextInputField/ContentText");
+        Transform titleText = gameObject.transform.Find("TitleBar/BackPlate/TextInputField/TitleText");
+
+        // Here we get the location of the input fields for the content and title 
+        Transform contentInputText = gameObject.transform.Find("ContentQuad/TextInputField");
+        Transform titleInputText = gameObject.transform.Find("TitleBar/BackPlate/TextInputField");
 
         Debug.Log("APP_DEBUG: Getting ContentQuad from PostItPrefab");
 
@@ -81,14 +81,19 @@ public class PostItManager : MonoBehaviour
             GameObject contentTextGO = contentText.gameObject;
             GameObject titleBackPlateGO = titleBackPlate.gameObject; 
             GameObject titleTextGO = titleText.gameObject;
+            GameObject contentInputTextGO = contentInputText.gameObject;
+            GameObject titleInputTextGO = titleInputText.gameObject;
 
-
+            // Gets the specific components of the post-it prefab
             this.contentQuadRend = contentQuadGO.GetComponent<MeshRenderer>();
             this.ContentTextDisplay = contentTextGO.GetComponent<TextMeshPro>();
 
             this.titleBackPlateRend = titleBackPlateGO.GetComponent<MeshRenderer>();
             this.TitleTextDisplay = titleTextGO.GetComponent<TextMeshPro>();
 
+            this.ContentTextInput = contentInputTextGO.GetComponent<TextMeshPro>();
+            this.TitleTextInput = titleInputTextGO.GetComponent<TextMeshPro>();
+            
         }
         else
         {
@@ -119,10 +124,10 @@ public class PostItManager : MonoBehaviour
         UnityDispatcher.InvokeOnAppThread(() =>
         {
             // sets content and title text
-            ContentTextInput.SetText(_data.Content);
             Debug.Log("APP_DEBUG: Setting content to:" + _data.Content);
-            TitleTextInput.SetText(_data.Title);
             Debug.Log("APP_DEBUG: Setting title to:" + _data.Title);
+            ContentTextInput.SetText(_data.Content);
+            TitleTextInput.SetText(_data.Title);
 
             // sets the color of the postit
             SetMaterialFromColor(_data.Color);
@@ -138,6 +143,17 @@ public class PostItManager : MonoBehaviour
             Debug.Log("ASA - Setting scale to: " + data.Scale);
             transform.localScale = data.Scale;
         });
+
+    }
+
+    // Changes the postit color (back plate and title bar) to the specified material
+    public void ChangePostItColor(Material mat, Material mat_trans)
+    {
+
+            this.contentQuadRend.material = mat;
+            this.titleBackPlateRend.material = mat_trans;
+            Debug.Log("APP_DEBUG: Setting ContentQuad material.");
+
 
     }
 
@@ -164,17 +180,6 @@ public class PostItManager : MonoBehaviour
     public void ChangeColorBlue()
     {
         ChangePostItColor(MaterialBlue, MaterialBlueTrans);
-    }
-
-    // Changes the postit color (back plate and title bar) to the specified material
-    public void ChangePostItColor(Material mat, Material mat_trans)
-    {
-
-            this.contentQuadRend.material = mat;
-            this.titleBackPlateRend.material = mat_trans;
-            Debug.Log("APP_DEBUG: Setting ContentQuad material.");
-
-
     }
 
     // Sets the material of the post it based on the color value that is returned from Cosmos DB
@@ -251,12 +256,14 @@ public class PostItManager : MonoBehaviour
 
         // Turn off text editing of the postit
         ContentTextInput.gameObject.SetActive(false);
+        TitleTextInput.gameObject.SetActive(false);
 
         // Update the postit color (in the PostIt class)
         UpdatePostItColorFromMaterial(this.contentQuadRend.material);	
 
-        // Update the postit content (in the PostIt class)
+        // Update the postit content and title text (in the PostIt class)
         _data.Content = ContentTextDisplay.text;
+        _data.Title = TitleTextDisplay.text;
 
         Exception ex = _script.SavePostIt(_data, gameObject);
         if (ex != null)
@@ -283,6 +290,8 @@ public class PostItManager : MonoBehaviour
 
         // Enable text and title editing (turning on the TextMeshPro input fields)
         ContentTextInput.gameObject.SetActive(true);
+        TitleTextInput.gameObject.SetActive(true);
+
 
     }
 }

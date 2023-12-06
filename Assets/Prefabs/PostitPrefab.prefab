@@ -1711,7 +1711,9 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: "Hey! I would like to get some chicken for dinner! \n"
+  m_Text: 'Hey! I would like to get some chicken for dinner! Oh nooo
+
+'
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
@@ -1719,7 +1721,7 @@ MonoBehaviour:
   m_GlobalFontAsset: {fileID: 0}
   m_OnFocusSelectAll: 1
   m_ResetOnDeActivation: 0
-  m_RestoreOriginalTextOnEscape: 1
+  m_RestoreOriginalTextOnEscape: 0
   m_isRichTextEditingAllowed: 1
   m_LineLimit: 7
   m_InputValidator: {fileID: 0}
@@ -4920,7 +4922,7 @@ GameObject:
   - component: {fileID: 9122569705428942076}
   - component: {fileID: 7702489471357141653}
   m_Layer: 0
-  m_Name: TextContent
+  m_Name: TitleText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9740,10 +9742,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c661c02840662e4fa7f7f3651bf1552, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ContentTextDisplay: {fileID: 0}
-  ContentTextInput: {fileID: 0}
-  TitleTextDisplay: {fileID: 0}
   TitleTextInput: {fileID: 0}
+  ContentTextInput: {fileID: 0}
   LockButton: {fileID: 6453909679477303663}
   UnlockButton: {fileID: 3942161033633954378}
   MaterialYellow: {fileID: 2100000, guid: cb74390ea57642f8b5ca0aa8f5fb38c1, type: 2}
@@ -11320,7 +11320,7 @@ GameObject:
   - component: {fileID: 228440315470087063}
   - component: {fileID: 6590817081286123645}
   m_Layer: 0
-  m_Name: TextContent
+  m_Name: ContentText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11407,7 +11407,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Hey! I would like to get some chicken for dinner! \n\u200B"
+  m_text: "Hey! I would like to get some chicken for dinner! Oh nooo\n\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6a84f857bec7e7345843ae29404c57ce, type: 2}
   m_sharedMaterial: {fileID: 21202819797275496, guid: 6a84f857bec7e7345843ae29404c57ce, type: 2}
