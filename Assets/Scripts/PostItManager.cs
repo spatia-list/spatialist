@@ -21,8 +21,8 @@ public class PostItManager : MonoBehaviour
     private PostIt _data;
 
     // TextMeshPro objects
-    private MRTKTMPInputField TitleTextInput;
-    private MRTKTMPInputField ContentTextInput;
+    private MRTKUGUIInputField TitleTextInput;
+    private MRTKUGUIInputField ContentTextInput;
     private TextMeshPro TitleTextDisplay;
     private TextMeshPro ContentTextDisplay;
 
@@ -92,8 +92,8 @@ public class PostItManager : MonoBehaviour
             this.titleBackPlateRend = titleBackPlateGO.GetComponent<MeshRenderer>();
             this.TitleTextDisplay = titleTextGO.GetComponent<TextMeshPro>();
 
-            this.ContentTextInput = contentInputTextGO.GetComponent<MRTKTMPInputField>();
-            this.TitleTextInput = titleInputTextGO.GetComponent<MRTKTMPInputField>();
+            this.ContentTextInput = contentInputTextGO.GetComponent<MRTKUGUIInputField>();
+            this.TitleTextInput = titleInputTextGO.GetComponent<MRTKUGUIInputField>();
             
         }
         else
