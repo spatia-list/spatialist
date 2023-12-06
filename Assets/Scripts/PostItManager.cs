@@ -164,4 +164,11 @@ public class PostItManager : MonoBehaviour
         Color4Button.SetActive(true);
         Color5Button.SetActive(true);
     }
+
+    // Function called when the user clicks on the delete button
+    public void Delete()
+    {
+        Debug.Log("APP_DEBUG: Deleting post it");
+        _script.DeletePostIt(_data, gameObject);
+    }
 }

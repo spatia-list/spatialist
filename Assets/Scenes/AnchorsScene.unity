@@ -1865,7 +1865,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EndpointURL: http://185.224.139.115:8000
   Username: TestUser
-  GroupName: TestRoom
+  GroupName: TestRoom2
 --- !u!114 &967253954
 MonoBehaviour:
   m_ObjectHideFlags: 0
