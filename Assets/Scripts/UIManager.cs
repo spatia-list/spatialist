@@ -71,7 +71,8 @@ public class UIManager : MonoBehaviour
             _list[i].SetActive(false);
         }
 
-        SetState(StartState);
+        // Comment this out, when configuring the UI, let's reenable it
+        //SetState(StartState);
     }
 
     // Update is called once per frame

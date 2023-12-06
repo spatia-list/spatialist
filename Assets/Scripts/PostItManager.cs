@@ -295,4 +295,13 @@ public class PostItManager : MonoBehaviour
 
 
     }
+
+    // Function called when the user clicks on the delete button
+    public void Delete()
+    {
+        Debug.Log("APP_DEBUG: Deleting post it");
+        _script.DeletePostIt(_data, gameObject);
+    }
+
+
 }
