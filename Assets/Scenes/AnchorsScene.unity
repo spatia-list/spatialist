@@ -558,7 +558,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 937906662203130604, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 963822469022056367, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -740,6 +740,22 @@ PrefabInstance:
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: UIManager, Assembly-CSharp
       objectReference: {fileID: 0}
+    - target: {fileID: 3833576309219611652, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3833576309219611652, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3833576309219611652, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.048
+      objectReference: {fileID: 0}
+    - target: {fileID: 3833576309219611652, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.016
+      objectReference: {fileID: 0}
     - target: {fileID: 4065958979071058268, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -775,14 +791,14 @@ PrefabInstance:
     - target: {fileID: 4529165129515433368, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 870294857}
+      objectReference: {fileID: 810674820}
     - target: {fileID: 4529165129515433368, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: SetU2
+      value: SetActive
       objectReference: {fileID: 0}
     - target: {fileID: 4529165129515433368, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: UIManager, Assembly-CSharp
+      value: UnityEngine.GameObject, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 4758717289967424311, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: ButtonPressed.m_PersistentCalls.m_Calls.Array.size
@@ -1207,15 +1223,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 110123287243307132, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       insertIndex: -1
       addedObject: {fileID: 870294859}
-    - targetCorrespondingSourceObject: {fileID: 609506377724395537, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
-    - targetCorrespondingSourceObject: {fileID: 3574933374182179451, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
-    - targetCorrespondingSourceObject: {fileID: 3877547666281663460, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
     - targetCorrespondingSourceObject: {fileID: 5568599115249741518, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       insertIndex: -1
       addedObject: {fileID: 810674826}
@@ -1387,12 +1394,12 @@ MonoBehaviour:
   targetToFace: {fileID: 0}
   pivotAxis: 7
   minDistance: 0.3
-  maxDistance: 0.9
-  defaultDistance: 0.7
+  maxDistance: 0.5
+  defaultDistance: 0.5
   maxViewHorizontalDegrees: 30
   maxViewVerticalDegrees: 20
   reorientWhenOutsideParameters: 1
-  orientToControllerDeadzoneDegrees: 60
+  orientToControllerDeadzoneDegrees: 45
   ignoreAngleClamp: 0
   ignoreDistanceClamp: 0
   ignoreReferencePitchAndRoll: 0
@@ -1455,6 +1462,18 @@ PrefabInstance:
     - target: {fileID: 2400578266725564608, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_WasSpriteAssigned
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2867201759437405539, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 870294857}
+    - target: {fileID: 2867201759437405539, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SetU3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2867201759437405539, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: UIManager, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 2867201759987767193, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.size
@@ -1524,6 +1543,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MappingButton
       objectReference: {fileID: 0}
+    - target: {fileID: 4650336334747025260, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4650336334825379608, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_Name
       value: CreateButton
@@ -1578,7 +1601,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4650336335719039536, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_text
-      value: SETTINGS
+      value: CHANGE MAP
       objectReference: {fileID: 0}
     - target: {fileID: 4650336335719039536, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_textAlignment
@@ -1647,6 +1670,10 @@ PrefabInstance:
     - target: {fileID: 4650336336052702775, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4650336336340095936, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
+      propertyPath: m_Name
+      value: Change Map
       objectReference: {fileID: 0}
     - target: {fileID: 4650336336369554838, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_IsActive
@@ -1865,7 +1892,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EndpointURL: http://185.224.139.115:8000
   Username: TestUser
-  GroupName: TestRoom2
+  GroupName: DeepanaRoom
 --- !u!114 &967253954
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1896,6 +1923,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  GroupPrefab: {fileID: 422668615752833110, guid: da748c346527e0c4d857b39394ac324b, type: 3}
 --- !u!82 &967253955
 AudioSource:
   m_ObjectHideFlags: 0
