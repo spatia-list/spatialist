@@ -1524,6 +1524,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MappingButton
       objectReference: {fileID: 0}
+    - target: {fileID: 4650336334747025260, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4650336334825379608, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_Name
       value: CreateButton
@@ -1578,7 +1582,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4650336335719039536, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_text
-      value: SETTINGS
+      value: CHANGE MAP
       objectReference: {fileID: 0}
     - target: {fileID: 4650336335719039536, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_textAlignment
@@ -1647,6 +1651,10 @@ PrefabInstance:
     - target: {fileID: 4650336336052702775, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4650336336340095936, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
+      propertyPath: m_Name
+      value: Change Map
       objectReference: {fileID: 0}
     - target: {fileID: 4650336336369554838, guid: 7df03b5bed020494a8b52f252ae76859, type: 3}
       propertyPath: m_IsActive
@@ -1865,7 +1873,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EndpointURL: http://185.224.139.115:8000
   Username: TestUser
-  GroupName: TestRoom2
+  GroupName: DeepanaRoom
 --- !u!114 &967253954
 MonoBehaviour:
   m_ObjectHideFlags: 0
