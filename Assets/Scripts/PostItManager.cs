@@ -20,9 +20,14 @@ public class PostItManager : MonoBehaviour
     private PostIt _data;
 
     // TextMeshPro objects
-    public TextMeshPro TextDisplay;
-    public TextMeshPro TextInput;
-    public TextMeshPro Title;
+    public TextMeshPro ContentTextDisplay;
+    public TextMeshPro ContentTextInput;
+    public TextMeshPro TitleTextDisplay;
+    public TextMeshPro TitleTextInput;
+
+    // Renderer objects (for the material of the postit)
+    private MeshRenderer contentQuadRend;
+    private MeshRenderer titleBackPlateRend;
 
     // Lock and Unlock buttons
     public GameObject LockButton;
@@ -32,24 +37,26 @@ public class PostItManager : MonoBehaviour
     /// New material to change for post it
     /// </summary>
     public Material MaterialYellow;
-    public Material MaterialYellowTrans;
     public Material MaterialPink;
-    public Material MaterialPinkTrans;
     public Material MaterialGreen;
-    public Material MaterialGreenTrans;
     public Material MaterialRed;
-    public Material MaterialRedTrans;
     public Material MaterialBlue;
+    public Material MaterialYellowTrans;
+    public Material MaterialPinkTrans;
+    public Material MaterialGreenTrans;
+    public Material MaterialRedTrans;
     public Material MaterialBlueTrans;
 
-    public GameObject Color1Button;
-    public GameObject Color2Button;
-    public GameObject Color3Button;
-    public GameObject Color4Button;
-    public GameObject Color5Button;
+    public GameObject ColorYellowButton;
+    public GameObject ColorPinkButton;
+    public GameObject ColorGreenButton;
+    public GameObject ColorRedButton;
+    public GameObject ColorBlueButton;
 
-    private MeshRenderer quadRend;
-    private MeshRenderer backPlateRend;
+    
+
+
+    
 
 
     // Start is called before the first frame update
@@ -58,19 +65,30 @@ public class PostItManager : MonoBehaviour
         // Start state of the postit is unlocked
         _state = PostItState.UNLOCKED;
 
-        // Find where we can access the material of the title and content quad in the prefab
-        Transform quad = gameObject.transform.Find("ContentQuad");
-        Transform backPlate = gameObject.transform.Find("TitleBar/BackPlate");
+        // Find where we can access the material of the content Quad and the title in the prefab
+        Transform contentQuad = gameObject.transform.Find("ContentQuad");
+    	Transform titleBackPlate = gameObject.transform.Find("TitleBar/BackPlate");
+
+        // Find where we can access the text of the content and title in the prefab
+        Transform contentText = gameObject.transform.Find("ContentQuad/TextInputField/TextContent");
+        Transform titleText = gameObject.transform.Find("TitleBar/BackPlate/TextInputField/TextContent");
 
         Debug.Log("APP_DEBUG: Getting ContentQuad from PostItPrefab");
 
-        if (quad != null && backPlate != null)
+        if (contentQuad != null && contentText != null && titleBackPlate != null && titleText != null) //  && backPlate != null
         {
-            GameObject quadGO = quad.gameObject;
-            GameObject backPlateGO = backPlate.gameObject; 
+            GameObject contentQuadGO = contentQuad.gameObject;
+            GameObject contentTextGO = contentText.gameObject;
+            GameObject titleBackPlateGO = titleBackPlate.gameObject; 
+            GameObject titleTextGO = titleText.gameObject;
 
-            this.quadRend = quadGO.GetComponent<MeshRenderer>();
-            this.backPlateRend = backPlateGO.GetComponent<MeshRenderer>();
+
+            this.contentQuadRend = contentQuadGO.GetComponent<MeshRenderer>();
+            this.ContentTextDisplay = contentTextGO.GetComponent<TextMeshPro>();
+
+            this.titleBackPlateRend = titleBackPlateGO.GetComponent<MeshRenderer>();
+            this.TitleTextDisplay = titleTextGO.GetComponent<TextMeshPro>();
+
         }
         else
         {
@@ -101,9 +119,10 @@ public class PostItManager : MonoBehaviour
         UnityDispatcher.InvokeOnAppThread(() =>
         {
             // sets content and title text
-            TextDisplay.SetText(_data.Content);
+            ContentTextInput.SetText(_data.Content);
             Debug.Log("APP_DEBUG: Setting content to:" + _data.Content);
-            Title.SetText(_data.Title);
+            TitleTextInput.SetText(_data.Title);
+            Debug.Log("APP_DEBUG: Setting title to:" + _data.Title);
 
             // sets the color of the postit
             SetMaterialFromColor(_data.Color);
@@ -151,8 +170,8 @@ public class PostItManager : MonoBehaviour
     public void ChangePostItColor(Material mat, Material mat_trans)
     {
 
-            this.quadRend.material = mat;
-            this.backPlateRend.material = mat_trans;
+            this.contentQuadRend.material = mat;
+            this.titleBackPlateRend.material = mat_trans;
             Debug.Log("APP_DEBUG: Setting ContentQuad material.");
 
 
@@ -224,20 +243,20 @@ public class PostItManager : MonoBehaviour
         LockButton.SetActive(false);
 
         // Hide the color edit buttons
-        Color1Button.SetActive(false);
-        Color2Button.SetActive(false);
-        Color3Button.SetActive(false);
-        Color4Button.SetActive(false);
-        Color5Button.SetActive(false);
+        ColorYellowButton.SetActive(false);
+        ColorPinkButton.SetActive(false);
+        ColorGreenButton.SetActive(false);
+        ColorRedButton.SetActive(false);
+        ColorBlueButton.SetActive(false);
 
         // Turn off text editing of the postit
-        TextInput.gameObject.SetActive(false);
+        ContentTextInput.gameObject.SetActive(false);
 
         // Update the postit color (in the PostIt class)
-        UpdatePostItColorFromMaterial(this.quadRend.material);	
+        UpdatePostItColorFromMaterial(this.contentQuadRend.material);	
 
         // Update the postit content (in the PostIt class)
-        _data.Content = TextDisplay.text;
+        _data.Content = ContentTextDisplay.text;
 
         Exception ex = _script.SavePostIt(_data, gameObject);
         if (ex != null)
@@ -256,14 +275,14 @@ public class PostItManager : MonoBehaviour
         LockButton.SetActive(true);
 
         // Display the color selection buttons
-        Color1Button.SetActive(true);
-        Color2Button.SetActive(true);
-        Color3Button.SetActive(true);
-        Color4Button.SetActive(true);
-        Color5Button.SetActive(true);
+        ColorYellowButton.SetActive(true);
+        ColorPinkButton.SetActive(true);
+        ColorGreenButton.SetActive(true);
+        ColorRedButton.SetActive(true);
+        ColorBlueButton.SetActive(true);
 
         // Enable text and title editing (turning on the TextMeshPro input fields)
-        TextInput.gameObject.SetActive(true);
+        ContentTextInput.gameObject.SetActive(true);
 
     }
 }
