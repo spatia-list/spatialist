@@ -1,0 +1,1 @@
+C:\Users\zenoh\Mixed Reality (SpatiaList)\spatialist\build_mixedrealitykeyboard\Spatialist\Spatialist.vcxproj;arm64
