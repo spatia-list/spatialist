@@ -27,8 +27,8 @@ public class PostItManager : MonoBehaviour
     private TextMeshPro ContentTextDisplay;
 
     // Renderer objects (for the material of the postit)
-    private MeshRenderer contentQuadRend;
-    private MeshRenderer titleBackPlateRend;
+    public MeshRenderer contentQuadRend;
+    public MeshRenderer titleBackPlateRend;
 
     // Lock and Unlock buttons
     public GameObject LockButton;
@@ -67,39 +67,39 @@ public class PostItManager : MonoBehaviour
     	Transform titleBackPlate = gameObject.transform.Find("TitleBar/BackPlate");
 
         // Find where we can access the text of the content and title in the prefab
-        Transform contentText = gameObject.transform.Find("ContentQuad/TextInputField/ContentText");
-        Transform titleText = gameObject.transform.Find("TitleBar/BackPlate/TextInputField/TitleText");
+        // Transform contentText = gameObject.transform.Find("ContentQuad/TextInputField/ContentText");
+        // Transform titleText = gameObject.transform.Find("TitleBar/BackPlate/TextInputField/TitleText");
 
         // Here we get the location of the input fields for the content and title 
-        Transform contentInputText = gameObject.transform.Find("ContentQuad/TextInputField");
-        Transform titleInputText = gameObject.transform.Find("TitleBar/BackPlate/TextInputField");
+        // Transform contentInputText = gameObject.transform.Find("ContentQuad/TextInputField");
+        // Transform titleInputText = gameObject.transform.Find("TitleBar/BackPlate/TextInputField");
 
         Debug.Log("APP_DEBUG: Getting ContentQuad from PostItPrefab");
 
-        if (contentQuad != null && contentText != null && titleBackPlate != null && titleText != null) //  && backPlate != null
-        {
-            GameObject contentQuadGO = contentQuad.gameObject;
-            GameObject contentTextGO = contentText.gameObject;
-            GameObject titleBackPlateGO = titleBackPlate.gameObject; 
-            GameObject titleTextGO = titleText.gameObject;
-            GameObject contentInputTextGO = contentInputText.gameObject;
-            GameObject titleInputTextGO = titleInputText.gameObject;
+        // if (contentQuad != null && contentText != null && titleBackPlate != null && titleText != null) //  && backPlate != null
+        // {
+        //     GameObject contentQuadGO = contentQuad.gameObject;
+        //     GameObject contentTextGO = contentText.gameObject;
+        //     GameObject titleBackPlateGO = titleBackPlate.gameObject; 
+        //     GameObject titleTextGO = titleText.gameObject;
+        //     GameObject contentInputTextGO = contentInputText.gameObject;
+        //     GameObject titleInputTextGO = titleInputText.gameObject;
 
-            // Gets the specific components of the post-it prefab
-            this.contentQuadRend = contentQuadGO.GetComponent<MeshRenderer>();
-            this.ContentTextDisplay = contentTextGO.GetComponent<TextMeshPro>();
+        //     // Gets the specific components of the post-it prefab
+        //     this.contentQuadRend = contentQuadGO.GetComponent<MeshRenderer>();
+        //     this.ContentTextDisplay = contentTextGO.GetComponent<TextMeshPro>();
 
-            this.titleBackPlateRend = titleBackPlateGO.GetComponent<MeshRenderer>();
-            this.TitleTextDisplay = titleTextGO.GetComponent<TextMeshPro>();
+        //     this.titleBackPlateRend = titleBackPlateGO.GetComponent<MeshRenderer>();
+        //     this.TitleTextDisplay = titleTextGO.GetComponent<TextMeshPro>();
 
-            this.ContentTextInput = contentInputTextGO.GetComponent<MRTKUGUIInputField>();
-            this.TitleTextInput = titleInputTextGO.GetComponent<MRTKUGUIInputField>();
+        //     this.ContentTextInput = contentInputTextGO.GetComponent<MRTKUGUIInputField>();
+        //     this.TitleTextInput = titleInputTextGO.GetComponent<MRTKUGUIInputField>();
             
-        }
-        else
-        {
-            Debug.Log("APP_DEBUG: Could not find ContentQuad or BackPlate in PostItPrefab");
-        }
+        // }
+        // else
+        // {
+        //     Debug.Log("APP_DEBUG: Could not find ContentQuad or BackPlate in PostItPrefab");
+        // }
 
     }
 
