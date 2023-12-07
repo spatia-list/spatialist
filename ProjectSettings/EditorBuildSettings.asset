@@ -5,10 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/AnchorsScene.unity
     guid: fff810944bcd7e54c9f71e10dc1410b5
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Mixed Reality Toolkit Examples/2.8.3/Experimental - MixedRealityKeyboard/Scenes/MixedRealityKeyboardExample.unity
     guid: b21a91f417fdc7b41b531772ff092fcb
   m_configObjects:
