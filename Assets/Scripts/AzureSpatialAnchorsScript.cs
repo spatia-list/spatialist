@@ -511,8 +511,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         else
         {
             // if the group doesn't exit, create it in the db and load all groups again
-            _networkManager.JoinGroup(name);
             Debug.Log("APP_DEBUG: Group doesn't exist, creating it");
+            _networkManager.JoinGroup(name);
+
+            // delay
+            Task.Delay(2000);
+
             LoadGroups();
         }
 

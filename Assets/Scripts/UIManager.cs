@@ -194,7 +194,20 @@ public class UIManager : MonoBehaviour
 
     public void SetU5() { SetState(UIState.MAPPING_MODE); }
 
-    public void SetU6() { SetState(UIState.MAPPING_CHANGE_NAME); }
+    public void SetU6() {
+        // reset map name
+        GameObject mappingChangeName = _list[(int)UIState.MAPPING_CHANGE_NAME];
+
+        // get the child game object MRKeyboardInputField (TMP)
+        Transform keyboardInputTrans = mappingChangeName.transform.Find("Mapping Change Map Name [Frame]/TextInputPrefab/VerticalGroup/MRKeyboardInputField (TMP)");
+        // get the text from the input field
+        GameObject keyboardInputObj = keyboardInputTrans.gameObject;
+        keyboardInputObj.GetComponent<TMPro.TMP_InputField>().text = "";
+
+        // enable the ui view
+        SetState(UIState.MAPPING_CHANGE_NAME); 
+        
+    }
 
     public void SetU7() { SetState(UIState.MAPPING_CONFIRM_CANCEL); }
 
@@ -204,6 +217,9 @@ public class UIManager : MonoBehaviour
 
     public void SetMapName()
     {
+        // find the AzureSpatialAnchorsScript component in the scene
+        _script = GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>();
+
         // get the text from the input field in the child game object MRKeyboardInputField (TMP)
         Debug.Log("APP_DEBUG: SetMapName called");
 
@@ -215,7 +231,7 @@ public class UIManager : MonoBehaviour
             Debug.Log("APP_DEBUG: mappingChangeName is null");
             return;
         }
-        Transform keyboardInputTrans = mappingChangeName.transform.Find("UI6-MappingChangeMapName [Canvas]/Mapping Change Map Name [Frame]/TextInputPrefab/VerticalGroup/MRKeyboardInputField (TMP)");
+        Transform keyboardInputTrans = mappingChangeName.transform.Find("Mapping Change Map Name [Frame]/TextInputPrefab/VerticalGroup/MRKeyboardInputField (TMP)");
         // get the text from the input field
         if (keyboardInputTrans == null)
         {
@@ -224,12 +240,16 @@ public class UIManager : MonoBehaviour
         }
         GameObject keyboardInputObj = keyboardInputTrans.gameObject;
         string groupName = keyboardInputObj.GetComponent<TMPro.TMP_InputField>().text;
+
         if (groupName == null || groupName == "")
         {
             Debug.Log("APP_DEBUG: groupName is empty");
             _script.Speak("Please enter a name for the map");
             return;
         }
+
+        // print the group name
+        Debug.Log("APP_DEBUG: entered group name is " + groupName);
 
         if (_script.IsMapNameExisting(groupName))
         {
@@ -240,6 +260,7 @@ public class UIManager : MonoBehaviour
 
         Debug.Log("APP_DEBUG: Setting map name to: " + groupName);
         _script.SetCurrentGroup(groupName);
+        _script.Speak("Entered to map "+ groupName);
 
         // disable the ui view
         _list[(int)UIState.MAPPING_CHANGE_NAME].SetActive(false);
