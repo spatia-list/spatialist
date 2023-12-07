@@ -505,7 +505,15 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 usernames.Add(_networkManager.Username);
                 group.users = usernames;
                 _networkManager.JoinGroup(name);
+                Debug.Log("APP_DEBUG: Username added to group");
             }   
+        }
+        else
+        {
+            // if the group doesn't exit, create it in the db and load all groups again
+            _networkManager.JoinGroup(name);
+            Debug.Log("APP_DEBUG: Group doesn't exist, creating it");
+            LoadGroups();
         }
 
         // if group name is the same, return
@@ -1165,4 +1173,28 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             return;
         } 
     }
+
+    // speak a string using TextToSpeech
+    public void Speak(string text)
+    {
+        this._textToSpeech.StartSpeaking(text);
+    }
+
+    // check whether the map name is existing call IsMapNameExisting()
+    public bool IsMapNameExisting(string mapName)
+    {
+        // find the name in _groups
+        GroupJSON group = _groups.Find((g) => g.group_name == mapName);
+        if (group != null)
+        {
+            Debug.Log("APP_DEBUG: Map name is existing");
+            return true;
+        }
+        else
+        {
+            Debug.Log("APP_DEBUG: Map name is not existing");
+            return false;
+        }
+    }
+
 }

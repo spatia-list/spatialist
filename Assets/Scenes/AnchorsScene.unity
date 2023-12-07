@@ -893,6 +893,34 @@ PrefabInstance:
       propertyPath: ButtonPressed.m_PersistentCalls.m_Calls.Array.data[2].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
+    - target: {fileID: 2049199670511596478, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2049199670511596478, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2049199670511596478, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 870294857}
+    - target: {fileID: 2049199670511596478, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2049199670511596478, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SetMapName
+      objectReference: {fileID: 0}
+    - target: {fileID: 2049199670511596478, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: UIManager, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 2049199670511596478, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
+      value: UIManager, Assembly-CSharp
+      objectReference: {fileID: 0}
     - target: {fileID: 2060992813545366181, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -1927,12 +1955,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2060992813545366181, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       insertIndex: -1
       addedObject: {fileID: 810674822}
-    - targetCorrespondingSourceObject: {fileID: 7119890855456581521, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
-    - targetCorrespondingSourceObject: {fileID: 6124120351030771574, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
     - targetCorrespondingSourceObject: {fileID: 6747651020910695286, guid: 6b8a6be56129d6246bc32fd86259e046, type: 3}
       insertIndex: -1
       addedObject: {fileID: 314869293}

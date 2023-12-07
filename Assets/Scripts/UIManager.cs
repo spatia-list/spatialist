@@ -54,8 +54,14 @@ public class UIManager : MonoBehaviour
     private GameObject _currentView;
 
 
+    private AzureSpatialAnchorsScript _script;
+
+
     void Start()
     {
+        // find the AzureSpatialAnchorsScript component in the scene
+        _script = gameObject.GetComponent<AzureSpatialAnchorsScript>();
+
         _list.Add(U1Welcome);
         _list.Add(U2Launch);
         _list.Add(U3SelectMap);
@@ -195,5 +201,49 @@ public class UIManager : MonoBehaviour
     public void SetU8() { SetState(UIState.LOCALIZATION); }
 
     public void SetU9() { SetState(UIState.POSTIT); }
+
+    public void SetMapName()
+    {
+        // get the text from the input field in the child game object MRKeyboardInputField (TMP)
+        Debug.Log("APP_DEBUG: SetMapName called");
+
+        // get the mapping change name gameobject
+        GameObject mappingChangeName = _list[(int)UIState.MAPPING_CHANGE_NAME];
+        // get the child game object MRKeyboardInputField (TMP)
+        if (mappingChangeName == null)
+        {
+            Debug.Log("APP_DEBUG: mappingChangeName is null");
+            return;
+        }
+        Transform keyboardInputTrans = mappingChangeName.transform.Find("UI6-MappingChangeMapName [Canvas]/Mapping Change Map Name [Frame]/TextInputPrefab/VerticalGroup/MRKeyboardInputField (TMP)");
+        // get the text from the input field
+        if (keyboardInputTrans == null)
+        {
+            Debug.Log("APP_DEBUG: keyboardInputTrans is null");
+            return;
+        }
+        GameObject keyboardInputObj = keyboardInputTrans.gameObject;
+        string groupName = keyboardInputObj.GetComponent<TMPro.TMP_InputField>().text;
+        if (groupName == null || groupName == "")
+        {
+            Debug.Log("APP_DEBUG: groupName is empty");
+            _script.Speak("Please enter a name for the map");
+            return;
+        }
+
+        if (_script.IsMapNameExisting(groupName))
+        {
+            Debug.Log("APP_DEBUG: groupName already exists");
+            _script.Speak("Map name already exists, please enter a different name");
+            return;
+        }
+
+        Debug.Log("APP_DEBUG: Setting map name to: " + groupName);
+        _script.SetCurrentGroup(groupName);
+
+        // disable the ui view
+        _list[(int)UIState.MAPPING_CHANGE_NAME].SetActive(false);
+    }
+
 
 }
