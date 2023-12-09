@@ -34,6 +34,7 @@ public class LocalAnchor
     public string anchorId;
     public string owner;
     public GameObject Instance;
+    public bool anchorFound = false;
 
     public LocalAnchor(string anchorId, string owner)
     {
@@ -550,9 +551,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         Debug.Log("APP_DEBUG: Performing Refresh...");
         if (await _networkManager.ShouldRefreshAnchors())
         {
-
+            Debug.Log("APP_DEBUG:  Refreshing anchors!");    
             FetchAnchorsFromDBAndAddToWatcher();
-
         }
         else
         {
@@ -1089,9 +1089,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                         LocalAnchor existing = _foundLocalAnchors.Find(anchor => anchor.anchorId == id);
                         GameObject anchorGameObject;
                         CloudNativeAnchor anchorNativeAnchor;
-                        if (existing != null && existing.Instance != null)
+                        if (existing != null && existing.Instance != null && existing.anchorFound)
                         {
-                            Debug.Log("ASA - Anchor already located");
+                            Debug.Log($"ASA - Anchor already located with id {existing.anchorId}");
                             anchorGameObject = existing.Instance;
                             if (!anchorGameObject.TryGetComponent<CloudNativeAnchor>(out anchorNativeAnchor)) 
                             {
@@ -1101,15 +1101,33 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                         }
                         else
                         {
-                            Debug.Log("ASA - Anchor never located, instantiating");
+                            if (existing != null && existing.Instance != null)
+                            {
+                                Debug.Log($"ASA - Anchor created was was located with id {existing.anchorId} but not found");
+                                anchorGameObject = existing.Instance;
+                                anchorGameObject.SetActive(false); // hide the initial prefab
 
-                            //Create GameObject
-                            anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
-                            anchorGameObject.transform.localScale = Vector3.one * 0.07f;
-                            anchorNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
+                                // Create GameObject with new prefab
+                                anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
+                                anchorGameObject.transform.localScale = Vector3.one * 0.07f;
+                                anchorNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
 
-                            correspondingAnchor.AttachInstance(anchorGameObject);
-                            _foundLocalAnchors.Add(correspondingAnchor);
+                                existing.AttachInstance(anchorGameObject);
+                                existing.anchorFound = true; // set anchor as found
+                            }
+                            else
+                            {
+                                Debug.Log($"ASA - Anchor never located, instantiating with id {existing.anchorId}");
+
+                                //Create GameObject
+                                anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
+                                anchorGameObject.transform.localScale = Vector3.one * 0.07f;
+                                anchorNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
+
+                                correspondingAnchor.AttachInstance(anchorGameObject);
+                                correspondingAnchor.anchorFound = true; // set anchor as found
+                                _foundLocalAnchors.Add(correspondingAnchor); // add to found anchors
+                            }
                         }
                         Debug.Log("APP_DEBUG: ASA - Attaching anchor position...");
                         // Link to Cloud Anchor
