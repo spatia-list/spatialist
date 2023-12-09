@@ -8,6 +8,8 @@ using Microsoft.MixedReality.Toolkit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+
 // using System.Numerics;
 using System.Threading.Tasks;
 using TMPro;
@@ -77,7 +79,7 @@ public class PostIt : IEquatable<PostIt>
 
     public bool Same(PostIt other)
     {
-        return this.Id == other.Id;
+        return this.Id.Equals(other.Id); // String equality is correct, == is also valid in C#
     }
 
     public bool Modified(PostIt other)
@@ -170,6 +172,9 @@ public class PostIt : IEquatable<PostIt>
 
 
 [RequireComponent(typeof(SpatialAnchorManager))]
+[RequireComponent(typeof(NetworkManager))]
+
+
 public class AzureSpatialAnchorsScript : MonoBehaviour
 {
     /// <summary>
@@ -541,6 +546,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public async void RefreshData()
     {
+        
         Debug.Log("APP_DEBUG: Performing Refresh...");
         if (await _networkManager.ShouldRefreshAnchors())
         {
@@ -555,7 +561,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         if(await  _networkManager.ShouldRefreshPostIts())
         {
-            await GetAndPlacePostIts();
+            _ = GetAndPlacePostIts(); // dont wait for completion TODO: Check how async is non-blocking
         } else
         {
             Debug.Log("ASA - Skipping postit refresh!");
@@ -566,108 +572,136 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         if (swiped != null)
         {
             Debug.Log("APP_DEBUG: Creating swipe!");
-            CreateSwipe(swiped);
+            await Task.Run(() => { CreateSwipe(swiped); });
+            
         }
     }
 
     public async Task GetAndPlacePostIts()
     {
-        _availablePostIts = await _networkManager.GetPostIts();
+        
+
+        // TODO: Check if the count of the different lists is coherent
+
+        List<PostIt> fetch = await _networkManager.GetPostIts();
 
         List<PostIt> neverSeen = new();
         List<PostIt> toModify = new();
         List<PostIt> toDelete = new();
 
-
-        foreach (PostIt item in _availablePostIts)
+        // run async task
+        await Task.Run(() =>
         {
-            if (!_foundPostIts.Contains(item))
+            lock (_availablePostIts) lock (_foundLocalAnchors)
             {
-                Debug.Log("ASA - Found a new post it");
-                neverSeen.Add(item);
-            }
-        }
+                    // Update available postits
+                    _availablePostIts = fetch;
 
-        foreach (PostIt item in _foundPostIts)
-        {
-            PostIt res = _availablePostIts.Find((p) => p == item);
-
-            if (res == null)
-            {
-                Debug.Log("ASA - Found a postit deletion event");
-                toDelete.Add(item);
-            }
-            else if (res.Modified(item))
-            {
-                Debug.Log("ASA - Found a postit modification event");
-                toDelete.Add(item);
-            }
-        }
-
-        // filter the available postits 
-        foreach (PostIt postIt in neverSeen)
-        {
-            foreach (LocalAnchor anchor in _foundLocalAnchors)
-            {
-                if (anchor.anchorId == postIt.AnchorId)
-                {
-                    Debug.Log("ASA - Found a local postit");
-
-                    UnityDispatcher.InvokeOnAppThread(() =>
+                    foreach (PostIt item in _availablePostIts)
                     {
-                        GameObject go = Instantiate(PostItPrefab);
-                        PostItManager manager = go.GetComponent<PostItManager>();
-                        manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
-                        manager.SetObject(postIt, anchor);
-
-
-                        _foundPostItManagers.Add(manager);
-                        _foundPostIts.Add(postIt);
-
-                    });
-
-                    Debug.Log("ASA - Postit successfully placed!");
-                    break;
-                }
-            }
-        }
-
-        // Perform deletion
-        UnityDispatcher.InvokeOnAppThread(() =>
-        {
-            foreach (PostIt p in toDelete)
-            {
-
-                Debug.Log("ASA - Deleting postit");
-                if (p.Instance != null)
-                {
-                    p.Instance.SetActive(false);
-                }
-            }
-        });
-
-        // Perform modifications
-
-        foreach (PostIt postIt in toModify)
-        {
-            foreach (LocalAnchor anchor in _foundLocalAnchors)
-            {
-                if (anchor.anchorId == postIt.AnchorId)
-                {
-                    Debug.Log("ASA - Found a local postit to modify");
-
-
-                    if (postIt.Instance != null)
-                    {
-                        PostItManager manager = postIt.Instance.GetComponent<PostItManager>();
-                        manager.SetObject(postIt, anchor);
+                        if (!_foundPostIts.Contains(item))
+                        {
+                            Debug.Log("ASA - Found a new post it");
+                            neverSeen.Add(item);
+                        }
                     }
 
-                    Debug.Log("ASA - Postit successfully modified!");
-                    break;
-                }
-            }
-        }
+                    Debug.Log($"ASA - Must check for {neverSeen.Count} never found postits");
+
+                    foreach (PostIt item in _foundPostIts)
+                    {
+                        PostIt res = _availablePostIts.Find((p) => p.Same(item)); // Use the 'same' operator checking id equality
+
+                        if (res == null)
+                        {
+                            Debug.Log("ASA - Found a postit deletion event");
+                            toDelete.Add(item);
+                        }
+                        else if (res.Modified(item))
+                        {
+                            Debug.Log("ASA - Found a postit modification event");
+                            toModify.Add(item);
+                        }
+                    }
+
+
+                    Debug.Log($"ASA - Must trigger delete of {toDelete.Count} postits");
+                    Debug.Log($"ASA - Must trigger modification {toModify.Count} postits");
+
+
+
+
+                    // filter the available postits 
+                    foreach (PostIt postIt in neverSeen)
+                    {
+                        foreach (LocalAnchor anchor in _foundLocalAnchors)
+                        {
+                            if (anchor.anchorId == postIt.AnchorId)
+                            {
+                                Debug.Log("ASA - Found a local postit");
+
+                                UnityDispatcher.InvokeOnAppThread(() =>
+                                {
+                                    GameObject go = Instantiate(PostItPrefab);
+                                    PostItManager manager = go.GetComponent<PostItManager>();
+                                    manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
+                                    manager.SetObject(postIt, anchor);
+
+
+                                    _foundPostItManagers.Add(manager);
+                                    _foundPostIts.Add(postIt);
+
+                                });
+
+                                Debug.Log("ASA - Postit successfully placed!");
+                                // break; // TODO: test without break opt
+                            }
+                        }
+                    }
+
+                    // Perform deletion
+
+                    foreach (PostIt p in toDelete)
+                    {
+
+                        Debug.Log("ASA - Deleting a postit");
+                        if (p.Instance != null)
+                        {
+                            UnityDispatcher.InvokeOnAppThread(() =>
+                            {
+                                p.Instance.SetActive(false);
+                            });
+
+                        }
+                    }
+
+
+                    // Perform modifications
+
+                    foreach (PostIt postIt in toModify)
+                    {
+                        foreach (LocalAnchor anchor in _foundLocalAnchors)
+                        {
+                            if (anchor.anchorId == postIt.AnchorId)
+                            {
+                                Debug.Log("ASA - Found a local postit to modify");
+
+
+                                if (postIt.Instance != null)
+                                {
+                                    PostItManager manager = postIt.Instance.GetComponent<PostItManager>();
+                                    manager.SetObject(postIt, anchor);
+                                }
+
+                                Debug.Log("ASA - Postit successfully modified!");
+                                //break; // TODO: Same check as above
+                            }
+                        }
+                    }
+
+            } // Release lock
+
+        });
     }
 
     public async void BeginMapping()
@@ -821,6 +855,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     // Add the created anchor to the list of found anchors 
 
                     _foundLocalAnchors.Add(createdAnchor);
+
+                    RefreshData();
                 }
                 else
                 {
@@ -1049,60 +1085,77 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case LocateAnchorStatus.Located:
             case LocateAnchorStatus.AlreadyTracked:
 
-                // Go add your anchor to the scene...
-
-                //Creating and adjusting GameObjects have to run on the main thread. We are using the UnityDispatcher to make sure this happens.
-                UnityDispatcher.InvokeOnAppThread(() =>
+                // Wait to acquire lock on found anchor (thread protection)
+                lock (_foundLocalAnchors)
                 {
-                    CloudSpatialAnchor foundAnchor = args.Anchor;
-                    string id = foundAnchor.Identifier;
-                    Debug.Log("APP_DEBUG: ASA - Instantiating found anchor");
-
-                    // find in available
-                    LocalAnchor correspondingAnchor = _existingLocalAnchors.Find((anchor) => anchor.anchorId == id);
-                    if (correspondingAnchor == null) { Debug.Log("APP_DEBUG: Unknown identifier encountered"); return; }
-
-                    // If there is already an anchor in the _found, disable it
-                    LocalAnchor existing = _foundLocalAnchors.Find(anchor => anchor.anchorId == id);
-                    if(existing != null)
+                    //Creating and adjusting GameObjects have to run on the main thread. We are using the UnityDispatcher to make sure this happens.
+                    UnityDispatcher.InvokeOnAppThread(() =>
                     {
-                        Debug.Log("ASA - Removed preexisting anchor isntance");
-                        _foundLocalAnchors.Remove(existing);
-                        existing.Instance.SetActive(false);
-                    }
+                        CloudSpatialAnchor foundAnchor = args.Anchor;
+                        string id = foundAnchor.Identifier;
 
-                    //Create GameObject
-                    GameObject anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
-                    anchorGameObject.transform.localScale = Vector3.one * 0.07f;
+                        // find in available
+                        LocalAnchor correspondingAnchor = _existingLocalAnchors.Find((anchor) => anchor.anchorId == id);
+                        if (correspondingAnchor == null) { Debug.Log("APP_DEBUG: Unknown identifier encountered"); return; }
 
+                        // If there is already an anchor in the _found, disable it
+                        LocalAnchor existing = _foundLocalAnchors.Find(anchor => anchor.anchorId == id);
+                        GameObject anchorGameObject;
+                        CloudNativeAnchor anchorNativeAnchor;
+                        if (existing != null && existing.Instance != null)
+                        {
+                            Debug.Log("ASA - Anchor already located");
+                            anchorGameObject = existing.Instance;
+                            if (!anchorGameObject.TryGetComponent<CloudNativeAnchor>(out anchorNativeAnchor)) 
+                            {
+                                Debug.Log("ASA - ERROR trying to get cloudnativeanchor component");
+                            }
 
+                        }
+                        else
+                        {
+                            Debug.Log("ASA - Anchor never located, instantiating");
 
-                    Debug.Log("APP_DEBUG: ASA - Attaching anchor position...");
-                    // Link to Cloud Anchor
-                    try
-                    {
-                        Pose pose = foundAnchor.GetPose();
-                        Debug.Log("APP_DEBUG: ASA - Pose:" + pose.ToString());
-                        anchorGameObject.AddComponent<CloudNativeAnchor>().CloudToNative(foundAnchor);
+                            //Create GameObject
+                            anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
+                            anchorGameObject.transform.localScale = Vector3.one * 0.07f;
+                            anchorNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
 
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.Log("APP_DEBUG: ASA - Error attaching anchor position");
-                        Debug.LogException(e);
-                    }
+                            correspondingAnchor.AttachInstance(anchorGameObject);
+                            _foundLocalAnchors.Add(correspondingAnchor);
+                        }
+                        Debug.Log("APP_DEBUG: ASA - Attaching anchor position...");
+                        // Link to Cloud Anchor
+                        try
+                        {
+                            Pose pose = foundAnchor.GetPose();
+                            Debug.Log("APP_DEBUG: ASA - Pose:" + pose.ToString());
+                            if(anchorNativeAnchor != null)
+                            {
+                                anchorNativeAnchor.CloudToNative(foundAnchor);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.Log("APP_DEBUG: ASA - Error attaching anchor position");
+                            Debug.LogException(e);
+                        }
+                        Debug.Log("APP_DEBUG: ASA - Attached anchor position");
 
-                    correspondingAnchor.AttachInstance(anchorGameObject);
-                    Debug.Log("APP_DEBUG: ASA - Attached anchor position");
+                        
+                        Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
+                        if (_state != ManagerState.MAPPING)
+                        {
+                            //anchorGameObject.SetActive(false);
+                            Debug.Log("APP_DEBUG: ASA - Set anchor to disabled as not in mapping mode");
+                        }
+                    });
 
-                    _foundLocalAnchors.Add(correspondingAnchor);
-                    Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
-                    if (_state != ManagerState.MAPPING)
-                    {
-                        //anchorGameObject.SetActive(false);
-                        Debug.Log("APP_DEBUG: ASA - Set anchor to disabled as not in mapping mode");
-                    }
-                });
+                    // After locating a new anchor, one must call Get And Place
+                    _ = GetAndPlacePostIts();
+                } // release lock on found anchors
+                
+
                 break;
 
             case LocateAnchorStatus.NotLocatedAnchorDoesNotExist:
