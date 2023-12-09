@@ -7,16 +7,14 @@ using TMPro;
 public class ShowKeyboard : MonoBehaviour
 {
     public TouchScreenKeyboard keyboard;
-    private TMP_InputField inputField;
+    public TMP_InputField inputField;
 
     // Start is called before the first frame update
     void Start()
     {
-        inputField = GetComponent<TMP_InputField>();
-        // inputField.OnSelect.AddListener(x => OpenSystemKeyboard()); // calls the function OpenSystemKeyboard(), the x => is necessary because the OnSelect event passes a string as an output parameter (the inputfield ID)
+        
     }
 
-    
     public void OpenSystemKeyboard()
     {  
         string currentText = inputField.text; // Get the current text from the input field

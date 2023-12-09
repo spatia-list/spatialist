@@ -21,10 +21,13 @@ public class PostItManager : MonoBehaviour
     private PostIt _data;
 
     // TextMeshPro objects
-    private TextMeshPro TitleTextInput;
-    private TextMeshPro ContentTextInput;
-    private TextMeshPro TitleTextDisplay;
-    private TextMeshPro ContentTextDisplay;
+    // public TMP_InputField TitleTextInput;
+    public TMP_InputField ContentTextInput;
+    // public TextMeshProUGUI TitleTextDisplay;
+    public TextMeshProUGUI ContentTextDisplay;
+
+    // Button to edit the text
+    public GameObject EditTextButton;
 
     // Renderer objects (for the material of the postit)
     public MeshRenderer contentQuadRend;
@@ -55,16 +58,18 @@ public class PostItManager : MonoBehaviour
     public GameObject ColorBlueButton;
     
 
-
     // Start is called before the first frame update
     void Start()
     {
         // Start state of the postit is unlocked
         _state = PostItState.UNLOCKED;
 
+        /// READ: 
+        /// Code for if we want to get the game objects without defining them in the inspector!
+
         // Find where we can access the material of the content Quad and the title in the prefab
-        Transform contentQuad = gameObject.transform.Find("ContentQuad");
-    	Transform titleBackPlate = gameObject.transform.Find("TitleBar/BackPlate");
+        // Transform contentQuad = gameObject.transform.Find("ContentQuad");
+    	// Transform titleBackPlate = gameObject.transform.Find("TitleBar/BackPlate");
 
         // Find where we can access the text of the content and title in the prefab
         // Transform contentText = gameObject.transform.Find("ContentQuad/TextInputField/ContentText");
@@ -74,7 +79,7 @@ public class PostItManager : MonoBehaviour
         // Transform contentInputText = gameObject.transform.Find("ContentQuad/TextInputField");
         // Transform titleInputText = gameObject.transform.Find("TitleBar/BackPlate/TextInputField");
 
-        Debug.Log("APP_DEBUG: Getting ContentQuad from PostItPrefab");
+        // Debug.Log("APP_DEBUG: Getting ContentQuad from PostItPrefab");
 
         // if (contentQuad != null && contentText != null && titleBackPlate != null && titleText != null) //  && backPlate != null
         // {
@@ -128,7 +133,7 @@ public class PostItManager : MonoBehaviour
             Debug.Log("APP_DEBUG: Setting content to:" + _data.Content);
             Debug.Log("APP_DEBUG: Setting title to:" + _data.Title);
             ContentTextInput.text = _data.Content;
-            TitleTextInput.text = _data.Title;
+            //TitleTextInput.text = _data.Title;
 
             // sets the color of the postit
             SetMaterialFromColor(_data.Color);
@@ -154,7 +159,6 @@ public class PostItManager : MonoBehaviour
             this.contentQuadRend.material = mat;
             this.titleBackPlateRend.material = mat_trans;
             Debug.Log("APP_DEBUG: Setting ContentQuad material.");
-
 
     }
 
@@ -255,16 +259,18 @@ public class PostItManager : MonoBehaviour
         ColorRedButton.SetActive(false);
         ColorBlueButton.SetActive(false);
 
-        // Turn off text editing of the postit
-        ContentTextInput.gameObject.SetActive(false);
-        TitleTextInput.gameObject.SetActive(false);
+        // Turn off text editing of the postit (hide the edit text button)
+        // ContentTextInput.gameObject.SetActive(false);
+        // TitleTextInput.gameObject.SetActive(false);
+        EditTextButton.SetActive(false);
 
         // Update the postit color (in the PostIt class)
         UpdatePostItColorFromMaterial(this.contentQuadRend.material);	
 
         // Update the postit content and title text (in the PostIt class)
         _data.Content = ContentTextDisplay.text;
-        _data.Title = TitleTextDisplay.text;
+        //_data.Title = TitleTextDisplay.text;
+
 
         Exception ex = _script.SavePostIt(_data, gameObject);
         if (ex != null)
@@ -290,8 +296,9 @@ public class PostItManager : MonoBehaviour
         ColorBlueButton.SetActive(true);
 
         // Enable text and title editing (turning on the TextMeshPro input fields)
-        ContentTextInput.gameObject.SetActive(true);
-        TitleTextInput.gameObject.SetActive(true);
+        // ContentTextInput.gameObject.SetActive(true);
+        // TitleTextInput.gameObject.SetActive(true);
+        EditTextButton.SetActive(true);
 
 
     }
