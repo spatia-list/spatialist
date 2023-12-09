@@ -48,6 +48,7 @@ public class SwipeJSON
 
 public class PostItUploadJSON
 {
+    public string id { get; set; }
     public string anchor_id { get; set; }
     public string owner { get; set; }
     public string title { get; set; }
@@ -113,6 +114,7 @@ public class PostItUploadJSON
         }
 
         PostItUploadJSON res = new();
+        res.id = postIt.Id;
         res.rgb = rgb;
         res.pose = pose;
         res.anchor_id = postIt.AnchorId;
@@ -160,6 +162,35 @@ public class GetAnchorsResponseJSON
 public class HashMessageJSON
 {
     public string hash { get; set; }
+}
+
+public class GroupJSON
+{
+    public string id { get; set; }
+    public string group_name { get; set; }
+    public List<string> users { get; set; }
+    public string _rid { get; set; }
+    public string _self { get; set; }
+    public string _etag { get; set; }
+    public string _attachments { get; set; }
+    public int _ts { get; set; }
+}
+
+public class GroupResponseJSON
+{
+    public List<GroupJSON> groups { get; set; }
+}
+
+public class JoinGroupJSON
+{
+    public string group_name { get; set; }
+    public string username { get; set; }
+
+    public JoinGroupJSON(string groupName, string username)
+    {
+        this.group_name = groupName;
+        this.username = username;
+    }
 }
 
 
@@ -242,6 +273,12 @@ public class NetworkManager : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    public void ResetHashes()
+    {
+        _lastAnchorsHash = null;
+        _lastPostItsHash = null;
     }
 
     public async Task<bool> ShouldRefreshPostIts()
@@ -426,6 +463,95 @@ public class NetworkManager : MonoBehaviour
 
     }
 
+    // Delete post-it from the DB
+    public async Task<bool> DeletePostIt(PostIt postIt)
+    {
+        try
+        {
+            // Do the actual request and await the response
+            var httpClient = new HttpClient();
+            var httpResponse = await httpClient.DeleteAsync(EndpointURL + $"/postit/{postIt.Id}");
+
+            // If the response contains content we want to read it!
+            if (httpResponse.Content != null)
+            {
+                var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                // MessageResponseJSON res = Newtonsoft.Json.JsonConvert.DeserializeObject<MessageResponseJSON>(responseContent);
+                Debug.Log(responseContent);
+            }
+            return true;
+
+        }
+        catch (Exception e)
+        {
+            Debug.Log("APP_DEBUG: NetManager - " + e.Message);
+            return false;
+        }
+    }
 
 
+    // method to get list of groups
+    public async Task<List<GroupJSON>> GetGroups()
+    {
+        try
+        {
+            string textResponse = await getAsync("/groups");
+
+            GroupResponseJSON response = Newtonsoft.Json.JsonConvert.DeserializeObject<GroupResponseJSON>(textResponse);
+
+            // print the number of groups
+            Debug.Log("APP_DEBUG: Total group count: " + response.groups.Count);
+
+            // print all groups            
+            //Debug.Log("APP_DEBUG: all groups:");
+            //foreach (GroupJSON group in response.groups)
+            //{
+            //    Debug.Log("APP_DEBUG: group id: " + group.id + " group name: " + group.group_name);
+            //}
+
+
+            return response.groups;
+        }
+        catch (Exception e)
+        {
+            Debug.Log("APP_DEBUG: NetManager - " + e.Message);
+        }
+
+        return null;
+    }
+
+    // method named JoinGroup to call the endpoint to join a group
+    public async void JoinGroup(String groupName)
+    {
+        try
+        {
+            JoinGroupJSON entry = new JoinGroupJSON(groupName,this.Username);
+
+            // encode to json
+            string msg = Newtonsoft.Json.JsonConvert.SerializeObject(entry);
+
+            // perform the request
+            Debug.Log(msg);
+
+            HttpContent content = new StringContent(msg, Encoding.UTF8, "application/json");
+
+            // Do the actual request and await the response
+            var httpClient = new HttpClient();
+            var httpResponse = await httpClient.PostAsync(EndpointURL + "/joingroup", content);
+
+            // If the response contains content we want to read it!
+            if (httpResponse.Content != null)
+            {
+                var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                // MessageResponseJSON res = Newtonsoft.Json.JsonConvert.DeserializeObject<MessageResponseJSON>(responseContent);
+                Debug.Log(responseContent);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.Log("APP_DEBUG: NetManager - " + e.Message);
+        }
+    }
 }

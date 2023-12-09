@@ -1,12 +1,19 @@
 using Microsoft.Azure.SpatialAnchors;
 using Microsoft.Azure.SpatialAnchors.Unity;
 using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Audio;
 using Microsoft.MixedReality.Toolkit.Experimental.UI;
+using Microsoft.MixedReality.Toolkit.UI;
+using Microsoft.MixedReality.Toolkit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+
 // using System.Numerics;
 using System.Threading.Tasks;
+using TMPro;
+using Unity.VisualScripting;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Events;
@@ -72,7 +79,7 @@ public class PostIt : IEquatable<PostIt>
 
     public bool Same(PostIt other)
     {
-        return this.Id == other.Id;
+        return this.Id.Equals(other.Id); // String equality is correct, == is also valid in C#
     }
 
     public bool Modified(PostIt other)
@@ -150,9 +157,9 @@ public class PostIt : IEquatable<PostIt>
             );
     }
 
-    public static PostIt Initial()
+    public static PostIt Initial(string username)
     {
-        return new PostIt(Guid.NewGuid().ToString(), "1", "TestUser", "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, Vector3.one * 0.4f);
+        return new PostIt(Guid.NewGuid().ToString(), "1", username , "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, Vector3.one * 0.4f);
     }
 
     public bool Equals(PostIt other)
@@ -165,6 +172,9 @@ public class PostIt : IEquatable<PostIt>
 
 
 [RequireComponent(typeof(SpatialAnchorManager))]
+[RequireComponent(typeof(NetworkManager))]
+
+
 public class AzureSpatialAnchorsScript : MonoBehaviour
 {
     /// <summary>
@@ -183,6 +193,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// Main interface to make API calls and connect to DB
     /// </summary>
     private NetworkManager _networkManager;
+
+    /// <summary>
+    /// Use to keep all groups
+    /// </summary>
+    private List<GroupJSON> _groups;
 
     /// <summary>
     /// Used to keep track of all found local anchors, coming from Azure Spatial Anchors
@@ -221,8 +236,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     private ManagerState _state;
 
-    private String _currentGroup = "TestRoom";
-
     /// <summary>
     /// The distance threshold to attach a post-it to an anchor (in meters)
     /// </summary>
@@ -231,10 +244,19 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     // Create a new UnityEvent that can be assigned in the Unity editor
     public UnityEvent onShortTap; 
 
+    // Group prefab
+    public GameObject GroupPrefab;
+
+    // TextToSpeech
+    private TextToSpeech _textToSpeech;
+
     // <Start>
     // Start is called before the first frame update
     void Start()
     {
+        // Set audio source of speech to text
+        _textToSpeech = gameObject.GetComponent<TextToSpeech>();
+
         //Set state to idle
         _state = ManagerState.IDLE;
         Debug.Log("APP_DEBUG: starting the session");
@@ -245,10 +267,13 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         // Set debuggers
         _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"APP_DEBUG: ASA - Debug: {args.Message}");
-        _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
+        _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"APP_DEBUG: ASA - Error: {args.ErrorMessage}");
 
         // Set the callback for when anchors are found
         _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
+
+        // Fetch all groups
+        LoadGroups();
 
         // Start the ASA session and load all anchors and add to watcher
         StartAndLoadASASession();
@@ -258,6 +283,73 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     }
     // </Start>
+
+    private async void LoadGroups()
+    {
+        _groups = await _networkManager.GetGroups();
+
+        // sort groups
+        _groups.Sort((a, b) => a.group_name.CompareTo(b.group_name));
+
+        // print group name and id
+        foreach (GroupJSON group in _groups)
+        {
+            Debug.Log("APP_DEBUG: Group - " + group.group_name + " " + group.id);
+        }
+
+        // get reference to UIPrefab_Instance gameobject
+        GameObject UIPrefab_Instance = GameObject.Find("UIPrefab instance");
+        if (UIPrefab_Instance == null)
+        {
+            Debug.Log("APP_DEBUG: UIPrefab_Instance not found");
+        }
+        else
+        {
+            Debug.Log("APP_DEBUG: UIPrefab_Instance found");
+
+            // get reference to GroupDropdown gameobject
+            GameObject selectMap = UIPrefab_Instance.transform.Find("UI3-SelectMapEnterMap instance").gameObject;
+            GameObject GroupDropdown = UIPrefab_Instance.transform.Find("UI3-SelectMapEnterMap instance/Select Map for Entering Map [Frame]/ScrollingOC_PressableBtn_32x96/ScrollingObjectCollection/Container/GridObjectCollection").gameObject;
+            if (GroupDropdown == null)
+            {
+                Debug.Log("APP_DEBUG: dropdown not found");
+            } 
+            else
+            {
+                Debug.Log("APP_DEBUG: dropdown found");
+                // Delete all children of the dropdown
+                foreach (Transform child in GroupDropdown.transform)
+                {
+                    GameObject.Destroy(child.gameObject);
+                }
+
+                // Create a new option for each group
+                foreach (GroupJSON group in _groups)
+                {
+                    GameObject newOption = Instantiate(GroupPrefab);
+                    newOption.transform.SetParent(GroupDropdown.transform, false);
+                    newOption.GetComponent<Interactable>().OnClick.AddListener(() => 
+                    { 
+                        SetCurrentGroup(group.group_name); 
+                        selectMap.SetActive(false); 
+                        // say group name using TextToSpeech
+                        this._textToSpeech.StartSpeaking("Moving to " + group.group_name);
+                    });
+                    newOption.GetComponentInChildren<TextMeshPro>().text = group.group_name;
+                    //break;
+                }
+
+                GridObjectCollection grid = GroupDropdown.GetComponent<GridObjectCollection>();
+
+                // delay
+                await Task.Delay(1000);
+
+                grid.UpdateCollection();
+                Debug.Log("APP_DEBUG: dropdown updated");
+            }
+
+        }
+    }
 
     private async void StartAndLoadASASession()
     {
@@ -375,7 +467,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case ManagerState.CREATE:
                 {
                     Debug.Log("APP_DEBUG: CREATE MODE");
-                    CreatePostIt(handPosition, PostIt.Initial());
+                    CreatePostIt(handPosition, PostIt.Initial(this._networkManager.Username));
                     break;
                 }
 
@@ -394,13 +486,58 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
     // </ShortTap>
 
-
+    /// <summary>
+    /// Change the current group to the one with the given name
+    /// </summary>
+    /// <param name="name"></param>
     public void SetCurrentGroup(String name)
     {
-        _currentGroup = name;
+        // check if the username is in the group and if not add the username to the group
+        // find the group object from name
+        GroupJSON group = _groups.Find((g) => g.group_name == name);
+        if (group != null)
+        {
+            // get group usernames
+            List<string> usernames = group.users;
+            if (usernames.Contains(_networkManager.Username))
+            {
+                Debug.Log("APP_DEBUG: Username is in group");
+            }
+            else
+            {
+                Debug.Log("APP_DEBUG: Username is not in group");
+                // add username to group
+                usernames.Add(_networkManager.Username);
+                group.users = usernames;
+                _networkManager.JoinGroup(name);
+                Debug.Log("APP_DEBUG: Username added to group");
+            }   
+        }
+        else
+        {
+            // if the group doesn't exit, create it in the db and load all groups again
+            Debug.Log("APP_DEBUG: Group doesn't exist, creating it");
+            _networkManager.JoinGroup(name);
+
+            // delay
+            Task.Delay(2000);
+
+            LoadGroups();
+        }
+
+        // if group name is the same, return
+        if (_networkManager.GroupName == name) return;
+
+        Debug.Log("APP_DEBUG: Setting group to " + name);
+        _networkManager.GroupName = name;
+        _networkManager.ResetHashes();
         RefreshData();
     }
 
+    /// <summary>
+    /// Set username to a given name
+    /// </summary>
+    /// <param name="name"></param>
     public void SetUsername(String name)
     {
         _networkManager.Username = name;
@@ -409,6 +546,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public async void RefreshData()
     {
+        
         Debug.Log("APP_DEBUG: Performing Refresh...");
         if (await _networkManager.ShouldRefreshAnchors())
         {
@@ -423,7 +561,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         if(await  _networkManager.ShouldRefreshPostIts())
         {
-            await GetAndPlacePostIts();
+            _ = GetAndPlacePostIts(); // dont wait for completion TODO: Check how async is non-blocking
         } else
         {
             Debug.Log("ASA - Skipping postit refresh!");
@@ -434,107 +572,136 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         if (swiped != null)
         {
             Debug.Log("APP_DEBUG: Creating swipe!");
-            CreateSwipe(swiped);
+            await Task.Run(() => { CreateSwipe(swiped); });
+            
         }
     }
 
     public async Task GetAndPlacePostIts()
     {
-        _availablePostIts = await _networkManager.GetPostIts();
+        
+
+        // TODO: Check if the count of the different lists is coherent
+
+        List<PostIt> fetch = await _networkManager.GetPostIts();
 
         List<PostIt> neverSeen = new();
         List<PostIt> toModify = new();
         List<PostIt> toDelete = new();
 
-
-        foreach (PostIt item in _availablePostIts)
+        // run async task
+        await Task.Run(() =>
         {
-            if (!_foundPostIts.Contains(item))
+            lock (_availablePostIts) lock (_foundLocalAnchors)
             {
-                Debug.Log("ASA - Found a new post it");
-                neverSeen.Add(item);
-            }
-        }
+                    // Update available postits
+                    _availablePostIts = fetch;
 
-        foreach (PostIt item in _foundPostIts)
-        {
-            PostIt res = _availablePostIts.Find((p) => p == item);
-
-            if (res == null)
-            {
-                Debug.Log("ASA - Found a postit deletion event");
-                toDelete.Add(item);
-            }
-            else if (res.Modified(item))
-            {
-                Debug.Log("ASA - Found a postit modification event");
-                toDelete.Add(item);
-            }
-        }
-
-        // filter the available postits 
-        foreach (PostIt postIt in neverSeen)
-        {
-            foreach (LocalAnchor anchor in _foundLocalAnchors)
-            {
-                if (anchor.anchorId == postIt.AnchorId)
-                {
-                    Debug.Log("ASA - Found a local postit");
-
-                    UnityDispatcher.InvokeOnAppThread(() =>
+                    foreach (PostIt item in _availablePostIts)
                     {
-                        GameObject go = Instantiate(PostItPrefab);
-                        PostItManager manager = go.GetComponent<PostItManager>();
-                        manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
-                        manager.SetObject(postIt, anchor);
-                        manager.Lock();
-
-
-                        _foundPostItManagers.Add(manager);
-                        _foundPostIts.Add(postIt);
-
-                    });
-
-                    Debug.Log("ASA - Postit successfully placed!");
-                    break;
-                }
-            }
-        }
-
-        // Perform deletion
-        UnityDispatcher.InvokeOnAppThread(() =>
-        {
-            foreach (PostIt p in toDelete)
-            {
-                if (p.Instance != null)
-                {
-                    p.Instance.SetActive(false);
-                }
-            }
-        });
-
-        // Perform modifications
-
-        foreach (PostIt postIt in toModify)
-        {
-            foreach (LocalAnchor anchor in _foundLocalAnchors)
-            {
-                if (anchor.anchorId == postIt.AnchorId)
-                {
-                    Debug.Log("ASA - Found a local postit to modify");
-
-
-                    if (postIt.Instance != null)
-                    {
-                        PostItManager manager = postIt.Instance.GetComponent<PostItManager>();
-                        manager.SetObject(postIt, anchor);
+                        if (!_foundPostIts.Contains(item))
+                        {
+                            Debug.Log("ASA - Found a new post it");
+                            neverSeen.Add(item);
+                        }
                     }
 
-                    Debug.Log("ASA - Postit successfully modified!");
-                    break;
-                }
-            }
-        }
+                    Debug.Log($"ASA - Must check for {neverSeen.Count} never found postits");
+
+                    foreach (PostIt item in _foundPostIts)
+                    {
+                        PostIt res = _availablePostIts.Find((p) => p.Same(item)); // Use the 'same' operator checking id equality
+
+                        if (res == null)
+                        {
+                            Debug.Log("ASA - Found a postit deletion event");
+                            toDelete.Add(item);
+                        }
+                        else if (res.Modified(item))
+                        {
+                            Debug.Log("ASA - Found a postit modification event");
+                            toModify.Add(item);
+                        }
+                    }
+
+
+                    Debug.Log($"ASA - Must trigger delete of {toDelete.Count} postits");
+                    Debug.Log($"ASA - Must trigger modification {toModify.Count} postits");
+
+
+
+
+                    // filter the available postits 
+                    foreach (PostIt postIt in neverSeen)
+                    {
+                        foreach (LocalAnchor anchor in _foundLocalAnchors)
+                        {
+                            if (anchor.anchorId == postIt.AnchorId)
+                            {
+                                Debug.Log("ASA - Found a local postit");
+
+                                UnityDispatcher.InvokeOnAppThread(() =>
+                                {
+                                    GameObject go = Instantiate(PostItPrefab);
+                                    PostItManager manager = go.GetComponent<PostItManager>();
+                                    manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
+                                    manager.SetObject(postIt, anchor);
+
+
+                                    _foundPostItManagers.Add(manager);
+                                    _foundPostIts.Add(postIt);
+
+                                });
+
+                                Debug.Log("ASA - Postit successfully placed!");
+                                // break; // TODO: test without break opt
+                            }
+                        }
+                    }
+
+                    // Perform deletion
+
+                    foreach (PostIt p in toDelete)
+                    {
+
+                        Debug.Log("ASA - Deleting a postit");
+                        if (p.Instance != null)
+                        {
+                            UnityDispatcher.InvokeOnAppThread(() =>
+                            {
+                                p.Instance.SetActive(false);
+                            });
+
+                        }
+                    }
+
+
+                    // Perform modifications
+
+                    foreach (PostIt postIt in toModify)
+                    {
+                        foreach (LocalAnchor anchor in _foundLocalAnchors)
+                        {
+                            if (anchor.anchorId == postIt.AnchorId)
+                            {
+                                Debug.Log("ASA - Found a local postit to modify");
+
+
+                                if (postIt.Instance != null)
+                                {
+                                    PostItManager manager = postIt.Instance.GetComponent<PostItManager>();
+                                    manager.SetObject(postIt, anchor);
+                                }
+
+                                Debug.Log("ASA - Postit successfully modified!");
+                                //break; // TODO: Same check as above
+                            }
+                        }
+                    }
+
+            } // Release lock
+
+        });
     }
 
     public async void BeginMapping()
@@ -631,19 +798,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             }
             Debug.Log("APP_DEBUG: Session is started!");
 
-            Debug.Log("APP_DEBUG: Instantiated marker");
-            if (_spatialAnchorManager == null)
-            {
-                Debug.Log("APP_DEBUG: Null manager error"); return;
-            }
-            Debug.Log("APP_DEBUG: SM is OK!");
-
-            if (!_spatialAnchorManager.IsSessionStarted)
-            {
-                Debug.Log("APP_DEBUG: ASA - Session is not started"); return;
-            }
-            Debug.Log("APP_DEBUG: Session is started!");
-
             // Use ASA to save the position and the rotation of this GameObject.
             // Add and configure ASA components
             CloudNativeAnchor cloudNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
@@ -679,7 +833,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 Debug.Log($"APP_DEBUG: ASA - Saved cloud anchor with ID: {cloudSpatialAnchor.Identifier}");
 
                 // Create a LocalAnchor class instance and attach the GameObject to it
-                LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _currentGroup);
+                LocalAnchor createdAnchor = new(cloudSpatialAnchor.Identifier, _networkManager.GroupName);
                 createdAnchor.AttachInstance(anchorGameObject);
 
                 if (await _networkManager.PostAnchor(createdAnchor))
@@ -688,6 +842,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     // Add the created anchor to the list of found anchors 
 
                     _foundLocalAnchors.Add(createdAnchor);
+
+                    RefreshData();
                 }
                 else
                 {
@@ -924,60 +1080,77 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case LocateAnchorStatus.Located:
             case LocateAnchorStatus.AlreadyTracked:
 
-                // Go add your anchor to the scene...
-
-                //Creating and adjusting GameObjects have to run on the main thread. We are using the UnityDispatcher to make sure this happens.
-                UnityDispatcher.InvokeOnAppThread(() =>
+                // Wait to acquire lock on found anchor (thread protection)
+                lock (_foundLocalAnchors)
                 {
-                    CloudSpatialAnchor foundAnchor = args.Anchor;
-                    string id = foundAnchor.Identifier;
-                    Debug.Log("APP_DEBUG: ASA - Instantiating found anchor");
-
-                    // find in available
-                    LocalAnchor correspondingAnchor = _existingLocalAnchors.Find((anchor) => anchor.anchorId == id);
-                    if (correspondingAnchor == null) { Debug.Log("APP_DEBUG: Unknown identifier encountered"); return; }
-
-                    // If there is already an anchor in the _found, disable it
-                    LocalAnchor existing = _foundLocalAnchors.Find(anchor => anchor.anchorId == id);
-                    if(existing != null)
+                    //Creating and adjusting GameObjects have to run on the main thread. We are using the UnityDispatcher to make sure this happens.
+                    UnityDispatcher.InvokeOnAppThread(() =>
                     {
-                        Debug.Log("ASA - Removed preexisting anchor isntance");
-                        _foundLocalAnchors.Remove(existing);
-                        existing.Instance.SetActive(false);
-                    }
+                        CloudSpatialAnchor foundAnchor = args.Anchor;
+                        string id = foundAnchor.Identifier;
 
-                    //Create GameObject
-                    GameObject anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
-                    anchorGameObject.transform.localScale = Vector3.one * 0.07f;
+                        // find in available
+                        LocalAnchor correspondingAnchor = _existingLocalAnchors.Find((anchor) => anchor.anchorId == id);
+                        if (correspondingAnchor == null) { Debug.Log("APP_DEBUG: Unknown identifier encountered"); return; }
 
+                        // If there is already an anchor in the _found, disable it
+                        LocalAnchor existing = _foundLocalAnchors.Find(anchor => anchor.anchorId == id);
+                        GameObject anchorGameObject;
+                        CloudNativeAnchor anchorNativeAnchor;
+                        if (existing != null && existing.Instance != null)
+                        {
+                            Debug.Log("ASA - Anchor already located");
+                            anchorGameObject = existing.Instance;
+                            if (!anchorGameObject.TryGetComponent<CloudNativeAnchor>(out anchorNativeAnchor)) 
+                            {
+                                Debug.Log("ASA - ERROR trying to get cloudnativeanchor component");
+                            }
 
+                        }
+                        else
+                        {
+                            Debug.Log("ASA - Anchor never located, instantiating");
 
-                    Debug.Log("APP_DEBUG: ASA - Attaching anchor position...");
-                    // Link to Cloud Anchor
-                    try
-                    {
-                        Pose pose = foundAnchor.GetPose();
-                        Debug.Log("APP_DEBUG: ASA - Pose:" + pose.ToString());
-                        anchorGameObject.AddComponent<CloudNativeAnchor>().CloudToNative(foundAnchor);
+                            //Create GameObject
+                            anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
+                            anchorGameObject.transform.localScale = Vector3.one * 0.07f;
+                            anchorNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
 
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.Log("APP_DEBUG: ASA - Error attaching anchor position");
-                        Debug.LogException(e);
-                    }
+                            correspondingAnchor.AttachInstance(anchorGameObject);
+                            _foundLocalAnchors.Add(correspondingAnchor);
+                        }
+                        Debug.Log("APP_DEBUG: ASA - Attaching anchor position...");
+                        // Link to Cloud Anchor
+                        try
+                        {
+                            Pose pose = foundAnchor.GetPose();
+                            Debug.Log("APP_DEBUG: ASA - Pose:" + pose.ToString());
+                            if(anchorNativeAnchor != null)
+                            {
+                                anchorNativeAnchor.CloudToNative(foundAnchor);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.Log("APP_DEBUG: ASA - Error attaching anchor position");
+                            Debug.LogException(e);
+                        }
+                        Debug.Log("APP_DEBUG: ASA - Attached anchor position");
 
-                    correspondingAnchor.AttachInstance(anchorGameObject);
-                    Debug.Log("APP_DEBUG: ASA - Attached anchor position");
+                        
+                        Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
+                        if (_state != ManagerState.MAPPING)
+                        {
+                            //anchorGameObject.SetActive(false);
+                            Debug.Log("APP_DEBUG: ASA - Set anchor to disabled as not in mapping mode");
+                        }
+                    });
 
-                    _foundLocalAnchors.Add(correspondingAnchor);
-                    Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
-                    if (_state != ManagerState.MAPPING)
-                    {
-                        //anchorGameObject.SetActive(false);
-                        Debug.Log("APP_DEBUG: ASA - Set anchor to disabled as not in mapping mode");
-                    }
-                });
+                    // After locating a new anchor, one must call Get And Place
+                    _ = GetAndPlacePostIts();
+                } // release lock on found anchors
+                
+
                 break;
 
             case LocateAnchorStatus.NotLocatedAnchorDoesNotExist:
@@ -1017,5 +1190,63 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         Debug.Log($"APP_DEBUG: ASA - Cloud anchor deleted!");
     }
     // </DeleteAnchor>
+
+    // <DeletePostIt>
+    /// <summary>
+    /// Delete a post it from the UI and from the backend
+    /// </summary>
+    public async void DeletePostIt(PostIt data, GameObject obj)
+    {
+        Debug.Log("APP_DEBUG: Deleting post it ASA");
+        // print length of _foundPostIts
+        Debug.Log("APP_DEBUG: Length of _availablePostIts: " + _availablePostIts.Count);
+        // print the id of the post it to delete
+        Debug.Log("APP_DEBUG: Post it to delete: " + data.Id);
+
+        // check if the post it is in _foundPostIts
+        PostIt postIt = _availablePostIts.Find((post) => post.Id == data.Id);
+        if (postIt == null)
+        {
+            Debug.Log("APP_DEBUG: Post it not found in _availablePostIts");
+            obj.SetActive(false);
+            return;
+        }
+        else
+        {
+            Debug.Log("APP_DEBUG: Post it found in _availablePostIts");
+            Boolean ex = await _networkManager.DeletePostIt(data);
+            if (ex == true)
+            {
+                // refresh data
+                Debug.Log("APP_DEBUG: Post it deleted in backend");
+                // disable game object
+                obj.SetActive(false);
+            }
+            return;
+        } 
+    }
+
+    // speak a string using TextToSpeech
+    public void Speak(string text)
+    {
+        this._textToSpeech.StartSpeaking(text);
+    }
+
+    // check whether the map name is existing call IsMapNameExisting()
+    public bool IsMapNameExisting(string mapName)
+    {
+        // find the name in _groups
+        GroupJSON group = _groups.Find((g) => g.group_name == mapName);
+        if (group != null)
+        {
+            Debug.Log("APP_DEBUG: Map name is existing");
+            return true;
+        }
+        else
+        {
+            Debug.Log("APP_DEBUG: Map name is not existing");
+            return false;
+        }
+    }
 
 }
