@@ -159,7 +159,7 @@ public class PostIt : IEquatable<PostIt>
 
     public static PostIt Initial(string username)
     {
-        return new PostIt(Guid.NewGuid().ToString(), "1", username , "Test Title", PostItType.TEXT, "This is some content", Color.blue, null, Vector3.one * 0.4f);
+        return new PostIt(Guid.NewGuid().ToString(), "1", username , "", PostItType.TEXT, "", Color.blue, null, Vector3.one * 0.4f);
     }
 
     public bool Equals(PostIt other)
