@@ -2609,8 +2609,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EndpointURL: http://185.224.139.115:8000
-  Username: Zeno
-  GroupName: DeepanaRoom
+  Username: Beyza
+  GroupName: ETH_HG_Test
 --- !u!114 &967253954
 MonoBehaviour:
   m_ObjectHideFlags: 0

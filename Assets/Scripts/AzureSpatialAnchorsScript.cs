@@ -267,7 +267,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         // Set debuggers
         _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"APP_DEBUG: ASA - Debug: {args.Message}");
-        _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
+        _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"APP_DEBUG: ASA - Error: {args.ErrorMessage}");
 
         // Set the callback for when anchors are found
         _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
@@ -784,19 +784,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Quaternion orientation = new(0, 0, 0, 1);
             GameObject anchorGameObject = Instantiate(AnchorPrefab, position, orientation);
             anchorGameObject.transform.localScale = Vector3.one * 0.07f;
-
-            Debug.Log("APP_DEBUG: Instantiated marker");
-            if (_spatialAnchorManager == null)
-            {
-                Debug.Log("APP_DEBUG: Null manager error"); return;
-            }
-            Debug.Log("APP_DEBUG: SM is OK!");
-
-            if (!_spatialAnchorManager.IsSessionStarted)
-            {
-                Debug.Log("APP_DEBUG: ASA - Session is not started"); return;
-            }
-            Debug.Log("APP_DEBUG: Session is started!");
 
             Debug.Log("APP_DEBUG: Instantiated marker");
             if (_spatialAnchorManager == null)

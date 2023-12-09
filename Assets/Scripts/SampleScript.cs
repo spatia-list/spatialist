@@ -43,7 +43,7 @@ public class SampleScript : MonoBehaviour
         _spatialAnchorManager = GetComponent<SpatialAnchorManager>();
         _networkManager = GetComponent<NetworkManager>();
         _spatialAnchorManager.LogDebug += (sender, args) => Debug.Log($"APP_DEBUG: ASA - Debug: {args.Message}");
-        _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"ASA - Error: {args.ErrorMessage}");
+        _spatialAnchorManager.Error += (sender, args) => Debug.LogError($"APP_DEBUG:ASA - Error: {args.ErrorMessage}");
         _spatialAnchorManager.AnchorLocated += SpatialAnchorManager_AnchorLocated;
         TouchSession();
     }
