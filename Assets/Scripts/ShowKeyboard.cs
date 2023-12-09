@@ -7,17 +7,19 @@ using TMPro;
 public class ShowKeyboard : MonoBehaviour
 {
     public TouchScreenKeyboard keyboard;
-    public TMP_InputField inputField;
+    private TMP_InputField activeInputField;
+
 
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
-    public void OpenSystemKeyboard()
+    public void OpenSystemKeyboard(TMP_InputField InputField)
     {  
-        string currentText = inputField.text; // Get the current text from the input field
+        this.activeInputField = InputField;
+        string currentText = this.activeInputField.text; // Get the current text from the input field
         keyboard = TouchScreenKeyboard.Open(currentText, TouchScreenKeyboardType.Default, false, false, false, false);
         TouchScreenKeyboard.hideInput = true; // Hide the keyboard's input field
 
@@ -26,6 +28,7 @@ public class ShowKeyboard : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
+        // updates the selected input field with the keyboard response every frame
         if (keyboard != null)
         {
             if (keyboard.status == TouchScreenKeyboard.Status.Done || keyboard.status == TouchScreenKeyboard.Status.Canceled)
@@ -36,7 +39,7 @@ public class ShowKeyboard : MonoBehaviour
             else if (keyboard.active)
             {
                 // show the typed text on the post-it (inputField)
-                inputField.text = keyboard.text;
+                this.activeInputField.text = keyboard.text;
             }
 
         }

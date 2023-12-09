@@ -23,11 +23,13 @@ public class PostItManager : MonoBehaviour
     // TextMeshPro objects
     // public TMP_InputField TitleTextInput;
     public TMP_InputField ContentTextInput;
-    // public TextMeshProUGUI TitleTextDisplay;
+    public TMP_InputField TitleTextInput;
     public TextMeshProUGUI ContentTextDisplay;
+    public TextMeshProUGUI TitleTextDisplay;
 
     // Button to edit the text
     public GameObject EditTextButton;
+    public GameObject EditTitleButton;
 
     // Renderer objects (for the material of the postit)
     public MeshRenderer contentQuadRend;
@@ -133,7 +135,7 @@ public class PostItManager : MonoBehaviour
             Debug.Log("APP_DEBUG: Setting content to:" + _data.Content);
             Debug.Log("APP_DEBUG: Setting title to:" + _data.Title);
             ContentTextInput.text = _data.Content;
-            //TitleTextInput.text = _data.Title;
+            TitleTextInput.text = _data.Title;
 
             // sets the color of the postit
             SetMaterialFromColor(_data.Color);
@@ -260,16 +262,15 @@ public class PostItManager : MonoBehaviour
         ColorBlueButton.SetActive(false);
 
         // Turn off text editing of the postit (hide the edit text button)
-        // ContentTextInput.gameObject.SetActive(false);
-        // TitleTextInput.gameObject.SetActive(false);
         EditTextButton.SetActive(false);
+        EditTitleButton.SetActive(false);
 
         // Update the postit color (in the PostIt class)
         UpdatePostItColorFromMaterial(this.contentQuadRend.material);	
 
         // Update the postit content and title text (in the PostIt class)
         _data.Content = ContentTextDisplay.text;
-        //_data.Title = TitleTextDisplay.text;
+        _data.Title = TitleTextDisplay.text;
 
 
         Exception ex = _script.SavePostIt(_data, gameObject);
@@ -296,10 +297,8 @@ public class PostItManager : MonoBehaviour
         ColorBlueButton.SetActive(true);
 
         // Enable text and title editing (turning on the TextMeshPro input fields)
-        // ContentTextInput.gameObject.SetActive(true);
-        // TitleTextInput.gameObject.SetActive(true);
         EditTextButton.SetActive(true);
-
+        EditTitleButton.SetActive(true);
 
     }
 
