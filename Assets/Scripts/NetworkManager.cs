@@ -181,6 +181,18 @@ public class GroupResponseJSON
     public List<GroupJSON> groups { get; set; }
 }
 
+public class JoinGroupJSON
+{
+    public string group_name { get; set; }
+    public string username { get; set; }
+
+    public JoinGroupJSON(string groupName, string username)
+    {
+        this.group_name = groupName;
+        this.username = username;
+    }
+}
+
 
 public class NetworkManager : MonoBehaviour
 {
@@ -509,6 +521,37 @@ public class NetworkManager : MonoBehaviour
         return null;
     }
 
+    // method named JoinGroup to call the endpoint to join a group
+    public async void JoinGroup(String groupName)
+    {
+        try
+        {
+            JoinGroupJSON entry = new JoinGroupJSON(groupName,this.Username);
 
+            // encode to json
+            string msg = Newtonsoft.Json.JsonConvert.SerializeObject(entry);
 
+            // perform the request
+            Debug.Log(msg);
+
+            HttpContent content = new StringContent(msg, Encoding.UTF8, "application/json");
+
+            // Do the actual request and await the response
+            var httpClient = new HttpClient();
+            var httpResponse = await httpClient.PostAsync(EndpointURL + "/joingroup", content);
+
+            // If the response contains content we want to read it!
+            if (httpResponse.Content != null)
+            {
+                var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                // MessageResponseJSON res = Newtonsoft.Json.JsonConvert.DeserializeObject<MessageResponseJSON>(responseContent);
+                Debug.Log(responseContent);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.Log("APP_DEBUG: NetManager - " + e.Message);
+        }
+    }
 }

@@ -481,16 +481,58 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
     // </ShortTap>
 
-
+    /// <summary>
+    /// Change the current group to the one with the given name
+    /// </summary>
+    /// <param name="name"></param>
     public void SetCurrentGroup(String name)
     {
-        if (_networkManager.GroupName == name) return;  
-        _networkManager.GroupName = name;
+        // check if the username is in the group and if not add the username to the group
+        // find the group object from name
+        GroupJSON group = _groups.Find((g) => g.group_name == name);
+        if (group != null)
+        {
+            // get group usernames
+            List<string> usernames = group.users;
+            if (usernames.Contains(_networkManager.Username))
+            {
+                Debug.Log("APP_DEBUG: Username is in group");
+            }
+            else
+            {
+                Debug.Log("APP_DEBUG: Username is not in group");
+                // add username to group
+                usernames.Add(_networkManager.Username);
+                group.users = usernames;
+                _networkManager.JoinGroup(name);
+                Debug.Log("APP_DEBUG: Username added to group");
+            }   
+        }
+        else
+        {
+            // if the group doesn't exit, create it in the db and load all groups again
+            Debug.Log("APP_DEBUG: Group doesn't exist, creating it");
+            _networkManager.JoinGroup(name);
+
+            // delay
+            Task.Delay(2000);
+
+            LoadGroups();
+        }
+
+        // if group name is the same, return
+        if (_networkManager.GroupName == name) return;
+
         Debug.Log("APP_DEBUG: Setting group to " + name);
+        _networkManager.GroupName = name;
         _networkManager.ResetHashes();
         RefreshData();
     }
 
+    /// <summary>
+    /// Set username to a given name
+    /// </summary>
+    /// <param name="name"></param>
     public void SetUsername(String name)
     {
         _networkManager.Username = name;
@@ -1129,4 +1171,28 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             return;
         } 
     }
+
+    // speak a string using TextToSpeech
+    public void Speak(string text)
+    {
+        this._textToSpeech.StartSpeaking(text);
+    }
+
+    // check whether the map name is existing call IsMapNameExisting()
+    public bool IsMapNameExisting(string mapName)
+    {
+        // find the name in _groups
+        GroupJSON group = _groups.Find((g) => g.group_name == mapName);
+        if (group != null)
+        {
+            Debug.Log("APP_DEBUG: Map name is existing");
+            return true;
+        }
+        else
+        {
+            Debug.Log("APP_DEBUG: Map name is not existing");
+            return false;
+        }
+    }
+
 }
