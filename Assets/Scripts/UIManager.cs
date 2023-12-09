@@ -32,6 +32,7 @@ public class UIManager : MonoBehaviour
     public GameObject U7MappingConfirmCancel;
     public GameObject U8Lozalization;
     public GameObject U9PostIt;
+    public GameObject HandMenu;
 
     /// <summary>
     /// Used to keep track of all GameObjects that represent an UI prefab
@@ -76,6 +77,8 @@ public class UIManager : MonoBehaviour
         {
             _list[i].SetActive(false);
         }
+
+        HandMenu.SetActive(false);
 
         // Comment this out, when configuring the UI, let's reenable it
         //SetState(StartState);
@@ -184,6 +187,9 @@ public class UIManager : MonoBehaviour
     /// <summary>
     /// Called when UI is in a specific state
     /// </summary>
+    /// 
+    public void SetHandMenu() { HandMenu.SetActive(true); }
+
     public void SetU1() { SetState(UIState.WELCOME); }
 
     public void SetU2() { SetState(UIState.LAUNCH); }
@@ -192,7 +198,20 @@ public class UIManager : MonoBehaviour
 
     public void SetU4() { SetState(UIState.MAPPING_MAIN); }
 
-    public void SetU5() { SetState(UIState.MAPPING_MODE); }
+    public void SetU5() {
+
+        // find the AzureSpatialAnchorsScript component in the scene
+        _script = GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>();
+
+        _script.Speak("First, you need to select an existing map, or need to create a new one." +
+            "Then, raise your hand and look at your palm.There, you will see some buttons." +
+            "Click on the mapping button to create anchors around the room." +
+            "Click on the create button to create post - its." +
+            "You can modify your post-it by clicking edit button, delete it by using delete button, and save it by using save button.");
+
+        SetState(UIState.MAPPING_MODE); 
+    
+    }
 
     public void SetU6() {
         // reset map name
