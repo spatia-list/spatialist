@@ -196,7 +196,7 @@ public class UIManager : MonoBehaviour
     public void SetU5() {
         _script = GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>();
 
-        _script.Speak("First, you need to select an existing map, or need to create a new one. Then, raise your hand and look at your palm.There, you will see some buttons. Click on the mapping button to create anchors around the room. Click on the create button to create postits. You can modify your post-it by clicking edit button, delete it by using delete button, and save it by using save button.");
+        _script.Speak("First, you need to select an existing map, or need to create a new one. Then, raise your hand and look at your palm. There, you will see some buttons. Click on the mapping button to create anchors around the room. Click on the create button to create postits. You can modify your post-it by clicking edit button, delete it by using delete button, and save it by using save button.");
 
         SetState(UIState.MAPPING_MODE); 
     
