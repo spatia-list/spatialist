@@ -328,8 +328,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 {
                     GameObject newOption = Instantiate(GroupPrefab);
                     newOption.transform.SetParent(GroupDropdown.transform, false);
-                    newOption.GetComponent<Interactable>().OnClick.AddListener(() => 
+                    newOption.GetComponent<PressableButtonHoloLens2>().ButtonPressed.AddListener(() => 
                     { 
+                        Debug.Log("APP_DEBUG: User selected group " + group.group_name);
                         SetCurrentGroup(group.group_name); 
                         selectMap.SetActive(false); 
                         // say group name using TextToSpeech
@@ -490,13 +491,15 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// Change the current group to the one with the given name
     /// </summary>
     /// <param name="name"></param>
-    public void SetCurrentGroup(String name)
+    public async void SetCurrentGroup(String name)
     {
         // check if the username is in the group and if not add the username to the group
         // find the group object from name
         GroupJSON group = _groups.Find((g) => g.group_name == name);
+        Debug.Log("APP_DEBUG: User is requesting to set group: " + name);
         if (group != null)
         {
+            Debug.Log("APP_DEBUG: Group exists");
             // get group usernames
             List<string> usernames = group.users;
             if (usernames.Contains(_networkManager.Username))
@@ -520,7 +523,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             _networkManager.JoinGroup(name);
 
             // delay
-            Task.Delay(2000);
+            await Task.Delay(2000);
 
             LoadGroups();
         }
@@ -528,10 +531,14 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         // if group name is the same, return
         if (_networkManager.GroupName == name) return;
 
-        Debug.Log("APP_DEBUG: Setting group to " + name);
-        _networkManager.GroupName = name;
-        _networkManager.ResetHashes();
-        RefreshData();
+        lock (_networkManager)
+        {
+            Debug.Log("APP_DEBUG: Setting group to " + name);
+            _networkManager.GroupName = name;
+            _networkManager.ResetHashes();
+            RefreshData();
+        }
+        
     }
 
     /// <summary>
@@ -544,37 +551,49 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         RefreshData();
     }
 
-    public async void RefreshData()
+    public void RefreshData()
     {
+        if (_networkManager.GroupName == null || _networkManager.GroupName == string.Empty){
+            Debug.Log("APP_DEBUG: No group selected, skipping refresh");
+            return;
+        }
+
+        lock(_networkManager)
+        {
+            Task.Run(async () =>
+            {
+                Debug.Log("APP_DEBUG: Performing Refresh...");
+                if (await _networkManager.ShouldRefreshAnchors())
+                {
+
+                    FetchAnchorsFromDBAndAddToWatcher();
+
+                }
+                else
+                {
+                    Debug.Log("APP_DEBUG: Skipping anchor refresh!");
+                }
+
+                if (await _networkManager.ShouldRefreshPostIts())
+                {
+                    _ = GetAndPlacePostIts(); // dont wait for completion TODO: Check how async is non-blocking
+                }
+                else
+                {
+                    Debug.Log("ASA - Skipping postit refresh!");
+                }
+
+                // Check if we have a swipe from the API for the current user
+                PostIt swiped = await _networkManager.GetSwipe();
+                if (swiped != null)
+                {
+                    Debug.Log("APP_DEBUG: Creating swipe!");
+                    await Task.Run(() => { CreateSwipe(swiped); });
+
+                }
+            });   
+        } // Release lock
         
-        Debug.Log("APP_DEBUG: Performing Refresh...");
-        if (await _networkManager.ShouldRefreshAnchors())
-        {
-
-            FetchAnchorsFromDBAndAddToWatcher();
-
-        }
-        else
-        {
-            Debug.Log("APP_DEBUG: Skipping anchor refresh!");
-        }
-
-        if(await  _networkManager.ShouldRefreshPostIts())
-        {
-            _ = GetAndPlacePostIts(); // dont wait for completion TODO: Check how async is non-blocking
-        } else
-        {
-            Debug.Log("ASA - Skipping postit refresh!");
-        }
-
-        // Check if we have a swipe from the API for the current user
-        PostIt swiped = await _networkManager.GetSwipe();
-        if (swiped != null)
-        {
-            Debug.Log("APP_DEBUG: Creating swipe!");
-            await Task.Run(() => { CreateSwipe(swiped); });
-            
-        }
     }
 
     public async Task GetAndPlacePostIts()
