@@ -63,8 +63,8 @@ public class PostItManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // Start state of the postit is unlocked
-        _state = PostItState.UNLOCKED;
+        // Start state of the postit is locked
+        LockUI();
 
         /// READ: 
         /// Code for if we want to get the game objects without defining them in the inspector!
@@ -247,6 +247,25 @@ public class PostItManager : MonoBehaviour
     // Called when the user locks (saves) the post it, by clicking on the lock button
     public void Lock()
     {
+        LockUI();
+
+        // Update the postit color (in the PostIt class)
+        UpdatePostItColorFromMaterial(this.contentQuadRend.material);	
+
+        // Update the postit content and title text (in the PostIt class)
+        _data.Content = ContentTextDisplay.text;
+        _data.Title = TitleTextDisplay.text;
+
+
+        Exception ex = _script.SavePostIt(_data, gameObject);
+        if (ex != null)
+        {
+            Debug.LogException(ex);
+        }
+    }
+
+    public void LockUI()
+    {
         Debug.Log("APP_DEBUG: Locking post it");
         _state = PostItState.LOCKED;
 
@@ -264,20 +283,6 @@ public class PostItManager : MonoBehaviour
         // Turn off text editing of the postit (hide the edit text button)
         EditTextButton.SetActive(false);
         EditTitleButton.SetActive(false);
-
-        // Update the postit color (in the PostIt class)
-        UpdatePostItColorFromMaterial(this.contentQuadRend.material);	
-
-        // Update the postit content and title text (in the PostIt class)
-        _data.Content = ContentTextDisplay.text;
-        _data.Title = TitleTextDisplay.text;
-
-
-        Exception ex = _script.SavePostIt(_data, gameObject);
-        if (ex != null)
-        {
-            Debug.LogException(ex);
-        }
     }
 
     // Called when the user unlocks (to edit) the post it, by clicking on the unlock button
