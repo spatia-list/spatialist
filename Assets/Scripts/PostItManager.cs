@@ -9,6 +9,7 @@ using Unity.VisualScripting;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using Microsoft.MixedReality.Toolkit.Experimental.UI;
+using Microsoft.MixedReality.Toolkit.UI.BoundsControl;
 
 
 public enum PostItState { LOCKED, UNLOCKED }
@@ -337,6 +338,12 @@ public class PostItManager : MonoBehaviour
         // Turn off text editing of the postit (hide the edit text button)
         EditTextButton.SetActive(false);
         EditTitleButton.SetActive(false);
+
+        if (gameObject.TryGetComponent<BoundsControl>(out BoundsControl bc))
+        {
+            Debug.Log("APP_DEBUG: PostIt - LockUI - Removing bounds control");
+            bc.enabled = false;
+        }
     }
 
     // Called when the user unlocks (to edit) the post it, by clicking on the unlock button
