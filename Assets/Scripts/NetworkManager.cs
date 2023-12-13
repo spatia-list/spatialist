@@ -28,7 +28,7 @@ public class PostItJSON
     public string title { get; set; }
     public string content_type { get; set; }
     public string content { get; set; }
-    public List<float> rgb { get; set; }
+    public List<int> rgb { get; set; }
     public PoseJSON pose { get; set; }
     public List<float> scale { get; set; }
     public string _rid { get; set; }
@@ -54,17 +54,17 @@ public class PostItUploadJSON
     public string title { get; set; }
     public string content_type { get; set; }
     public string content { get; set; }
-    public List<float> rgb { get; set; }
+    public List<int> rgb { get; set; }
     public PoseJSON pose { get; set; }
     public List<float> scale { get; set; }
 
     public static PostItUploadJSON FromObject(PostIt postIt)
     {
-        List<float> rgb = new()
+        List<int> rgb = new()
         {
-            postIt.Color.r,
-            postIt.Color.g,
-            postIt.Color.b
+            (int) Math.Round(postIt.Color.r),
+            (int) Math.Round(postIt.Color.g),
+            (int) Math.Round(postIt.Color.b)
         };
 
         PoseJSON pose = new PoseJSON();

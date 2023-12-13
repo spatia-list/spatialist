@@ -1009,6 +1009,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <param name="data">post-it data</param>
     public Exception SavePostIt(PostIt data, GameObject obj)
     {
+        Debug.Log("APP_DEBUG: Saving postit");
+
         Tuple<Pose?, Vector3, string> res = GetPoseToClosestAnchor(obj);
 
         if (res == null)
@@ -1090,27 +1092,33 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case LocateAnchorStatus.AlreadyTracked:
 
                 // Wait to acquire lock on found anchor (thread protection)
-                lock (_foundLocalAnchors)
+                //Creating and adjusting GameObjects have to run on the main thread. We are using the UnityDispatcher to make sure this happens.
+                UnityDispatcher.InvokeOnAppThread(() =>
                 {
-                    //Creating and adjusting GameObjects have to run on the main thread. We are using the UnityDispatcher to make sure this happens.
-                    UnityDispatcher.InvokeOnAppThread(() =>
+                    Debug.Log("APP_DEBUG: ASA - Anchor located, now trying to create the gameobject!");
+                    CloudSpatialAnchor foundAnchor = args.Anchor;
+                    string id = foundAnchor.Identifier;
+
+                    // find in available
+                    Debug.Log("APP_DEBUG: ASA - Looking for anchor in available anchors");
+                    LocalAnchor correspondingAnchor = _existingLocalAnchors.Find((anchor) => anchor.anchorId == id);
+                    if (correspondingAnchor == null) { Debug.Log("APP_DEBUG: Unknown identifier encountered"); return; }
+
+                    // If there is already an anchor in the _found, disable it
+                    Debug.Log("APP_DEBUG: ASA - Looking for anchor in found anchors");
+                    LocalAnchor existing = _foundLocalAnchors.Find(anchor => anchor.anchorId == id);
+                    GameObject anchorGameObject;
+                    CloudNativeAnchor anchorNativeAnchor;
+
+                    Debug.Log("APP_DEBUG: ASA - Finished searching anchors in foundLocalAnchors");
+
+                    try
                     {
-                        CloudSpatialAnchor foundAnchor = args.Anchor;
-                        string id = foundAnchor.Identifier;
-
-                        // find in available
-                        LocalAnchor correspondingAnchor = _existingLocalAnchors.Find((anchor) => anchor.anchorId == id);
-                        if (correspondingAnchor == null) { Debug.Log("APP_DEBUG: Unknown identifier encountered"); return; }
-
-                        // If there is already an anchor in the _found, disable it
-                        LocalAnchor existing = _foundLocalAnchors.Find(anchor => anchor.anchorId == id);
-                        GameObject anchorGameObject;
-                        CloudNativeAnchor anchorNativeAnchor;
                         if (existing != null && existing.Instance != null && existing.anchorFound)
                         {
                             Debug.Log($"ASA - Anchor already located with id {existing.anchorId}");
                             anchorGameObject = existing.Instance;
-                            if (!anchorGameObject.TryGetComponent<CloudNativeAnchor>(out anchorNativeAnchor)) 
+                            if (!anchorGameObject.TryGetComponent<CloudNativeAnchor>(out anchorNativeAnchor))
                             {
                                 Debug.Log("ASA - ERROR trying to get cloudnativeanchor component");
                             }
@@ -1120,7 +1128,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                         {
                             if (existing != null && existing.Instance != null)
                             {
-                                Debug.Log($"ASA - Anchor created was was located with id {existing.anchorId} but not found");
+                                Debug.Log($"ASA - Anchor created was located with id {existing.anchorId} but not found");
                                 anchorGameObject = existing.Instance;
                                 anchorGameObject.SetActive(false); // hide the initial prefab
 
@@ -1146,36 +1154,42 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                                 _foundLocalAnchors.Add(correspondingAnchor); // add to found anchors
                             }
                         }
-                        Debug.Log("APP_DEBUG: ASA - Attaching anchor position...");
-                        // Link to Cloud Anchor
-                        try
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log("APP_DEBUG: ASA - Error creating gameobject");
+                        Debug.LogException(e);
+                        return;
+                    }
+                    Debug.Log("APP_DEBUG: ASA - Attaching anchor position...");
+                    // Link to Cloud Anchor
+                    try
+                    {
+                        Pose pose = foundAnchor.GetPose();
+                        Debug.Log("APP_DEBUG: ASA - Pose:" + pose.ToString());
+                        if(anchorNativeAnchor != null)
                         {
-                            Pose pose = foundAnchor.GetPose();
-                            Debug.Log("APP_DEBUG: ASA - Pose:" + pose.ToString());
-                            if(anchorNativeAnchor != null)
-                            {
-                                anchorNativeAnchor.CloudToNative(foundAnchor);
-                            }
+                            anchorNativeAnchor.CloudToNative(foundAnchor);
                         }
-                        catch (Exception e)
-                        {
-                            Debug.Log("APP_DEBUG: ASA - Error attaching anchor position");
-                            Debug.LogException(e);
-                        }
-                        Debug.Log("APP_DEBUG: ASA - Attached anchor position");
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log("APP_DEBUG: ASA - Error attaching anchor position");
+                        Debug.LogException(e);
+                    }
+                    Debug.Log("APP_DEBUG: ASA - Attached anchor position");
 
                         
-                        Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
-                        if (_state != ManagerState.MAPPING)
-                        {
-                            //anchorGameObject.SetActive(false);
-                            Debug.Log("APP_DEBUG: ASA - Set anchor to disabled as not in mapping mode");
-                        }
-                    });
+                    Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
+                    if (_state != ManagerState.MAPPING)
+                    {
+                        //anchorGameObject.SetActive(false);
+                        Debug.Log("APP_DEBUG: ASA - Set anchor to disabled as not in mapping mode");
+                    }
+                });
 
-                    // After locating a new anchor, one must call Get And Place
-                    _ = GetAndPlacePostIts();
-                } // release lock on found anchors
+                // After locating a new anchor, one must call Get And Place
+                _ = GetAndPlacePostIts();
                 
 
                 break;
