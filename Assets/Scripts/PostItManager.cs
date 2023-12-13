@@ -10,6 +10,7 @@ using Unity.XR.CoreUtils;
 using UnityEngine;
 using Microsoft.MixedReality.Toolkit.Experimental.UI;
 using Microsoft.MixedReality.Toolkit.UI.BoundsControl;
+using Microsoft.MixedReality.Toolkit.Input;
 
 
 public enum PostItState { LOCKED, UNLOCKED }
@@ -64,8 +65,8 @@ public class PostItManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // Start state of the postit is locked
-        LockUI();
+        // Start state of the postit is unlocked (since we want to edit and rescale the postit in the  )
+        Unlock();
 
         /// READ: 
         /// Code for if we want to get the game objects without defining them in the inspector!
@@ -311,7 +312,6 @@ public class PostItManager : MonoBehaviour
         _data.Content = ContentTextDisplay.text;
         _data.Title = TitleTextDisplay.text;
 
-
         Exception ex = _script.SavePostIt(_data, gameObject);
         if (ex != null)
         {
@@ -339,18 +339,26 @@ public class PostItManager : MonoBehaviour
         EditTextButton.SetActive(false);
         EditTitleButton.SetActive(false);
 
-        if (gameObject.TryGetComponent<BoundsControl>(out BoundsControl bc))
+        // Lock the scaling (bounds control)
+        if (gameObject.TryGetComponent<BoundsControl>(out BoundsControl postitBoundsControl))
         {
             Debug.Log("APP_DEBUG: PostIt - LockUI - Removing bounds control");
-            bc.enabled = false;
+            postitBoundsControl.enabled = false; // makes sure that we can not rescale the postit when the poster is locked
         }
+
+        // Lock the position (disable interaction grabbable)
+        if (gameObject.TryGetComponent<NearInteractionGrabbable>(out NearInteractionGrabbable postitGrabbable))
+        {
+            Debug.Log("APP_DEBUG: PostIt - LockUI - Removing grabbable");
+            postitGrabbable.enabled = false; // makes sure that we can not move the postit when the poster is locked
+        }
+
     }
 
     // Called when the user unlocks (to edit) the post it, by clicking on the unlock button
     public void Unlock()
     {
         _state = PostItState.UNLOCKED;
-        //UnlockButton.SetActive(false);
 
         // Display the lock/save button
         LockButton.SetActive(true);
@@ -365,6 +373,20 @@ public class PostItManager : MonoBehaviour
         // Enable text and title editing (turning on the TextMeshPro input fields)
         EditTextButton.SetActive(true);
         EditTitleButton.SetActive(true);
+
+        // Turn on the scaling (bounds control)
+        if (gameObject.TryGetComponent<BoundsControl>(out BoundsControl postitBoundsControl))
+        {
+            Debug.Log("APP_DEBUG: PostIt - LockUI - Removing bounds control");
+            postitBoundsControl.enabled = true; // makes sure that we can not rescale the postit when the poster is locked
+        }
+
+        // Turn on interaction grabbable
+        if (gameObject.TryGetComponent<NearInteractionGrabbable>(out NearInteractionGrabbable postitGrabbable))
+        {
+            Debug.Log("APP_DEBUG: PostIt - LockUI - Removing grabbable");
+            postitGrabbable.enabled = true; // makes sure that we can not move the postit when the poster is locked
+        }
 
     }
 
