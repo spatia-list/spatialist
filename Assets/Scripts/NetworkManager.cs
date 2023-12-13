@@ -54,16 +54,18 @@ public class PostItUploadJSON
     public string title { get; set; }
     public string content_type { get; set; }
     public string content { get; set; }
-    public List<int> rgb { get; set; }
+    public List<float> rgb { get; set; }
     public PoseJSON pose { get; set; }
     public List<float> scale { get; set; }
 
     public static PostItUploadJSON FromObject(PostIt postIt)
     {
-        List<int> rgb = new List<int>();
-        rgb.Add((int)(postIt.Color.r * 255));
-        rgb.Add((int)(postIt.Color.g * 255));
-        rgb.Add((int)(postIt.Color.b * 255));
+        List<float> rgb = new()
+        {
+            postIt.Color.r,
+            postIt.Color.g,
+            postIt.Color.b
+        };
 
         PoseJSON pose = new PoseJSON();
         // check if the Pose is not null 
@@ -113,15 +115,17 @@ public class PostItUploadJSON
             scale.Add(postIt.Scale[2]);
         }
 
-        PostItUploadJSON res = new();
-        res.id = postIt.Id;
-        res.rgb = rgb;
-        res.pose = pose;
-        res.anchor_id = postIt.AnchorId;
-        res.owner = postIt.Owner;
-        res.title = postIt.Title;
-        res.content = postIt.Content;
-        res.scale = scale;
+        PostItUploadJSON res = new()
+        {
+            id = postIt.Id,
+            rgb = rgb,
+            pose = pose,
+            anchor_id = postIt.AnchorId,
+            owner = postIt.Owner,
+            title = postIt.Title,
+            content = postIt.Content,
+            scale = scale
+        };
         if (postIt.Type == PostItType.MEDIA)
         {
             res.content_type = "media";

@@ -9,6 +9,7 @@ using Unity.VisualScripting;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using Microsoft.MixedReality.Toolkit.Experimental.UI;
+using Microsoft.MixedReality.Toolkit.UI.BoundsControl;
 
 
 public enum PostItState { LOCKED, UNLOCKED }
@@ -63,8 +64,8 @@ public class PostItManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // Start state of the postit is unlocked
-        _state = PostItState.UNLOCKED;
+        // Start state of the postit is locked
+        LockUI();
 
         /// READ: 
         /// Code for if we want to get the game objects without defining them in the inspector!
@@ -192,60 +193,133 @@ public class PostItManager : MonoBehaviour
     // Sets the material of the post it based on the color value that is returned from Cosmos DB
     // Function is called when loading data from Cosmos DB
     private void SetMaterialFromColor(Color postItColor)
-        {
-
-            if (postItColor == Color.yellow)
-            {
-                ChangePostItColor(MaterialYellow, MaterialYellowTrans);
-            }
-            else if (postItColor == Color.magenta)
-            {
-                ChangePostItColor(MaterialPink, MaterialPinkTrans);
-            }
-            else if (postItColor == Color.green)
-            {
-                ChangePostItColor(MaterialGreen, MaterialGreenTrans);
-            }
-            else if (postItColor == Color.red)
-            {
-                ChangePostItColor(MaterialRed, MaterialRedTrans);
-            }
-            else if (postItColor == Color.blue)
-            {
-                ChangePostItColor(MaterialBlue, MaterialBlueTrans);
-            }
-        }
+    {
+        ColorToMaterials(postItColor, out Material mat, out Material mat_trans);
+        ChangePostItColor(mat, mat_trans);
+    }
 
 
     // Updates the RGB color value of the post it based on the material
     // This function is called when the PostIt data needs to be updated and saved to cosmos DB
     private void UpdatePostItColorFromMaterial(Material mat)
     {
-        if (mat == MaterialYellow)
+        MaterialToColor(mat, out Color color);
+        _data.Color = color;
+    }
+
+    public void MaterialToColor(Material mat, out Color color)
+    {
+        switch (mat)
         {
-            _data.Color = Color.yellow;
+            case Material m when m == MaterialYellow:
+                color = Color.yellow;
+                break;
+            case Material m when m == MaterialPink:
+                color = Color.magenta;
+                break;
+            case Material m when m == MaterialGreen:
+                color = Color.green;
+                break;
+            case Material m when m == MaterialRed:
+                color = Color.red;
+                break;
+            case Material m when m == MaterialBlue:
+                color = Color.blue;
+                break;
+            default:
+                Debug.Log("APP_DEBUG: PostIt - Material not recognized");
+                color = Color.yellow;
+                break;
         }
-        else if (mat == MaterialPink)
+    }
+
+    private static List<Color> _availableColors = new List<Color>
         {
-            _data.Color = Color.magenta;
+            Color.yellow,
+            Color.magenta,
+            Color.green,
+            Color.red,
+            Color.blue
+        };
+
+    public void ColorToMaterials(Color color, out Material mat, out Material mat_trans)
+    {
+
+        /* It is invalid to check the color using the static color.(...) objects since they are stored as RGB triples
+         * Therefore, we need to construct a list of all the usable colors, get their RGB values, and choose the one with
+         * the smallest distance. If the distance is larger than a threshold, we can assume that the color is not recognized
+         */
+
+        float minDistance = float.MaxValue;
+        Color? closestColor = null;
+
+        Vector3 vecTarget = new Vector3(color.r, color.g, color.b);
+
+        foreach (Color c in _availableColors)
+        {
+            Vector3 vec = new Vector3(c.r, c.g, c.b);
+            float distance = Vector3.Distance(vec, vecTarget);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestColor = c;
+            }
         }
-        else if (mat == MaterialGreen)
+
+        Debug.Log("APP_DEBUG: PostIt - ColorToMaterials - Closest color is: " + closestColor + " with distance" + minDistance);
+
+        switch (closestColor)
         {
-            _data.Color = Color.green;
-        }
-        else if (mat == MaterialRed)
-        {
-            _data.Color = Color.red;
-        }
-        else if (mat == MaterialBlue)
-        {
-            _data.Color = Color.blue;
+            case Color when closestColor == Color.yellow:
+                mat = MaterialYellow;
+                mat_trans = MaterialYellowTrans;
+                break;
+            case Color when closestColor == Color.magenta:
+                mat = MaterialPink;
+                mat_trans = MaterialPinkTrans;
+                break;
+            case Color when closestColor == Color.green:
+                mat = MaterialGreen;
+                mat_trans = MaterialGreenTrans;
+                break;
+            case Color when closestColor == Color.red:
+                mat = MaterialRed;
+                mat_trans = MaterialRedTrans;
+                break;
+            case Color when closestColor == Color.blue:
+                mat = MaterialBlue;
+                mat_trans = MaterialBlueTrans;
+                break;
+            default:
+                Debug.Log("APP_DEBUG: PostIt - ColorToMaterials - Color not recognized");
+                mat = MaterialYellow;
+                mat_trans = MaterialYellowTrans;
+                break;
         }
     }
 
 
     // Called when the user locks (saves) the post it, by clicking on the lock button
     public void Lock()
+    {
+        LockUI();
+
+        // Update the postit color (in the PostIt class)
+        UpdatePostItColorFromMaterial(this.contentQuadRend.material);	
+
+        // Update the postit content and title text (in the PostIt class)
+        _data.Content = ContentTextDisplay.text;
+        _data.Title = TitleTextDisplay.text;
+
+
+        Exception ex = _script.SavePostIt(_data, gameObject);
+        if (ex != null)
+        {
+            Debug.LogException(ex);
+        }
+    }
+
+    public void LockUI()
     {
         Debug.Log("APP_DEBUG: Locking post it");
         _state = PostItState.LOCKED;
@@ -265,18 +339,10 @@ public class PostItManager : MonoBehaviour
         EditTextButton.SetActive(false);
         EditTitleButton.SetActive(false);
 
-        // Update the postit color (in the PostIt class)
-        UpdatePostItColorFromMaterial(this.contentQuadRend.material);	
-
-        // Update the postit content and title text (in the PostIt class)
-        _data.Content = ContentTextDisplay.text;
-        _data.Title = TitleTextDisplay.text;
-
-
-        Exception ex = _script.SavePostIt(_data, gameObject);
-        if (ex != null)
+        if (gameObject.TryGetComponent<BoundsControl>(out BoundsControl bc))
         {
-            Debug.LogException(ex);
+            Debug.Log("APP_DEBUG: PostIt - LockUI - Removing bounds control");
+            bc.enabled = false;
         }
     }
 
