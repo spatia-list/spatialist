@@ -28,7 +28,7 @@ public class PostItJSON
     public string title { get; set; }
     public string content_type { get; set; }
     public string content { get; set; }
-    public List<float> rgb { get; set; }
+    public string color { get; set; }
     public PoseJSON pose { get; set; }
     public List<float> scale { get; set; }
     public string _rid { get; set; }
@@ -54,18 +54,12 @@ public class PostItUploadJSON
     public string title { get; set; }
     public string content_type { get; set; }
     public string content { get; set; }
-    public List<float> rgb { get; set; }
+    public string color { get; set; }
     public PoseJSON pose { get; set; }
     public List<float> scale { get; set; }
 
     public static PostItUploadJSON FromObject(PostIt postIt)
     {
-        List<float> rgb = new()
-        {
-            postIt.Color.r,
-            postIt.Color.g,
-            postIt.Color.b
-        };
 
         PoseJSON pose = new PoseJSON();
         // check if the Pose is not null 
@@ -118,7 +112,7 @@ public class PostItUploadJSON
         PostItUploadJSON res = new()
         {
             id = postIt.Id,
-            rgb = rgb,
+            color = postIt.Color,
             pose = pose,
             anchor_id = postIt.AnchorId,
             owner = postIt.Owner,
@@ -310,11 +304,11 @@ public class NetworkManager : MonoBehaviour
         // print the number of postits
         Debug.Log("APP_DEBUG: Total post-it count: " + response.postits.Count);
 
-        // print all post-its titles, text content and rgb in one line
+        // print all post-its titles, text content and color in one line
         Debug.Log("APP_DEBUG: all post-its titles:");
         foreach (PostItJSON postIt in response.postits)
         {
-            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.content + " color: " + postIt.rgb[0] + ", " + postIt.rgb[1] + ", " + postIt.rgb[2] );
+            Debug.Log(postIt.id + " title: " + postIt.title + " content: " + postIt.content + " color: " + postIt.color);
         }
         List<PostIt> objectList = new List<PostIt>();
         for (int i = 0; i < response.postits.Count; i++)

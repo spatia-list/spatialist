@@ -140,7 +140,7 @@ public class PostItManager : MonoBehaviour
             TitleTextInput.text = _data.Title;
 
             // sets the color of the postit
-            SetMaterialFromColor(_data.Color);
+            SetMaterialFromColor(_data.Color); 
             
             // sets the parent and local pose, scales after
             if (data.Pose != null && parent != null)
@@ -159,11 +159,9 @@ public class PostItManager : MonoBehaviour
     // Changes the postit color (back plate and title bar) to the specified material
     public void ChangePostItColor(Material mat, Material mat_trans)
     {
-
             this.contentQuadRend.material = mat;
             this.titleBackPlateRend.material = mat_trans;
             Debug.Log("APP_DEBUG: Setting ContentQuad material.");
-
     }
 
     public void ChangeColorYellow()
@@ -191,108 +189,113 @@ public class PostItManager : MonoBehaviour
         ChangePostItColor(MaterialBlue, MaterialBlueTrans);
     }
 
+
     // Sets the material of the post it based on the color value that is returned from Cosmos DB
     // Function is called when loading data from Cosmos DB
-    private void SetMaterialFromColor(Color postItColor)
+    private void SetMaterialFromColor(string postItColorName)
     {
-        ColorToMaterials(postItColor, out Material mat, out Material mat_trans);
+        ColorToMaterials(postItColorName, out Material mat, out Material mat_trans);
         ChangePostItColor(mat, mat_trans);
     }
 
-
-    // Updates the RGB color value of the post it based on the material
+    // Updates the color value (string) from the post it based on the material
     // This function is called when the PostIt data needs to be updated and saved to cosmos DB
     private void UpdatePostItColorFromMaterial(Material mat)
     {
-        MaterialToColor(mat, out Color color);
-        _data.Color = color;
+        MaterialToColor(mat, out string colorName);
+
+        // The color is incoded as integer value in the server
+        _data.Color = colorName;
     }
 
-    public void MaterialToColor(Material mat, out Color color)
+    // Outputs the color (string), given a post-it material
+    public void MaterialToColor(Material mat, out string colorName)
     {
-        switch (mat)
+        switch (mat.name)
         {
-            case Material m when m == MaterialYellow:
-                color = Color.yellow;
+            case var name when name == MaterialYellow.name:
+                colorName = "yellow";	
                 break;
-            case Material m when m == MaterialPink:
-                color = Color.magenta;
+            case var name when name == MaterialPink.name:
+                colorName = "pink";
                 break;
-            case Material m when m == MaterialGreen:
-                color = Color.green;
+            case var name when name == MaterialGreen.name:
+                colorName = "green";
                 break;
-            case Material m when m == MaterialRed:
-                color = Color.red;
+            case var name when name == MaterialRed.name:
+                colorName = "red";
                 break;
-            case Material m when m == MaterialBlue:
-                color = Color.blue;
+            case var name when name == MaterialBlue.name:
+                colorName = "blue";
                 break;
             default:
                 Debug.Log("APP_DEBUG: PostIt - Material not recognized");
-                color = Color.yellow;
+                colorName = "error";	
                 break;
         }
     }
 
-    private static List<Color> _availableColors = new List<Color>
-        {
-            Color.yellow,
-            Color.magenta,
-            Color.green,
-            Color.red,
-            Color.blue
-        };
+    // private static List<Color> _availableColors = new List<Color>
+    //     {
+    //         Color.yellow,
+    //         Color.magenta,
+    //         Color.green,
+    //         Color.red,
+    //         Color.blue
+    //     };
 
-    public void ColorToMaterials(Color color, out Material mat, out Material mat_trans)
+
+    // Outputs a post-it material, given a color string loaded from the database
+    public void ColorToMaterials(String colorName, out Material mat, out Material mat_trans)
     {
 
-        /* It is invalid to check the color using the static color.(...) objects since they are stored as RGB triples
+        /* It is invalid to check the color using the static color.(...) objects since they are stored as RGB triples (in a range from 0 to 1)
          * Therefore, we need to construct a list of all the usable colors, get their RGB values, and choose the one with
          * the smallest distance. If the distance is larger than a threshold, we can assume that the color is not recognized
          */
+        
+        // float minDistance = float.MaxValue;
+        // Color? closestColor = null;
 
-        float minDistance = float.MaxValue;
-        Color? closestColor = null;
+        // Vector3 vecTarget = new Vector3(color.r, color.g, color.b);
 
-        Vector3 vecTarget = new Vector3(color.r, color.g, color.b);
+        // foreach (Color c in _availableColors)
+        // {
+        //     Vector3 vec = new Vector3(c.r, c.g, c.b);
+        //     float distance = Vector3.Distance(vec, vecTarget);
+        //     if (distance < minDistance)
+        //     {
+        //         minDistance = distance;
+        //         closestColor = c;
+        //     }
+        // }
 
-        foreach (Color c in _availableColors)
+        // Debug.Log("APP_DEBUG: PostIt - ColorToMaterials - Closest color is: " + closestColor + " with distance" + minDistance);
+
+        switch (colorName)
         {
-            Vector3 vec = new Vector3(c.r, c.g, c.b);
-            float distance = Vector3.Distance(vec, vecTarget);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                closestColor = c;
-            }
-        }
-
-        Debug.Log("APP_DEBUG: PostIt - ColorToMaterials - Closest color is: " + closestColor + " with distance" + minDistance);
-
-        switch (closestColor)
-        {
-            case Color when closestColor == Color.yellow:
+            case "yellow":
                 mat = MaterialYellow;
                 mat_trans = MaterialYellowTrans;
                 break;
-            case Color when closestColor == Color.magenta:
+            case "pink":
                 mat = MaterialPink;
                 mat_trans = MaterialPinkTrans;
                 break;
-            case Color when closestColor == Color.green:
+            case "green":
                 mat = MaterialGreen;
                 mat_trans = MaterialGreenTrans;
                 break;
-            case Color when closestColor == Color.red:
+            case "red":
                 mat = MaterialRed;
                 mat_trans = MaterialRedTrans;
                 break;
-            case Color when closestColor == Color.blue:
+            case "blue":
                 mat = MaterialBlue;
                 mat_trans = MaterialBlueTrans;
                 break;
             default:
-                Debug.Log("APP_DEBUG: PostIt - ColorToMaterials - Color not recognized");
+                Debug.Log("APP_DEBUG: PostIt - ColorToMaterials - Something went wrong, color string not recognized while loading data from Cosmos DB. Setting color to yellow (default)");
                 mat = MaterialYellow;
                 mat_trans = MaterialYellowTrans;
                 break;
@@ -319,6 +322,7 @@ public class PostItManager : MonoBehaviour
         }
     }
 
+    // Lock the UI elements of the post it
     public void LockUI()
     {
         Debug.Log("APP_DEBUG: Locking post it");

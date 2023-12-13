@@ -59,13 +59,13 @@ public class PostIt : IEquatable<PostIt>
     public string Title;
     public PostItType Type;
     public string Content;
-    public Color Color;
+    public string Color;
     public Pose? Pose;
     public Vector3 Scale;
 
     public GameObject Instance;
 
-    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content, Color color, Pose? pose, Vector3 scale)
+    public PostIt(string id, string anchorId, string owner, string title, PostItType type, string content, string color, Pose? pose, Vector3 scale)
     {
         Id = id;
         AnchorId = anchorId;
@@ -100,7 +100,7 @@ public class PostIt : IEquatable<PostIt>
     public static PostIt ParseJSON(PostItJSON data)
     {
         PostItType type;
-        Color color;
+        string color;
         Pose pose;
         Vector3 scale;
 
@@ -113,14 +113,14 @@ public class PostIt : IEquatable<PostIt>
             type = PostItType.TEXT;
         }
 
-        if (data.rgb != null && data.rgb.Count >= 3)
+        if (data.color != null)
         {
-            color = new Color(data.rgb[0], data.rgb[1], data.rgb[2]);
+            color = new string(data.color); //Color(data.rgb[0], data.rgb[1], data.rgb[2]);
         }
         else
         {
             Debug.Log("APP_DEBUG: Received invalid RGB data");
-            color = Color.white;
+            color = "white";
         }
 
         if (data.pose != null && data.pose.position != null && data.pose.orientation != null)
@@ -160,7 +160,7 @@ public class PostIt : IEquatable<PostIt>
 
     public static PostIt Initial(string username)
     {
-        return new PostIt(Guid.NewGuid().ToString(), "1", username , "", PostItType.TEXT, "", Color.blue, null, Vector3.one * 0.4f);
+        return new PostIt(Guid.NewGuid().ToString(), "1", username , "", PostItType.TEXT, "", "blue", null, Vector3.one * 0.4f);
     }
 
     public bool Equals(PostIt other)
