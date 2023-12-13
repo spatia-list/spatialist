@@ -37,7 +37,7 @@ public class PostItManager : MonoBehaviour
     public MeshRenderer contentQuadRend;
     public MeshRenderer titleBackPlateRend;
 
-    // Lock and Unlock buttons
+    // Lock and UnlockUI buttons
     public GameObject LockButton;
     public GameObject UnlockButton;
 
@@ -66,7 +66,7 @@ public class PostItManager : MonoBehaviour
     void Start()
     {
         // Start state of the postit is unlocked (since we want to edit and rescale the postit in the  )
-        Unlock();
+        // Default state in the prefab is always unlocked! UnlockUI();
 
         /// READ: 
         /// Code for if we want to get the game objects without defining them in the inspector!
@@ -356,7 +356,7 @@ public class PostItManager : MonoBehaviour
     }
 
     // Called when the user unlocks (to edit) the post it, by clicking on the unlock button
-    public void Unlock()
+    public void UnlockUI()
     {
         _state = PostItState.UNLOCKED;
 

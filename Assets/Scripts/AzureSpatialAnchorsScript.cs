@@ -580,9 +580,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     public async Task GetAndPlacePostIts()
     {
         
-
         // TODO: Check if the count of the different lists is coherent
-
         List<PostIt> fetch = await _networkManager.GetPostIts();
 
         List<PostIt> neverSeen = new();
@@ -624,12 +622,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                         }
                     }
 
-
                     Debug.Log($"ASA - Must trigger delete of {toDelete.Count} postits");
                     Debug.Log($"ASA - Must trigger modification {toModify.Count} postits");
-
-
-
 
                     // filter the available postits 
                     foreach (PostIt postIt in neverSeen)
@@ -638,15 +632,17 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                         {
                             if (anchor.anchorId == postIt.AnchorId)
                             {
+                                // Check if an anchor on Cosmos DB is found locally (in the same room)
                                 Debug.Log("ASA - Found a local postit");
 
                                 UnityDispatcher.InvokeOnAppThread(() =>
                                 {
+                                    // The creation of new post-it GameObjects locally
                                     GameObject go = Instantiate(PostItPrefab);
                                     PostItManager manager = go.GetComponent<PostItManager>();
                                     manager.AttachToInstance(this); //this: linking the instance of the ASA script to the postit manager (to use the private variables)
                                     manager.SetObject(postIt, anchor);
-
+                                    manager.LockUI(); // lock the incoming, fetched post-its
 
                                     _foundPostItManagers.Add(manager);
                                     _foundPostIts.Add(postIt);
@@ -660,7 +656,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     }
 
                     // Perform deletion
-
                     foreach (PostIt p in toDelete)
                     {
 
@@ -677,7 +672,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
 
                     // Perform modifications
-
                     foreach (PostIt postIt in toModify)
                     {
                         foreach (LocalAnchor anchor in _foundLocalAnchors)
