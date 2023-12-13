@@ -269,9 +269,6 @@ public class PostItManager : MonoBehaviour
     {
         LockUI();
 
-        // Update the postit color (in the PostIt class)
-        UpdatePostItColorFromMaterial(this.contentQuadRend.material);	
-
         // Update the postit content and title text (in the PostIt class)
         _data.Content = ContentTextDisplay.text;
         _data.Title = TitleTextDisplay.text;
