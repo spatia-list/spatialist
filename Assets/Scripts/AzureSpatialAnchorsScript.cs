@@ -1119,47 +1119,39 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
                     Debug.Log("APP_DEBUG: ASA - Finished searching anchors in foundLocalAnchors");
 
+
                     try
                     {
-                        if (existing != null && existing.Instance != null && existing.anchorFound)
+                        if (existing == null)
                         {
-                            Debug.Log($"ASA - Anchor already located with id {existing.anchorId}");
-                            anchorGameObject = existing.Instance;
-                            if (!anchorGameObject.TryGetComponent<CloudNativeAnchor>(out anchorNativeAnchor))
+                            Debug.Log($"APP_DEBUG: ASA - Anchor never located, instantiating with id {correspondingAnchor.anchorId}");
+
+                            //Create GameObject
+                            anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
+                            anchorGameObject.transform.localScale = Vector3.one * 0.07f;
+                            anchorNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
+
+                            correspondingAnchor.AttachInstance(anchorGameObject);
+                            correspondingAnchor.anchorFound = true; // set anchor as found
+                            _foundLocalAnchors.Add(correspondingAnchor); // add to found anchors
+
+                            Debug.Log("APP_DEBUG: ASA - Attaching anchor position...");
+                            // Link to Cloud Anchor
+                            try
                             {
-                                Debug.Log("ASA - ERROR trying to get cloudnativeanchor component");
+                                Pose pose = foundAnchor.GetPose();
+                                Debug.Log("APP_DEBUG: ASA - Pose:" + pose.ToString());
+                                if (anchorNativeAnchor != null)
+                                {
+                                    anchorNativeAnchor.CloudToNative(foundAnchor);
+                                }
                             }
-
-                        }
-                        else
-                        {
-                            if (existing != null && existing.Instance != null)
+                            catch (Exception e)
                             {
-                                Debug.Log($"ASA - Anchor created was located with id {existing.anchorId} but not found");
-                                anchorGameObject = existing.Instance;
-                                anchorGameObject.SetActive(false); // hide the initial prefab
-
-                                // Create GameObject with new prefab
-                                anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
-                                anchorGameObject.transform.localScale = Vector3.one * 0.07f;
-                                anchorNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
-
-                                existing.AttachInstance(anchorGameObject);
-                                existing.anchorFound = true; // set anchor as found
+                                Debug.Log("APP_DEBUG: ASA - Error attaching anchor position");
+                                Debug.LogException(e);
                             }
-                            else
-                            {
-                                Debug.Log($"ASA - Anchor never located, instantiating with id {existing.anchorId}");
-
-                                //Create GameObject
-                                anchorGameObject = Instantiate(FoundAnchorPrefab, Vector3.zero, Quaternion.identity);
-                                anchorGameObject.transform.localScale = Vector3.one * 0.07f;
-                                anchorNativeAnchor = anchorGameObject.AddComponent<CloudNativeAnchor>();
-
-                                correspondingAnchor.AttachInstance(anchorGameObject);
-                                correspondingAnchor.anchorFound = true; // set anchor as found
-                                _foundLocalAnchors.Add(correspondingAnchor); // add to found anchors
-                            }
+                            Debug.Log("APP_DEBUG: ASA - Attached anchor position");
                         }
                     }
                     catch (Exception e)
@@ -1168,23 +1160,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                         Debug.LogException(e);
                         return;
                     }
-                    Debug.Log("APP_DEBUG: ASA - Attaching anchor position...");
-                    // Link to Cloud Anchor
-                    try
-                    {
-                        Pose pose = foundAnchor.GetPose();
-                        Debug.Log("APP_DEBUG: ASA - Pose:" + pose.ToString());
-                        if(anchorNativeAnchor != null)
-                        {
-                            anchorNativeAnchor.CloudToNative(foundAnchor);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.Log("APP_DEBUG: ASA - Error attaching anchor position");
-                        Debug.LogException(e);
-                    }
-                    Debug.Log("APP_DEBUG: ASA - Attached anchor position");
+                    
 
                         
                     Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
