@@ -167,26 +167,31 @@ public class PostItManager : MonoBehaviour
     public void ChangeColorYellow()
     {
         ChangePostItColor(MaterialYellow, MaterialYellowTrans);
+        _data.Color = "yellow";
     }
 
     public void ChangeColorPink()
     {
         ChangePostItColor(MaterialPink, MaterialPinkTrans);
+        _data.Color = "pink";
     }
 
     public void ChangeColorGreen()
     {
         ChangePostItColor(MaterialGreen, MaterialGreenTrans);
+        _data.Color = "green";
     }
 
     public void ChangeColorRed()
     {
         ChangePostItColor(MaterialRed, MaterialRedTrans);
+        _data.Color = "red";
     }
 
     public void ChangeColorBlue()
     {
         ChangePostItColor(MaterialBlue, MaterialBlueTrans);
+        _data.Color = "blue";
     }
 
 
@@ -194,58 +199,12 @@ public class PostItManager : MonoBehaviour
     // Function is called when loading data from Cosmos DB
     private void SetMaterialFromColor(string postItColorName)
     {
+        _data.Color = postItColorName;
         ColorToMaterials(postItColorName, out Material mat, out Material mat_trans);
         ChangePostItColor(mat, mat_trans);
     }
 
-    // Updates the color value (string) from the post it based on the material
-    // This function is called when the PostIt data needs to be updated and saved to cosmos DB
-    private void UpdatePostItColorFromMaterial(Material mat)
-    {
-        MaterialToColor(mat, out string colorName);
-
-        // The color is incoded as integer value in the server
-        _data.Color = colorName;
-    }
-
-    // Outputs the color (string), given a post-it material
-    public void MaterialToColor(Material mat, out string colorName)
-    {
-        switch (mat.name)
-        {
-            case var name when name == MaterialYellow.name:
-                colorName = "yellow";	
-                break;
-            case var name when name == MaterialPink.name:
-                colorName = "pink";
-                break;
-            case var name when name == MaterialGreen.name:
-                colorName = "green";
-                break;
-            case var name when name == MaterialRed.name:
-                colorName = "red";
-                break;
-            case var name when name == MaterialBlue.name:
-                colorName = "blue";
-                break;
-            default:
-                Debug.Log("APP_DEBUG: PostIt - Material not recognized");
-                colorName = "error";	
-                break;
-        }
-    }
-
-    // private static List<Color> _availableColors = new List<Color>
-    //     {
-    //         Color.yellow,
-    //         Color.magenta,
-    //         Color.green,
-    //         Color.red,
-    //         Color.blue
-    //     };
-
-
-    // Outputs a post-it material, given a color string loaded from the database
+    
     public void ColorToMaterials(String colorName, out Material mat, out Material mat_trans)
     {
 
@@ -301,6 +260,8 @@ public class PostItManager : MonoBehaviour
                 break;
         }
     }
+
+
 
 
     // Called when the user locks (saves) the post it, by clicking on the lock button
