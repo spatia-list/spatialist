@@ -211,6 +211,7 @@ public class PostItManager : MonoBehaviour
     // Outputs the color (string), given a post-it material
     public void MaterialToColor(Material mat, out string colorName)
     {
+
         switch (mat.name)
         {
             case var name when name == MaterialYellow.name:
