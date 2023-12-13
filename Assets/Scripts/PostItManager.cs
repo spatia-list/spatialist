@@ -265,7 +265,7 @@ public class PostItManager : MonoBehaviour
 
 
     // Called when the user locks (saves) the post it, by clicking on the lock button
-    public void Lock()
+    public async void Lock()
     {
         LockUI();
 
@@ -273,7 +273,7 @@ public class PostItManager : MonoBehaviour
         _data.Content = ContentTextDisplay.text;
         _data.Title = TitleTextDisplay.text;
 
-        Exception ex = _script.SavePostIt(_data, gameObject);
+        Exception ex = await _script.SavePostIt(_data, gameObject);
         if (ex != null)
         {
             Debug.LogException(ex);

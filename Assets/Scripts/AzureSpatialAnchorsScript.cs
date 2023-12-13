@@ -892,31 +892,34 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// </summary>
     /// <param name="position"> postit_position_W post-it creation (in world space) </param>
     /// <returns> Async Task </returns>
-    private void CreatePostIt(Vector3 postitWorldPosition, PostIt data)
+    private async void CreatePostIt(Vector3 postitWorldPosition, PostIt data)
     {
 
         SetStateIdle();
+        (LocalAnchor ClosestAnchor, float anchorDistance) = await GetClosestAnchor(postitWorldPosition);
 
-        UnityDispatcher.InvokeOnAppThread(async () =>
+        Debug.Log("APP_DEBUG: Beginning post-it creation");
+        // Find the nearest anchor (within the treshold) to the post-it position
+
+
+        Debug.Log($"APP_DEBUG: Found nearby anchor!");
+
+        if (anchorDistance < _anchorDistanceThreshold)
         {
-            Debug.Log("APP_DEBUG: Beginning post-it creation");
-            // Find the nearest anchor (within the treshold) to the post-it position
-            (LocalAnchor ClosestAnchor, float anchorDistance) = GetClosestAnchor(postitWorldPosition);
+            Debug.Log($"APP_DEBUG: Found nearby anchor! (within {_anchorDistanceThreshold}m)");
+        }
+        else
+        {
+            Debug.Log($"APP_DEBUG: No nearby anchor found! (within {_anchorDistanceThreshold}m). Anchor is being created at the tapped position");
 
-            Debug.Log($"APP_DEBUG: Found nearby anchor!");
+            // Create an anchor at the post-it position
+            await CreateLocalAnchor(postitWorldPosition);
 
-            if (anchorDistance < _anchorDistanceThreshold)
-            {
-                Debug.Log($"APP_DEBUG: Found nearby anchor! (within {_anchorDistanceThreshold}m)");
-            }
-            else
-            {
-                Debug.Log($"APP_DEBUG: No nearby anchor found! (within {_anchorDistanceThreshold}m). Anchor is being created at the tapped position");
+        }
 
-                // Create an anchor at the post-it position
-                await CreateLocalAnchor(postitWorldPosition);
-
-            }
+        UnityDispatcher.InvokeOnAppThread(async() =>
+        {
+            
 
             // Get head world position
             if (!InputDevices.GetDeviceAtXRNode(XRNode.Head).TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 headWorldPosition))
@@ -960,7 +963,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <param name="position">position of the postit</param>
     /// <returns>closest anchor</returns>
     /// <returns>distance to closest anchor</returns>
-    private Tuple<LocalAnchor, float> GetClosestAnchor(Vector3 position)
+    private async Task<Tuple<LocalAnchor, float>> GetClosestAnchor(Vector3 position)
     {
 
         if (_foundLocalAnchors.Count <= 0)
@@ -969,18 +972,21 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             return new Tuple<LocalAnchor, float>(null, Mathf.Infinity);
         }
 
-        //Iterate over existing anchor gameobjects to find the closest one
-        return _foundLocalAnchors.Aggregate(
-            new Tuple<LocalAnchor, float>(null, Mathf.Infinity), // Base case
-            (currentBest, itemToCompare) =>
-            {
-                if (itemToCompare.Instance == null) return currentBest; // Cant compare empty local anchors
-                GameObject gameobject = itemToCompare.Instance;
-                Vector3 gameObjectPosition = gameobject.transform.position;
-                float distance = (position - gameObjectPosition).magnitude;
-                Debug.Log($"APP_DEBUG: ASA - Distances - Anchor {itemToCompare.anchorId} has distance {distance}");
-                return distance < currentBest.Item2 ? new Tuple<LocalAnchor, float>(itemToCompare, distance) : currentBest;
-            });
+        return await Task.Run(() =>
+        {
+            //Iterate over existing anchor gameobjects to find the closest one
+            return _foundLocalAnchors.Aggregate(
+                new Tuple<LocalAnchor, float>(null, Mathf.Infinity), // Base case
+                (currentBest, itemToCompare) =>
+                {
+                    if (itemToCompare.Instance == null) return currentBest; // Cant compare empty local anchors
+                    GameObject gameobject = itemToCompare.Instance;
+                    Vector3 gameObjectPosition = gameobject.transform.position;
+                    float distance = (position - gameObjectPosition).magnitude;
+                    Debug.Log($"APP_DEBUG: ASA - Distances - Anchor {itemToCompare.anchorId} has distance {distance}");
+                    return distance < currentBest.Item2 ? new Tuple<LocalAnchor, float>(itemToCompare, distance) : currentBest;
+                });
+        });
     }
     // </GetClosestAnchor>
 
@@ -989,7 +995,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// <summary>
     /// Directly get the pose to closest anchor, if it exists (nullable pose)
     /// </summary>
-    private Tuple<Pose?, Vector3, string> GetPoseToClosestAnchor(GameObject postit) // Pose? (optional type) -> nullable pose, we can check if a pose was not found
+    private async Task<Tuple<Pose?, Vector3, string>> GetPoseToClosestAnchor(GameObject postit) // Pose? (optional type) -> nullable pose, we can check if a pose was not found
     {
         // null check postit
         if (postit == null)
@@ -1000,7 +1006,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         // Get closest LocalAnchor and distance
         Vector3 postitWorldPosition = postit.transform.position;
-        Tuple<LocalAnchor, float> closest = GetClosestAnchor(postitWorldPosition);
+        Tuple<LocalAnchor, float> closest = await GetClosestAnchor(postitWorldPosition);
         LocalAnchor closestAnchor = closest.Item1;
         float anchorDistance = closest.Item2;
 
@@ -1028,11 +1034,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// Saves the post-it relative transformation (to the anchor position) to the backend (cosmos DB)
     /// </summary>
     /// <param name="data">post-it data</param>
-    public Exception SavePostIt(PostIt data, GameObject obj)
+    public async Task<Exception> SavePostIt(PostIt data, GameObject obj)
     {
         Debug.Log("APP_DEBUG: Saving postit");
 
-        Tuple<Pose?, Vector3, string> res = GetPoseToClosestAnchor(obj);
+        Tuple<Pose?, Vector3, string> res = await GetPoseToClosestAnchor(obj);
 
         if (res == null)
         {
