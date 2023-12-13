@@ -38,6 +38,13 @@ public class LocalAnchor
 
     public LocalAnchor(string anchorId, string owner)
     {
+
+        if(anchorId == null || owner == null)
+        {
+            Debug.Log("ASA - Null anchorId or owner");
+            throw new Exception("ASA - Null anchorId or owner");
+        }
+
         this.anchorId = anchorId;
         this.owner = owner;
     }
