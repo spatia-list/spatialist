@@ -221,6 +221,8 @@ public class NetworkManager : MonoBehaviour
             Debug.Log("APP_DEBUG: Unassigned Endpoint URL");
         }
 
+        GroupName = string.Empty;
+
 
     }
 
