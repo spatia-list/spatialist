@@ -78,7 +78,8 @@ public class UIManager : MonoBehaviour
         }
 
         // Comment this out, when configuring the UI, let's reenable it
-        //SetState(StartState);
+        SetState(StartState);
+        _script.Speak("Welcome to the Spatia-list Post-it notes! Your virtual post-it notes. Click next to proceed.");
     }
 
     // Update is called once per frame
@@ -192,7 +193,14 @@ public class UIManager : MonoBehaviour
 
     public void SetU4() { SetState(UIState.MAPPING_MAIN); }
 
-    public void SetU5() { SetState(UIState.MAPPING_MODE); }
+    public void SetU5() {
+        _script = GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>();
+
+        _script.Speak("First, you need to select an existing map, or need to create a new one. Then, raise your hand and look at your palm. There, you will see some buttons. Click on the mapping button to create anchors around the room. Click on the create button to create postits. You can modify your post-it by clicking edit button, delete it by using delete button, and save it by using save button.");
+
+        SetState(UIState.MAPPING_MODE); 
+    
+    }
 
     public void SetU6() {
         // reset map name
