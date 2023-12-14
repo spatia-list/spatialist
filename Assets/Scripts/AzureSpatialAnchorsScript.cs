@@ -336,7 +336,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 {
                     GameObject newOption = Instantiate(GroupPrefab);
                     newOption.transform.SetParent(GroupDropdown.transform, false);
-                    newOption.GetComponent<PressableButtonHoloLens2>().ButtonPressed.AddListener(() => 
+                    newOption.GetComponent<Interactable>().OnClick.AddListener(() => 
                     { 
                         Debug.Log("APP_DEBUG: User selected group " + group.group_name);
                         SetCurrentGroup(group.group_name); 
