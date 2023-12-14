@@ -1067,6 +1067,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public void CreateSwipe(PostIt content)
     {
+        // setting to a starting scale
+        content.Scale = Vector3.one * 0.4f;
 
         UnityDispatcher.InvokeOnAppThread(() =>
         {
@@ -1082,7 +1084,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 headRotation = Quaternion.identity;
             }
 
-            Vector3 final = headPosition + headRotation * Vector3.forward * 0.35f;
+            Vector3 final = headPosition + headRotation * Vector3.forward * 0.45f;
 
             Debug.Log("APP_DEBUG: PostIt - " + final);
 
@@ -1090,10 +1092,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         });
 
-
-        
-
-        
+        this.Speak("New post-it created from Swipe, now you can edit further and save it");
     }
 
 
