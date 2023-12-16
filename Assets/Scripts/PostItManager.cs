@@ -36,6 +36,8 @@ public class PostItManager : MonoBehaviour
     // Renderer objects (for the material of the postit)
     public MeshRenderer contentQuadRend;
     public MeshRenderer titleBackPlateRend;
+    public MeshRenderer contentQuadBackRend;
+    public MeshRenderer titleBackPlateBackRend;
 
     // Lock and UnlockUI buttons
     public GameObject LockButton;
@@ -159,9 +161,11 @@ public class PostItManager : MonoBehaviour
     // Changes the postit color (back plate and title bar) to the specified material
     public void ChangePostItColor(Material mat, Material mat_trans)
     {
-            this.contentQuadRend.material = mat;
-            this.titleBackPlateRend.material = mat_trans;
-            Debug.Log("APP_DEBUG: Setting ContentQuad material.");
+        this.contentQuadRend.material = mat;
+        this.contentQuadBackRend.material = mat;
+        this.titleBackPlateRend.material = mat_trans;
+        this.titleBackPlateBackRend.material = mat_trans;
+        Debug.Log("APP_DEBUG: Setting ContentQuad material.");
     }
 
     public void ChangeColorYellow()
