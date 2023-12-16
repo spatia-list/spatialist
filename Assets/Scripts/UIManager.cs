@@ -54,13 +54,16 @@ public class UIManager : MonoBehaviour
     private GameObject _currentView;
 
 
-    private AzureSpatialAnchorsScript _script;
+    public AzureSpatialAnchorsScript _script;
 
 
     void Start()
     {
         // find the AzureSpatialAnchorsScript component in the scene
-        _script = gameObject.GetComponent<AzureSpatialAnchorsScript>();
+        if (_script == null)
+        {
+            _script = GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>();
+        }
 
         _list.Add(U1Welcome);
         _list.Add(U2Launch);
@@ -79,7 +82,7 @@ public class UIManager : MonoBehaviour
 
         // Comment this out, when configuring the UI, let's reenable it
         SetState(StartState);
-        _script.Speak("Welcome to the Spatia-list Post-it notes! Your virtual post-it notes. Click next to proceed.");
+        _script.Speak("Welcome to SpatiaList Post-it notes, a persistent virtual notepad. Click next to proceed.");
     }
 
     // Update is called once per frame
@@ -196,7 +199,7 @@ public class UIManager : MonoBehaviour
     public void SetU5() {
         _script = GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>();
 
-        _script.Speak("First, you need to select an existing map, or need to create a new one. Then, raise your hand and look at your palm. There, you will see some buttons. Click on the mapping button to create anchors around the room. Click on the create button to create postits. You can modify your post-it by clicking edit button, delete it by using delete button, and save it by using save button.");
+        _script.Speak("Please select an existing map, or create one. Then, raise your hand with your palm up to reveal the creation menu. There, you will see some buttons. Click on the mapping button to create anchors around the room. Click on the create button to create postits. You can modify your post-it by clicking edit button, delete it by using delete button, and save it by using save button.");
 
         SetState(UIState.MAPPING_MODE); 
     
