@@ -258,6 +258,9 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     // TextToSpeech
     private TextToSpeech _textToSpeech;
 
+    private readonly object _refreshLock = new();
+    private readonly object _placingLock = new();
+
     // <Start>
     // Start is called before the first frame update
     void Start()
@@ -499,7 +502,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     /// Change the current group to the one with the given name
     /// </summary>
     /// <param name="name"></param>
-    public async void SetCurrentGroup(String name)
+    public void SetCurrentGroup(String name)
     {
         // check if the username is in the group and if not add the username to the group
         // find the group object from name
@@ -526,14 +529,17 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
         else
         {
-            // if the group doesn't exit, create it in the db and load all groups again
+            // if the group doesn't exist, create it in the db and load all groups again
             Debug.Log("APP_DEBUG: Group doesn't exist, creating it");
             _networkManager.JoinGroup(name);
 
-            // delay
-            await Task.Delay(2000);
+            Task.Run(async () =>
+            {
+                // delay
+                await Task.Delay(2000);
 
-            LoadGroups();
+                LoadGroups();
+            });
         }
 
         // if group name is the same, return
@@ -544,9 +550,43 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Debug.Log("APP_DEBUG: Setting group to " + name);
             _networkManager.GroupName = name;
             _networkManager.ResetHashes();
-            RefreshData();
+            ResetSession();
         }
         
+    }
+
+    private void ResetSession()
+    {
+        lock (_networkManager) lock (_foundLocalAnchors) lock (_foundPostIts)
+                {
+                    Debug.Log("APP_DEBUG: Resetting session");
+                    _spatialAnchorManager.DestroySession();
+
+                    Debug.Log("APP_DEBUG: Destroying all found anchors");
+                    foreach (LocalAnchor anchor in _foundLocalAnchors)
+                    {
+                        if (anchor.Instance != null)
+                        {
+                            Destroy(anchor.Instance);
+                        }
+                    }
+                    _foundLocalAnchors.Clear();
+                    Debug.Log("APP_DEBUG: Destroying all found postits");
+
+                    foreach (PostIt postIt in _foundPostIts)
+                    {
+                        if (postIt.Instance != null)
+                        {
+                            Destroy(postIt.Instance);
+                        }
+                    }
+                    _foundPostIts.Clear();
+
+                    Debug.Log("APP_DEBUG: Starting a new session with the new group");
+
+                    StartAndLoadASASession();
+
+                }
     }
 
     /// <summary>
@@ -565,47 +605,64 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             Debug.Log("APP_DEBUG: No group selected, skipping refresh");
             return;
         }
-
-        lock(_networkManager)
+        Task.Run(() =>
         {
-            Task.Run(async () =>
+            lock (_refreshLock)
             {
-                Debug.Log("APP_DEBUG: Performing Refresh...");
-                if (await _networkManager.ShouldRefreshAnchors())
+                Task.Run(async () =>
                 {
+                    Debug.Log("APP_DEBUG: Performing Refresh...");
+                    if (await _networkManager.ShouldRefreshAnchors())
+                    {
 
-                    FetchAnchorsFromDBAndAddToWatcher();
+                        FetchAnchorsFromDBAndAddToWatcher();
 
-                }
-                else
-                {
-                    Debug.Log("APP_DEBUG: Skipping anchor refresh!");
-                }
+                    }
+                    else
+                    {
+                        Debug.Log("APP_DEBUG: Skipping anchor refresh!");
+                    }
 
-                if (await _networkManager.ShouldRefreshPostIts())
-                {
-                    _ = GetAndPlacePostIts(); // dont wait for completion TODO: Check how async is non-blocking
-                }
-                else
-                {
-                    Debug.Log("ASA - Skipping postit refresh!");
-                }
+                    if (await _networkManager.ShouldRefreshPostIts())
+                    {
+                        _ = GetAndPlacePostIts(); // dont wait for completion TODO: Check how async is non-blocking
+                    }
+                    else
+                    {
+                        Debug.Log("ASA - Skipping postit refresh!");
+                    }
 
-                // Check if we have a swipe from the API for the current user
-                PostIt swiped = await _networkManager.GetSwipe();
-                if (swiped != null)
-                {
-                    Debug.Log("APP_DEBUG: Creating swipe!");
-                    await Task.Run(() => { CreateSwipe(swiped); });
+                    // Check if we have a swipe from the API for the current user
+                    PostIt swiped = await _networkManager.GetSwipe();
+                    if (swiped != null)
+                    {
+                        Debug.Log("APP_DEBUG: Creating swipe!");
+                        await Task.Run(() => { CreateSwipe(swiped); });
 
-                }
-            });   
-        } // Release lock
+                    }
+                });
+            } // Release lock
+        });
+        
         
     }
 
+    private bool _runningPlacePostIts = false;
+    private readonly object _runLock = new();
+
     public async Task GetAndPlacePostIts()
     {
+        lock(_runLock)
+        {
+            if (_runningPlacePostIts)
+            {
+                Debug.Log("APP_DEBUG: ASA - Already running GetAndPlacePostIts"); return;
+            }
+            _runningPlacePostIts = true;
+        }
+        
+
+        
         
         // TODO: Check if the count of the different lists is coherent
         List<PostIt> fetch = await _networkManager.GetPostIts();
@@ -617,7 +674,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         // run async task
         await Task.Run(() =>
         {
-            lock (_availablePostIts) lock (_foundLocalAnchors)
+            lock (_placingLock)
             {
                     // Update available postits
                     _availablePostIts = fetch;
@@ -677,7 +734,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                                 });
 
                                 Debug.Log("ASA - Postit successfully placed!");
-                                // break; // TODO: test without break opt
+                                break; // TODO: test without break opt
                             }
                         }
                     }
@@ -723,6 +780,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             } // Release lock
 
         });
+
+        lock (_runLock)
+        {
+            _runningPlacePostIts = false;
+        }
     }
 
     public async void BeginMapping()
@@ -738,7 +800,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             case ManagerState.MAPPING:
                 {
                     _state = ManagerState.CREATE;
-                    //HideAnchors();
+                    HideAnchors();
                     break;
                 }
             default:
@@ -756,36 +818,28 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     public void HideAnchors()
     {
         Debug.Log($"APP_DEBUG: ASA - Hiding {_foundLocalAnchors.Count} found local anchors");
-        UnityDispatcher.InvokeOnAppThread(() =>
+
+        foreach (LocalAnchor anchor in _foundLocalAnchors)
         {
-            foreach (LocalAnchor anchor in _foundLocalAnchors)
+            if (anchor.Instance != null && anchor.Instance.TryGetComponent<AnchorManager>(out AnchorManager manager))
             {
-                if (anchor.Instance != null)
-                {
-                    anchor.Instance.SetActive(false);
-                    Debug.Log("APP_DEBUG: Hid found anchor: " + anchor.anchorId);
-                }
-
+                manager.Hide();
             }
-        });
 
+        }
     }
 
     public void ShowAnchors()
     {
         Debug.Log($"APP_DEBUG: ASA - Showing {_foundLocalAnchors.Count} found local anchors");
-        UnityDispatcher.InvokeOnAppThread(() =>
+        foreach (LocalAnchor anchor in _foundLocalAnchors)
         {
-            foreach (LocalAnchor anchor in _foundLocalAnchors)
+            if (anchor.Instance != null && anchor.Instance.TryGetComponent<AnchorManager>(out AnchorManager manager))
             {
-                if (anchor.Instance != null)
-                {
-                    anchor.Instance.SetActive(true);
-                    Debug.Log("APP_DEBUG: Show found anchor: " + anchor.anchorId);
-                }
-
+                manager.Show();
             }
-        });
+
+        }
 
     }
 
@@ -1127,7 +1181,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     // If there is already an anchor in the _found, disable it
                     Debug.Log("APP_DEBUG: ASA - Looking for anchor in found anchors");
                     LocalAnchor existing = _foundLocalAnchors.Find(anchor => anchor.anchorId == id);
-                    GameObject anchorGameObject;
+                    GameObject anchorGameObject = null;
                     CloudNativeAnchor anchorNativeAnchor;
 
                     Debug.Log("APP_DEBUG: ASA - Finished searching anchors in foundLocalAnchors");
@@ -1179,7 +1233,14 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                     Debug.Log($"APP_DEBUG: ASA - There are now {_foundLocalAnchors.Count} found local anchors");
                     if (_state != ManagerState.MAPPING)
                     {
-                        //anchorGameObject.SetActive(false);
+                        if (anchorGameObject != null && anchorGameObject.TryGetComponent<AnchorManager>(out AnchorManager manager))
+                        {
+                            manager.Hide();
+                        }
+                        else
+                        {
+                            Debug.Log("APP_DEBUG: ASA - Could not find AnchorManager component");
+                        }
                         Debug.Log("APP_DEBUG: ASA - Set anchor to disabled as not in mapping mode");
                     }
                 });

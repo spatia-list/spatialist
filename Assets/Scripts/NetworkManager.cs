@@ -315,7 +315,17 @@ public class NetworkManager : MonoBehaviour
         List<PostIt> objectList = new List<PostIt>();
         for (int i = 0; i < response.postits.Count; i++)
         {
-            objectList.Add(PostIt.ParseJSON(response.postits[i]));
+            try
+            {
+                PostIt res = PostIt.ParseJSON(response.postits[i]);
+                if (res != null)
+                {
+                    objectList.Add(res);
+                }}
+            catch (Exception e)
+            {
+                Debug.Log("APP_DEBUG: NetManager - " + e.Message);
+            } 
         }
 
         foreach (var item in objectList)
