@@ -54,8 +54,14 @@ public class UIManager : MonoBehaviour
     private GameObject _currentView;
 
 
+    private AzureSpatialAnchorsScript _script;
+
+
     void Start()
     {
+        // find the AzureSpatialAnchorsScript component in the scene
+        _script = gameObject.GetComponent<AzureSpatialAnchorsScript>();
+
         _list.Add(U1Welcome);
         _list.Add(U2Launch);
         _list.Add(U3SelectMap);
@@ -71,7 +77,9 @@ public class UIManager : MonoBehaviour
             _list[i].SetActive(false);
         }
 
+        // Comment this out, when configuring the UI, let's reenable it
         SetState(StartState);
+        _script.Speak("Welcome to the Spatia-list Post-it notes! Your virtual post-it notes. Click next to proceed.");
     }
 
     // Update is called once per frame
@@ -81,61 +89,61 @@ public class UIManager : MonoBehaviour
         {
             case UIState.WELCOME:
                 {
-                    
+
                     break;
                 }
 
             case UIState.LAUNCH:
                 {
-                    
+
                     break;
                 }
 
             case UIState.SELECT_MAP:
                 {
-                    
+
                     break;
                 }
 
             case UIState.MAPPING_MAIN:
                 {
-                    
+
                     break;
                 }
 
             case UIState.MAPPING_MODE:
                 {
-                    
+
                     break;
                 }
 
             case UIState.MAPPING_CHANGE_NAME:
                 {
-                    
+
                     break;
                 }
 
             case UIState.MAPPING_CONFIRM_CANCEL:
                 {
-                    
+
                     break;
                 }
 
             case UIState.LOCALIZATION:
                 {
-                    
+
                     break;
                 }
 
             case UIState.POSTIT:
                 {
-                    
+
                     break;
                 }
 
             default:
                 {
-                    
+
                     break;
                 }
         }
@@ -147,7 +155,7 @@ public class UIManager : MonoBehaviour
     /// <param name="state">UIState that represents the next view that we want to display</param>
     private GameObject getView(UIState state)
     {
-        return _list[(int) state];
+        return _list[(int)state];
     }
 
     /// <summary>
@@ -161,12 +169,12 @@ public class UIManager : MonoBehaviour
         if (_currentView)
         {
             _currentView.SetActive(false);
-        }     
+        }
 
         _currentState = state;
 
         _currentView = getView(state);
-        
+
         if (_currentView != null)
         {
             _currentView.SetActive(true);
@@ -179,20 +187,92 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void SetU1() { SetState(UIState.WELCOME); }
 
-    public void SetU2() { SetState(UIState.LAUNCH);}
+    public void SetU2() { SetState(UIState.LAUNCH); }
 
     public void SetU3() { SetState(UIState.SELECT_MAP); }
 
     public void SetU4() { SetState(UIState.MAPPING_MAIN); }
 
-    public void SetU5() { SetState(UIState.MAPPING_MODE); }
+    public void SetU5() {
+        _script = GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>();
 
-    public void SetU6() { SetState(UIState.MAPPING_CHANGE_NAME); }
+        _script.Speak("First, you need to select an existing map, or need to create a new one. Then, raise your hand and look at your palm. There, you will see some buttons. Click on the mapping button to create anchors around the room. Click on the create button to create postits. You can modify your post-it by clicking edit button, delete it by using delete button, and save it by using save button.");
+
+        SetState(UIState.MAPPING_MODE); 
+    
+    }
+
+    public void SetU6() {
+        // reset map name
+        GameObject mappingChangeName = _list[(int)UIState.MAPPING_CHANGE_NAME];
+
+        // get the child game object MRKeyboardInputField (TMP)
+        Transform keyboardInputTrans = mappingChangeName.transform.Find("Mapping Change Map Name [Frame]/TextInputPrefab/VerticalGroup/MRKeyboardInputField (TMP)");
+        // get the text from the input field
+        GameObject keyboardInputObj = keyboardInputTrans.gameObject;
+        keyboardInputObj.GetComponent<TMPro.TMP_InputField>().text = "";
+
+        // enable the ui view
+        SetState(UIState.MAPPING_CHANGE_NAME); 
+        
+    }
 
     public void SetU7() { SetState(UIState.MAPPING_CONFIRM_CANCEL); }
 
     public void SetU8() { SetState(UIState.LOCALIZATION); }
 
     public void SetU9() { SetState(UIState.POSTIT); }
+
+    public void SetMapName()
+    {
+        // find the AzureSpatialAnchorsScript component in the scene
+        _script = GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>();
+
+        // get the text from the input field in the child game object MRKeyboardInputField (TMP)
+        Debug.Log("APP_DEBUG: SetMapName called");
+
+        // get the mapping change name gameobject
+        GameObject mappingChangeName = _list[(int)UIState.MAPPING_CHANGE_NAME];
+        // get the child game object MRKeyboardInputField (TMP)
+        if (mappingChangeName == null)
+        {
+            Debug.Log("APP_DEBUG: mappingChangeName is null");
+            return;
+        }
+        Transform keyboardInputTrans = mappingChangeName.transform.Find("Mapping Change Map Name [Frame]/TextInputPrefab/VerticalGroup/MRKeyboardInputField (TMP)");
+        // get the text from the input field
+        if (keyboardInputTrans == null)
+        {
+            Debug.Log("APP_DEBUG: keyboardInputTrans is null");
+            return;
+        }
+        GameObject keyboardInputObj = keyboardInputTrans.gameObject;
+        string groupName = keyboardInputObj.GetComponent<TMPro.TMP_InputField>().text;
+
+        if (groupName == null || groupName == "")
+        {
+            Debug.Log("APP_DEBUG: groupName is empty");
+            _script.Speak("Please enter a name for the map");
+            return;
+        }
+
+        // print the group name
+        Debug.Log("APP_DEBUG: entered group name is " + groupName);
+
+        if (_script.IsMapNameExisting(groupName))
+        {
+            Debug.Log("APP_DEBUG: groupName already exists");
+            _script.Speak("Map name already exists, please enter a different name");
+            return;
+        }
+
+        Debug.Log("APP_DEBUG: Setting map name to: " + groupName);
+        _script.SetCurrentGroup(groupName);
+        _script.Speak("Entered to map "+ groupName);
+
+        // disable the ui view
+        _list[(int)UIState.MAPPING_CHANGE_NAME].SetActive(false);
+    }
+
 
 }

@@ -26,7 +26,7 @@ public class PostItUpdater : MonoBehaviour
     {
         this.tmpText = gameObject.GetComponent<TextMeshProUGUI>();
         this.tmpText.SetText(text);
-        Debug.Log($"text update signal -> {text}");
+        Debug.Log($"APP_DEBUG: text update signal -> {text}");
     }
 
     // update color
@@ -34,14 +34,14 @@ public class PostItUpdater : MonoBehaviour
     {
         this.tmpText = gameObject.GetComponent<TextMeshProUGUI>();
         this.tmpText.color = ColorUtility.TryParseHtmlString(color, out var c) ? c : Color.white;
-        Debug.Log($"color update signal -> {color}");
+        Debug.Log($"APP_DEBUG: color update signal -> {color}");
     }
 
     // set id
     public void UpdateId(string id)
     {
         this.postItId = id;
-        Debug.Log($"id update signal -> {id}");
+        Debug.Log($"APP_DEBUG: id update signal -> {id}");
     }
 
     // update background color
@@ -49,6 +49,6 @@ public class PostItUpdater : MonoBehaviour
     {
         //this.tmpText = gameObject.GetComponent<TextMeshProUGUI>();
         //this.tmpText.color = ColorUtility.TryParseHtmlString(color, out var c) ? c : Color.white;
-        Debug.Log($"background color update signal -> {color}");
+        Debug.Log($"APP_DEBUG: background color update signal -> {color}");
     }
 }

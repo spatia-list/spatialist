@@ -9,8 +9,9 @@ public class UIStateBinder : MonoBehaviour
 
     public void SetUIManagerState(UIState state)
     {
-        if (manager == null) {
-            Debug.Log("Component tried to set state without attached UI manager!");
+        if (manager == null)
+        {
+            Debug.Log("APP_DEBUG: Component tried to set state without attached UI manager!");
             return;
         }
 

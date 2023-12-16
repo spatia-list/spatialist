@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class TextUpdateScript : MonoBehaviour
 {
-    
+
     // Attach to the TextMesh component linked to this object
     public TextMeshPro textMeshPro;
 
@@ -20,12 +20,12 @@ public class TextUpdateScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public void SetText(string text, Color color)
-    { 
-        Debug.Log($"TextOut :: {text}");
+    {
+        Debug.Log($"APP_DEBUG: TextOut :: {text}");
         textMeshPro.SetText(text);
         textMeshPro.color = color;
     }
