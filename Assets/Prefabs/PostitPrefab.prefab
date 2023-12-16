@@ -19559,6 +19559,10 @@ PrefabInstance:
       propertyPath: currentURL
       value: http://185.224.139.115:8000/
       objectReference: {fileID: 0}
+    - target: {fileID: 6397544354392829286, guid: 4410a2a17e71713438d8cf4ebc93d9a4, type: 3}
+      propertyPath: imageQuality
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
