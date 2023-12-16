@@ -11,6 +11,7 @@ using UnityEngine;
 using Microsoft.MixedReality.Toolkit.Experimental.UI;
 using Microsoft.MixedReality.Toolkit.UI.BoundsControl;
 using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.WebView;
 
 
 public enum PostItState { LOCKED, UNLOCKED }
@@ -36,6 +37,8 @@ public class PostItManager : MonoBehaviour
     // Renderer objects (for the material of the postit)
     public MeshRenderer contentQuadRend;
     public MeshRenderer titleBackPlateRend;
+    public MeshRenderer contentQuadBackRend;
+    public MeshRenderer titleBackPlateBackRend;
 
     // Lock and UnlockUI buttons
     public GameObject LockButton;
@@ -60,6 +63,10 @@ public class PostItManager : MonoBehaviour
     public GameObject ColorGreenButton;
     public GameObject ColorRedButton;
     public GameObject ColorBlueButton;
+
+    public GameObject WebViewObject;
+    private Microsoft.MixedReality.WebView.WebView _webView;
+    private IWebView _iWebView;
     
 
     // Start is called before the first frame update
@@ -109,7 +116,6 @@ public class PostItManager : MonoBehaviour
         // {
         //     Debug.Log("APP_DEBUG: Could not find ContentQuad or BackPlate in PostItPrefab");
         // }
-
     }
 
     // Update is called once per frame
@@ -154,14 +160,71 @@ public class PostItManager : MonoBehaviour
             transform.localScale = data.Scale;
         });
 
+        bool isRichContent = false;
+        if (data.Type == PostItType.MEDIA)
+        {
+            isRichContent = true;
+        }
+        Debug.Log("APP_DEBUG: PostIt - SetObject - isRichContent: " + isRichContent);
+
+        // Perfor rich content
+        if (data.Type == PostItType.MEDIA)
+        {
+            Debug.Log("APP_DEBUG: PostIt - SetObject - Rich content detected, loading media");
+            UnityDispatcher.InvokeOnAppThread(() =>
+            {
+                WebViewObject.SetActive(true);
+                
+            });
+
+            if (WebViewObject.TryGetComponent<Microsoft.MixedReality.WebView.WebView>(out Microsoft.MixedReality.WebView.WebView webView))
+            {
+                _webView = webView;
+                
+            }
+            else
+            {
+                Debug.Log("APP_DEBUG: PostIt - SetObject - Could not find WebView component in WebViewObject");
+            }
+
+            if (_webView == null)
+            {
+                Debug.Log("APP_DEBUG: PostIt - SetObject - WebView is null");
+                return;
+            }
+            else
+            {
+                Debug.Log("APP_DEBUG: PostIt - SetObject - WebView is not null");
+            }
+
+            _webView.GetWebViewWhenReady( (IWebView wv) =>
+            {
+                Debug.Log("APP_DEBUG: PostIt - SetObject - WebView is ready");
+                _iWebView = wv;
+            });
+
+            Debug.Log("APP_DEBUG: PostIt - SetObject - Loading URL: " + data.Content);
+
+            _webView.Load(new Uri(data.Content));
+        }
+        else
+        {
+            UnityDispatcher.InvokeOnAppThread(() =>
+            {
+                WebViewObject.SetActive(false);
+            });
+        }
+
     }
 
     // Changes the postit color (back plate and title bar) to the specified material
     public void ChangePostItColor(Material mat, Material mat_trans)
     {
-            this.contentQuadRend.material = mat;
-            this.titleBackPlateRend.material = mat_trans;
-            Debug.Log("APP_DEBUG: Setting ContentQuad material.");
+        this.contentQuadRend.material = mat;
+        this.contentQuadBackRend.material = mat;
+        this.titleBackPlateRend.material = mat_trans;
+        this.titleBackPlateBackRend.material = mat_trans;
+        Debug.Log("APP_DEBUG: Setting ContentQuad material.");
     }
 
     public void ChangeColorYellow()

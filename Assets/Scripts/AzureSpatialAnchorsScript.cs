@@ -92,7 +92,6 @@ public class PostIt : IEquatable<PostIt>
 
     public bool Modified(PostIt other)
     {
-        if (!this.Same(other)) return false;
 
         return this.AnchorId != other.AnchorId
             || this.Owner != other.Owner
@@ -100,7 +99,8 @@ public class PostIt : IEquatable<PostIt>
             || this.Type != other.Type
             || this.Content != other.Content
             || this.Pose != other.Pose
-            || this.Scale != other.Scale;
+            || this.Scale != other.Scale
+            || this.Color != other.Color;
 
     }
 
@@ -261,12 +261,27 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private readonly object _refreshLock = new();
     private readonly object _placingLock = new();
 
+    public Color MappingStatusColor;
+    public Color CreateStatusColor;
+    public Color IdleStatusColor;
+    public TextMeshProUGUI StatusText;
+
     // <Start>
     // Start is called before the first frame update
     void Start()
     {
         // Set audio source of speech to text
         _textToSpeech = gameObject.GetComponent<TextToSpeech>();
+
+        if (StatusText == null)
+        {
+            Debug.LogError("ASA - Status object not set!");
+        }
+        UnityDispatcher.InvokeOnAppThread(() =>
+        {
+            StatusText.SetText("Loading Session");
+            StatusText.color = IdleStatusColor;
+        });
 
         //Set state to idle
         _state = ManagerState.IDLE;
@@ -291,6 +306,12 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
         // Start the refresh timer
         _refreshTimer = 0.0f;
+
+        UnityDispatcher.InvokeOnAppThread(() =>
+        {
+            StatusText.SetText("Ready");
+            StatusText.color = IdleStatusColor;
+        });
 
     }
     // </Start>
@@ -601,7 +622,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
 
     public void RefreshData()
     {
-        if (_networkManager.GroupName == null || _networkManager.GroupName == string.Empty){
+        if (_networkManager == null || _networkManager.GroupName == null || _networkManager.GroupName == string.Empty){
             Debug.Log("APP_DEBUG: No group selected, skipping refresh");
             return;
         }
@@ -787,10 +808,28 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         }
     }
 
-    public async void BeginMapping()
+    public void BeginMapping()
     {
-        _state = ManagerState.MAPPING;
-        ShowAnchors();
+        if (_state == ManagerState.MAPPING)
+        {
+            _state = ManagerState.IDLE;
+            HideAnchors();
+            UnityDispatcher.InvokeOnAppThread(() =>
+            {
+                StatusText.SetText("Ready");
+                StatusText.color = IdleStatusColor;
+            });
+        } else
+        {
+            _state = ManagerState.MAPPING;
+            ShowAnchors();
+            UnityDispatcher.InvokeOnAppThread(() =>
+            {
+                StatusText.SetText("Mapping mode");
+                StatusText.color = MappingStatusColor;
+            });
+        }
+        
     }
 
     public void BeginCreate()
@@ -801,18 +840,36 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
                 {
                     _state = ManagerState.CREATE;
                     HideAnchors();
+                    UnityDispatcher.InvokeOnAppThread(() =>
+                    {
+                        StatusText.SetText("Tap to create");
+                        StatusText.color = CreateStatusColor;
+                    });
                     break;
                 }
             default:
                 {
                     _state = ManagerState.CREATE;
+                    UnityDispatcher.InvokeOnAppThread(() =>
+                    {
+                        StatusText.SetText("Tap to create");
+                        StatusText.color = CreateStatusColor;
+                    });
                     break;
                 }
         }
 
     }
 
-    public void SetStateIdle() { _state = ManagerState.IDLE; }
+    public void SetStateIdle() 
+    { 
+        _state = ManagerState.IDLE; 
+        UnityDispatcher.InvokeOnAppThread(() =>
+        {
+            StatusText.SetText("Ready");
+            StatusText.color = IdleStatusColor;
+        });
+    }
 
 
     public void HideAnchors()

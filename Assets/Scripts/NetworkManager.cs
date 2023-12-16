@@ -337,6 +337,13 @@ public class NetworkManager : MonoBehaviour
 
     public async Task<List<LocalAnchor>> GetAnchors()
     {
+
+        if (GroupName == null || GroupName == string.Empty)
+        {
+            Debug.Log("APP_DEBUG: GroupName is null or empty");
+            return null;
+        }
+
         string textResponse = await getAsync("/anchors/" + GroupName);
 
         // print the json response
