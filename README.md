@@ -8,9 +8,13 @@
 - [Deepana Ishtaweera (ETHZ)](https://github.com/deepanaishtaweera)
 - [Malo Ranzetti (ETHZ, EPFL)](https://github.com/mrztti)
 
+<img src="https://github.com/spatia-list/spatialist/blob/main/resources/ethz-logo.png" height=60px> 
+
 ## Supervisors
 - Mihai Dusmanu (Microsoft Research)
 - Patrick Misteli (Microsoft Research)
+
+<img src="https://github.com/spatia-list/spatialist/blob/main/resources/microsoft-logo.png" height=60px>
 
 ### Abstract
 SpatiaList is a HoloLens 2 application designed for spatially persistent digital post-its in a Mixed Reality (MR) environment. This project, in collaboration with Microsoft, is intended to showcase the potential of MR technologies to enable multi-user collaboration scenarios.
@@ -20,5 +24,29 @@ The user study shows an overall positive sentiment, with key recommendations to 
 
 #### Keywords: `Mixed Reality`, `HoloLens 2`, `Azure Spatial Anchors`, `Unity`, `Spatial Persistence`
 
-![ETHZ Logo](/resources/ethz_logo.png) ![Microsoft Logo](/resources/microsoft_logo.png)
+## Demo video
+
+TODO
+
+## Installation instructions
+
+This project must be loaded in Unity Editor and compiled for the HoloLens 2. 
+A valid Azure Spatial Anchors account is required to run the application, and tokens must be provided in the Unity Editor in the `Azure Spatial Anchors Manager` component.
+
+The backend system must be deployed on a publically acessible machine. The backend code is available on the [following repository](https://github.com/spatia-list/spatialist-backend), which contains deployment instructions as well as documentation for the API.
+A CosmosDB database is required to run the backend. The database must be configured with the following collections:
+- `spatialist_postits`
+- `spatialist_organizations` 
+- `spatialist_anchors`
+- `spatialist_swipes`
+
+The public URL must then be added to the Unity Editor in the `Network Manager` component.
+
+## Full report
+
+The full report is available [here](/resources/report.pdf).
+
+
+
+
 
