@@ -20,3 +20,5 @@ The user study shows an overall positive sentiment, with key recommendations to 
 
 #### Keywords: `Mixed Reality`, `HoloLens 2`, `Azure Spatial Anchors`, `Unity`, `Spatial Persistence`
 
+![ETHZ Logo](/resources/ethz_logo.png) ![Microsoft Logo](/resources/microsoft_logo.png)
+
