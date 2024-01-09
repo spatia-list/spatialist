@@ -26,7 +26,7 @@ The user study shows an overall positive sentiment, with key recommendations to 
 
 ## Demo video
 
-TODO
+[![Demo video](http://img.youtube.com/vi/IT7c7chMiws/0.jpg)](http://www.youtube.com/watch?v=IT7c7chMiws "SpatiaList Demo Video")
 
 ## Installation instructions
 
